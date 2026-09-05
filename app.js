@@ -3,8 +3,18 @@
 // FRONTEND APPLICATION
 // ==========================================
 
+
+// ==========================================
+// GOOGLE APPS SCRIPT API
+// ==========================================
+
 const API_URL =
   "https://script.google.com/macros/s/AKfycbw3HjV_sDrY8KNmGge2ChFLyg3gicZlNFfw_4xTspr3ZodPpmbJBmZsdMiu26f51R_5/exec";
+
+
+// ==========================================
+// GLOBAL DATA
+// ==========================================
 
 let recommendations = [];
 let sipBaskets = [];
@@ -12,7 +22,7 @@ let optionTrades = [];
 
 
 // ==========================================
-// INITIALIZATION
+// DOM READY
 // ==========================================
 
 document.addEventListener(
@@ -29,12 +39,25 @@ document.addEventListener(
 
     setupOptions();
 
+    setupDashboard();
+
     setTodayDates();
 
     await loadData();
 
   }
 );
+
+
+// ==========================================
+// SAFE ELEMENT HELPER
+// ==========================================
+
+function getElement(id) {
+
+  return document.getElementById(id);
+
+}
 
 
 // ==========================================
@@ -45,8 +68,16 @@ async function apiGet(action) {
 
   const response =
     await fetch(
-      `${API_URL}?action=${action}`
+      `${API_URL}?action=${encodeURIComponent(action)}`
     );
+
+  if (!response.ok) {
+
+    throw new Error(
+      `API request failed: ${response.status}`
+    );
+
+  }
 
   return await response.json();
 
@@ -66,15 +97,29 @@ async function apiPost(
     await fetch(
       API_URL,
       {
+
         method: "POST",
 
         body:
           JSON.stringify({
+
             action,
             data
+
           })
+
       }
     );
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      `API request failed: ${response.status}`
+    );
+
+  }
+
 
   return await response.json();
 
@@ -82,7 +127,7 @@ async function apiPost(
 
 
 // ==========================================
-// LOAD DATA
+// LOAD ALL DATA
 // ==========================================
 
 async function loadData() {
@@ -93,22 +138,48 @@ async function loadData() {
       "Loading latest data..."
     );
 
+
     const data =
       await apiGet(
         "dashboard"
       );
 
 
+    if (
+      data.success === false
+    ) {
+
+      throw new Error(
+        data.error ||
+        data.message ||
+        "Unable to load data"
+      );
+
+    }
+
+
     recommendations =
-      data.recommendations || [];
+      Array.isArray(
+        data.recommendations
+      )
+        ? data.recommendations
+        : [];
 
 
     sipBaskets =
-      data.sipBaskets || [];
+      Array.isArray(
+        data.sipBaskets
+      )
+        ? data.sipBaskets
+        : [];
 
 
     optionTrades =
-      data.options || [];
+      Array.isArray(
+        data.options
+      )
+        ? data.options
+        : [];
 
 
     populateMonthFilters();
@@ -116,6 +187,8 @@ async function loadData() {
     renderDashboard();
 
     renderRecommendations();
+
+    renderSIPBasket();
 
     renderOptions();
 
@@ -129,8 +202,10 @@ async function loadData() {
   catch (error) {
 
     console.error(
+      "Load Data Error:",
       error
     );
+
 
     showToast(
       "Unable to load data"
@@ -147,59 +222,80 @@ async function loadData() {
 
 function setupNavigation() {
 
-  document
-    .querySelectorAll(
+  const buttons =
+    document.querySelectorAll(
       ".nav-btn"
-    )
-    .forEach(
-      button => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            document
-              .querySelectorAll(
-                ".nav-btn"
-              )
-              .forEach(
-                b =>
-                  b.classList.remove(
-                    "active"
-                  )
-              );
+    );
 
 
-            button.classList.add(
-              "active"
-            );
+  buttons.forEach(
+    button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const pageId =
+            button.dataset.page;
 
 
-            document
-              .querySelectorAll(
-                ".page"
-              )
-              .forEach(
-                page =>
-                  page.classList.remove(
-                    "active"
-                  )
-              );
+          if (!pageId) {
+
+            return;
+
+          }
 
 
-            document
-              .getElementById(
-                button.dataset.page
-              )
-              .classList.add(
+          buttons.forEach(
+            item => {
+
+              item.classList.remove(
                 "active"
               );
 
-          }
-        );
+            }
+          );
 
-      }
-    );
+
+          button.classList.add(
+            "active"
+          );
+
+
+          document
+            .querySelectorAll(
+              ".page"
+            )
+            .forEach(
+              page => {
+
+                page.classList.remove(
+                  "active"
+                );
+
+              }
+            );
+
+
+          const page =
+            getElement(
+              pageId
+            );
+
+
+          if (page) {
+
+            page.classList.add(
+              "active"
+            );
+
+          }
+
+        }
+      );
+
+    }
+  );
 
 }
 
@@ -211,9 +307,23 @@ function setupNavigation() {
 function setupDarkMode() {
 
   const button =
-    document.getElementById(
+    getElement(
       "darkModeBtn"
     );
+
+
+  // If button does not exist,
+  // do not stop entire application
+
+  if (!button) {
+
+    console.warn(
+      "Dark mode button not found"
+    );
+
+    return;
+
+  }
 
 
   const savedMode =
@@ -230,10 +340,10 @@ function setupDarkMode() {
       "dark"
     );
 
-    button.textContent =
-      "☀️ Light Mode";
-
   }
+
+
+  updateThemeButton();
 
 
   button.addEventListener(
@@ -245,7 +355,7 @@ function setupDarkMode() {
       );
 
 
-      const dark =
+      const isDark =
         document.body.classList.contains(
           "dark"
         );
@@ -253,16 +363,13 @@ function setupDarkMode() {
 
       localStorage.setItem(
         "investmentHubTheme",
-        dark
+        isDark
           ? "dark"
           : "light"
       );
 
 
-      button.textContent =
-        dark
-          ? "☀️ Light Mode"
-          : "🌙 Dark Mode";
+      updateThemeButton();
 
     }
   );
@@ -271,7 +378,40 @@ function setupDarkMode() {
 
 
 // ==========================================
-// SET TODAY
+// UPDATE DARK MODE BUTTON
+// ==========================================
+
+function updateThemeButton() {
+
+  const button =
+    getElement(
+      "darkModeBtn"
+    );
+
+
+  if (!button) {
+
+    return;
+
+  }
+
+
+  const isDark =
+    document.body.classList.contains(
+      "dark"
+    );
+
+
+  button.textContent =
+    isDark
+      ? "☀️ Light Mode"
+      : "🌙 Dark Mode";
+
+}
+
+
+// ==========================================
+// SET TODAY DATE
 // ==========================================
 
 function setTodayDates() {
@@ -282,16 +422,146 @@ function setTodayDates() {
       .split("T")[0];
 
 
-  document.getElementById(
-    "recDate"
-  ).value =
-    today;
+  const recDate =
+    getElement(
+      "recDate"
+    );
 
 
-  document.getElementById(
-    "optionDate"
-  ).value =
-    today;
+  if (
+    recDate &&
+    !recDate.value
+  ) {
+
+    recDate.value =
+      today;
+
+  }
+
+
+  const optionDate =
+    getElement(
+      "optionDate"
+    );
+
+
+  if (
+    optionDate &&
+    !optionDate.value
+  ) {
+
+    optionDate.value =
+      today;
+
+  }
+
+}
+
+
+// ==========================================
+// DASHBOARD EVENTS
+// ==========================================
+
+function setupDashboard() {
+
+  const dashboardMonth =
+    getElement(
+      "dashboardMonthFilter"
+    );
+
+
+  if (dashboardMonth) {
+
+    dashboardMonth.addEventListener(
+      "change",
+      renderDashboard
+    );
+
+  }
+
+
+  const dashboardType =
+    getElement(
+      "dashboardTypeFilter"
+    );
+
+
+  if (dashboardType) {
+
+    dashboardType.addEventListener(
+      "change",
+      renderDashboard
+    );
+
+  }
+
+
+  const optionMonth =
+    getElement(
+      "dashboardOptionMonthFilter"
+    );
+
+
+  if (optionMonth) {
+
+    optionMonth.addEventListener(
+      "change",
+      renderDashboard
+    );
+
+  }
+
+
+  const optionStatus =
+    getElement(
+      "dashboardOptionStatusFilter"
+    );
+
+
+  if (optionStatus) {
+
+    optionStatus.addEventListener(
+      "change",
+      renderDashboard
+    );
+
+  }
+
+
+  const refreshButton =
+    getElement(
+      "refreshDashboardBtn"
+    );
+
+
+  if (refreshButton) {
+
+    refreshButton.addEventListener(
+      "click",
+      async () => {
+
+        refreshButton.disabled =
+          true;
+
+
+        refreshButton.textContent =
+          "Loading...";
+
+
+        await loadData();
+
+
+        refreshButton.disabled =
+          false;
+
+
+        refreshButton.textContent =
+          "↻ Refresh";
+
+      }
+    );
+
+  }
 
 }
 
@@ -302,7 +572,7 @@ function setTodayDates() {
 
 function populateMonthFilters() {
 
-  const recMonths =
+  const recommendationMonths =
     getUniqueMonths(
       recommendations
     );
@@ -316,13 +586,13 @@ function populateMonthFilters() {
 
   populateSelect(
     "recommendationMonthFilter",
-    recMonths
+    recommendationMonths
   );
 
 
   populateSelect(
     "dashboardMonthFilter",
-    recMonths
+    recommendationMonths
   );
 
 
@@ -340,6 +610,10 @@ function populateMonthFilters() {
 }
 
 
+// ==========================================
+// UNIQUE MONTHS
+// ==========================================
+
 function getUniqueMonths(data) {
 
   const months =
@@ -353,14 +627,28 @@ function getUniqueMonths(data) {
         item.Date
       ) {
 
-        months.add(
+        const value =
           String(
             item.Date
-          ).substring(
+          );
+
+
+        const month =
+          value.substring(
             0,
             7
-          )
-        );
+          );
+
+
+        if (
+          month.length === 7
+        ) {
+
+          months.add(
+            month
+          );
+
+        }
 
       }
 
@@ -370,11 +658,16 @@ function getUniqueMonths(data) {
 
   return [
     ...months
-  ].sort()
-   .reverse();
+  ]
+    .sort()
+    .reverse();
 
 }
 
+
+// ==========================================
+// POPULATE SELECT
+// ==========================================
 
 function populateSelect(
   id,
@@ -382,15 +675,19 @@ function populateSelect(
 ) {
 
   const select =
-    document.getElementById(
+    getElement(
       id
     );
 
 
-  if (!select) return;
+  if (!select) {
+
+    return;
+
+  }
 
 
-  const current =
+  const currentValue =
     select.value;
 
 
@@ -425,18 +722,30 @@ function populateSelect(
   );
 
 
-  select.value =
-    current;
+  if (
+    months.includes(
+      currentValue
+    )
+  ) {
+
+    select.value =
+      currentValue;
+
+  }
 
 }
 
 
-function formatMonth(
-  value
-) {
+// ==========================================
+// FORMAT MONTH
+// ==========================================
+
+function formatMonth(value) {
 
   if (!value) {
+
     return "";
+
   }
 
 
@@ -447,11 +756,25 @@ function formatMonth(
     );
 
 
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+
+    return value;
+
+  }
+
+
   return date.toLocaleDateString(
     "en-IN",
     {
+
       month: "long",
+
       year: "numeric"
+
     }
   );
 
@@ -459,106 +782,113 @@ function formatMonth(
 
 
 // ==========================================
-// DASHBOARD
+// FILTER RECOMMENDATIONS
+// ==========================================
+
+function getFilteredDashboardRecommendations() {
+
+  const month =
+    getElement(
+      "dashboardMonthFilter"
+    )?.value ||
+    "";
+
+
+  const type =
+    getElement(
+      "dashboardTypeFilter"
+    )?.value ||
+    "";
+
+
+  return recommendations.filter(
+    item => {
+
+      const monthMatch =
+        !month ||
+        String(
+          item.Date ||
+          ""
+        ).startsWith(
+          month
+        );
+
+
+      const typeMatch =
+        !type ||
+        item.Type ===
+        type;
+
+
+      return (
+        monthMatch &&
+        typeMatch
+      );
+
+    }
+  );
+
+}
+
+
+// ==========================================
+// RENDER DASHBOARD
 // ==========================================
 
 function renderDashboard() {
 
-  const month =
-    document.getElementById(
-      "dashboardMonthFilter"
-    ).value;
+  const data =
+    getFilteredDashboardRecommendations();
 
 
-  const type =
-    document.getElementById(
-      "dashboardTypeFilter"
-    ).value;
+  setText(
+    "totalRecommendations",
+    data.length
+  );
 
 
-  let data =
-    [...recommendations];
-
-
-  if (
-    month
-  ) {
-
-    data =
-      data.filter(
-        item =>
-          String(
-            item.Date
-          ).startsWith(
-            month
-          )
-      );
-
-  }
-
-
-  if (
-    type
-  ) {
-
-    data =
-      data.filter(
-        item =>
-          item.Type ===
-          type
-      );
-
-  }
-
-
-  document.getElementById(
-    "totalRecommendations"
-  ).textContent =
-    data.length;
-
-
-  document.getElementById(
-    "activeRecommendations"
-  ).textContent =
+  setText(
+    "activeRecommendations",
     data.filter(
       item =>
         item.Status ===
         "Active"
-    ).length;
+    ).length
+  );
 
 
-  document.getElementById(
-    "targetHit"
-  ).textContent =
+  setText(
+    "targetHit",
     data.filter(
       item =>
         item.Status ===
         "Target Hit"
-    ).length;
+    ).length
+  );
 
 
-  document.getElementById(
-    "slHit"
-  ).textContent =
+  setText(
+    "slHit",
     data.filter(
       item =>
         item.Status ===
         "SL Hit"
-    ).length;
+    ).length
+  );
 
 
-  const average =
-    data.length
+  const averageReturn =
+    data.length > 0
 
       ?
 
       data.reduce(
         (
-          sum,
+          total,
           item
         ) =>
 
-          sum +
+          total +
           Number(
             item.Return_Percent ||
             0
@@ -575,43 +905,46 @@ function renderDashboard() {
       0;
 
 
-  document.getElementById(
-    "averageReturn"
-  ).textContent =
-    average.toFixed(2) +
-    "%";
+  setText(
+    "averageReturn",
+    averageReturn.toFixed(2) +
+    "%"
+  );
 
 
   const tbody =
-    document.getElementById(
+    getElement(
       "dashboardRecommendationsTable"
     );
 
 
-  tbody.innerHTML =
-    "";
+  if (tbody) {
+
+    tbody.innerHTML =
+      "";
 
 
-  data
-    .slice(0, 10)
-    .forEach(
-      item => {
+    data
+      .slice(
+        0,
+        10
+      )
+      .forEach(
+        item => {
 
-        tbody.innerHTML += `
+          const row =
+            document.createElement(
+              "tr"
+            );
 
-          <tr>
 
-            <td>
-              ${item.Date || ""}
-            </td>
+          row.innerHTML =
+            `
+            <td>${escapeHtml(item.Date || "")}</td>
 
-            <td>
-              ${item.Name || ""}
-            </td>
+            <td>${escapeHtml(item.Name || "")}</td>
 
-            <td>
-              ${item.Type || ""}
-            </td>
+            <td>${escapeHtml(item.Type || "")}</td>
 
             <td>
               ₹${formatNumber(item.Entry_CMP)}
@@ -621,24 +954,34 @@ function renderDashboard() {
               ₹${formatNumber(item.Current_CMP)}
             </td>
 
-            <td
-              class="${Number(item.Return_Percent) >= 0 ? "positive" : "negative"}"
-            >
-
-              ${formatNumber(item.Return_Percent)}%
-
+            <td class="${
+              Number(
+                item.Return_Percent
+              ) >= 0
+                ? "positive"
+                : "negative"
+            }">
+              ${formatNumber(
+                item.Return_Percent
+              )}%
             </td>
 
             <td>
-              ${statusBadge(item.Status)}
+              ${statusBadge(
+                item.Status
+              )}
             </td>
+            `;
 
-          </tr>
 
-        `;
+          tbody.appendChild(
+            row
+          );
 
-      }
-    );
+        }
+      );
+
+  }
 
 
   renderOptionDashboard();
@@ -647,102 +990,98 @@ function renderDashboard() {
 
 
 // ==========================================
-// OPTION DASHBOARD
+// RENDER OPTION DASHBOARD
 // ==========================================
 
 function renderOptionDashboard() {
 
   const month =
-    document.getElementById(
+    getElement(
       "dashboardOptionMonthFilter"
-    ).value;
+    )?.value ||
+    "";
 
 
   const status =
-    document.getElementById(
+    getElement(
       "dashboardOptionStatusFilter"
-    ).value;
+    )?.value ||
+    "";
 
 
-  let data =
-    [...optionTrades];
+  const data =
+    optionTrades.filter(
+      item => {
 
-
-  if (
-    month
-  ) {
-
-    data =
-      data.filter(
-        item =>
+        const monthMatch =
+          !month ||
           String(
-            item.Date
+            item.Date ||
+            ""
           ).startsWith(
             month
-          )
-      );
-
-  }
+          );
 
 
-  if (
-    status
-  ) {
-
-    data =
-      data.filter(
-        item =>
+        const statusMatch =
+          !status ||
           item.Status ===
-          status
-      );
-
-  }
+          status;
 
 
-  document.getElementById(
-    "totalOptionTrades"
-  ).textContent =
-    data.length;
+        return (
+          monthMatch &&
+          statusMatch
+        );
+
+      }
+    );
 
 
-  document.getElementById(
-    "openOptionTrades"
-  ).textContent =
+  setText(
+    "totalOptionTrades",
+    data.length
+  );
+
+
+  setText(
+    "openOptionTrades",
     data.filter(
       item =>
         item.Status ===
         "Open"
-    ).length;
+    ).length
+  );
 
 
-  document.getElementById(
-    "optionTargetHit"
-  ).textContent =
+  setText(
+    "optionTargetHit",
     data.filter(
       item =>
         item.Status ===
         "Target Hit"
-    ).length;
+    ).length
+  );
 
 
-  document.getElementById(
-    "optionSLHit"
-  ).textContent =
+  setText(
+    "optionSLHit",
     data.filter(
       item =>
         item.Status ===
         "SL Hit"
-    ).length;
+    ).length
+  );
 
 
   const netPL =
     data.reduce(
       (
-        sum,
+        total,
         item
       ) =>
 
-        sum +
+        total +
         Number(
           item.Net_PL ||
           0
@@ -753,22 +1092,26 @@ function renderOptionDashboard() {
 
 
   const netPLField =
-    document.getElementById(
+    getElement(
       "optionNetPL"
     );
 
 
-  netPLField.textContent =
-    "₹" +
-    formatNumber(
-      netPL
-    );
+  if (netPLField) {
+
+    netPLField.textContent =
+      "₹" +
+      formatNumber(
+        netPL
+      );
 
 
-  netPLField.className =
-    netPL >= 0
-      ? "positive"
-      : "negative";
+    netPLField.className =
+      netPL >= 0
+        ? "positive"
+        : "negative";
+
+  }
 
 }
 
@@ -780,193 +1123,51 @@ function renderOptionDashboard() {
 function setupRecommendationForm() {
 
   const form =
-    document.getElementById(
+    getElement(
       "recommendationForm"
     );
 
 
-  document
-    .getElementById(
+  const showButton =
+    getElement(
       "showRecommendationFormBtn"
-    )
-    .addEventListener(
-      "click",
-      () => {
-
-        document
-          .getElementById(
-            "recommendationFormContainer"
-          )
-          .classList.remove(
-            "hidden"
-          );
-
-
-        document
-          .getElementById(
-            "recommendationForm"
-          )
-          .reset();
-
-
-        document
-          .getElementById(
-            "recommendationId"
-          ).value =
-          "";
-
-
-        document
-          .getElementById(
-            "recommendationFormTitle"
-          ).textContent =
-          "Add Recommendation";
-
-
-        document
-          .getElementById(
-            "recDate"
-          ).value =
-          new Date()
-            .toISOString()
-            .split("T")[0];
-
-      }
     );
 
 
-  document
-    .getElementById(
+  if (showButton) {
+
+    showButton.addEventListener(
+      "click",
+      openNewRecommendationForm
+    );
+
+  }
+
+
+  const cancelButton =
+    getElement(
       "cancelRecommendationBtn"
-    )
-    .addEventListener(
+    );
+
+
+  if (cancelButton) {
+
+    cancelButton.addEventListener(
       "click",
       closeRecommendationForm
     );
 
-
-  form.addEventListener(
-    "submit",
-    async event => {
-
-      event.preventDefault();
+  }
 
 
-      const id =
-        document.getElementById(
-          "recommendationId"
-        ).value;
+  if (form) {
 
+    form.addEventListener(
+      "submit",
+      saveRecommendation
+    );
 
-      const data = {
-
-        id,
-
-        date:
-          document.getElementById(
-            "recDate"
-          ).value,
-
-        name:
-          document.getElementById(
-            "recName"
-          ).value,
-
-        symbol:
-          document.getElementById(
-            "recSymbol"
-          ).value
-          .trim()
-          .toUpperCase(),
-
-        type:
-          document.getElementById(
-            "recType"
-          ).value,
-
-        entryCMP:
-          Number(
-            document.getElementById(
-              "recEntry"
-            ).value
-          ),
-
-        target:
-          Number(
-            document.getElementById(
-              "recTarget"
-            ).value
-          ),
-
-        stopLoss:
-          Number(
-            document.getElementById(
-              "recStopLoss"
-            ).value
-          ),
-
-        timeFrame:
-          document.getElementById(
-            "recTimeFrame"
-          ).value,
-
-        remarks:
-          document.getElementById(
-            "recRemarks"
-          ).value
-
-      };
-
-
-      try {
-
-        if (
-          id
-        ) {
-
-          await apiPost(
-            "updateRecommendation",
-            data
-          );
-
-          showToast(
-            "Recommendation updated"
-          );
-
-        }
-
-        else {
-
-          await apiPost(
-            "addRecommendation",
-            data
-          );
-
-          showToast(
-            "Recommendation saved"
-          );
-
-        }
-
-
-        closeRecommendationForm();
-
-        await loadData();
-
-      }
-
-      catch (
-        error
-      ) {
-
-        showToast(
-          "Unable to save recommendation"
-        );
-
-      }
-
-    }
-  );
+  }
 
 
   [
@@ -978,93 +1179,388 @@ function setupRecommendationForm() {
     .forEach(
       id => {
 
-        document
-          .getElementById(
+        const element =
+          getElement(
             id
-          )
-          .addEventListener(
-            "input",
-            renderRecommendations
           );
 
-        document
-          .getElementById(
-            id
-          )
-          .addEventListener(
-            "change",
-            renderRecommendations
-          );
+
+        if (!element) {
+
+          return;
+
+        }
+
+
+        element.addEventListener(
+          "input",
+          renderRecommendations
+        );
+
+
+        element.addEventListener(
+          "change",
+          renderRecommendations
+        );
 
       }
-    );
-
-
-  document
-    .getElementById(
-      "dashboardMonthFilter"
-    )
-    .addEventListener(
-      "change",
-      renderDashboard
-    );
-
-
-  document
-    .getElementById(
-      "dashboardTypeFilter"
-    )
-    .addEventListener(
-      "change",
-      renderDashboard
-    );
-
-
-  document
-    .getElementById(
-      "dashboardOptionMonthFilter"
-    )
-    .addEventListener(
-      "change",
-      renderDashboard
-    );
-
-
-  document
-    .getElementById(
-      "dashboardOptionStatusFilter"
-    )
-    .addEventListener(
-      "change",
-      renderDashboard
-    );
-
-
-  document
-    .getElementById(
-      "refreshDashboardBtn"
-    )
-    .addEventListener(
-      "click",
-      loadData
     );
 
 }
 
 
 // ==========================================
-// CLOSE FORM
+// OPEN NEW RECOMMENDATION FORM
+// ==========================================
+
+function openNewRecommendationForm() {
+
+  const container =
+    getElement(
+      "recommendationFormContainer"
+    );
+
+
+  const form =
+    getElement(
+      "recommendationForm"
+    );
+
+
+  if (container) {
+
+    container.classList.remove(
+      "hidden"
+    );
+
+  }
+
+
+  if (form) {
+
+    form.reset();
+
+  }
+
+
+  setText(
+    "recommendationFormTitle",
+    "Add Recommendation"
+  );
+
+
+  const idField =
+    getElement(
+      "recommendationId"
+    );
+
+
+  if (idField) {
+
+    idField.value =
+      "";
+
+  }
+
+
+  const dateField =
+    getElement(
+      "recDate"
+    );
+
+
+  if (dateField) {
+
+    dateField.value =
+      new Date()
+        .toISOString()
+        .split("T")[0];
+
+  }
+
+}
+
+
+// ==========================================
+// SAVE RECOMMENDATION
+// ==========================================
+
+async function saveRecommendation(
+  event
+) {
+
+  event.preventDefault();
+
+
+  const id =
+    getElement(
+      "recommendationId"
+    )?.value ||
+    "";
+
+
+  const data = {
+
+    id,
+
+    date:
+      getElement(
+        "recDate"
+      )?.value ||
+      "",
+
+    name:
+      getElement(
+        "recName"
+      )?.value ||
+      "",
+
+    symbol:
+      (
+        getElement(
+          "recSymbol"
+        )?.value ||
+        ""
+      )
+        .trim()
+        .toUpperCase(),
+
+    type:
+      getElement(
+        "recType"
+      )?.value ||
+      "Stock",
+
+    entryCMP:
+      Number(
+        getElement(
+          "recEntry"
+        )?.value ||
+        0
+      ),
+
+    target:
+      Number(
+        getElement(
+          "recTarget"
+        )?.value ||
+        0
+      ),
+
+    stopLoss:
+      Number(
+        getElement(
+          "recStopLoss"
+        )?.value ||
+        0
+      ),
+
+    timeFrame:
+      getElement(
+        "recTimeFrame"
+      )?.value ||
+      "",
+
+    remarks:
+      getElement(
+        "recRemarks"
+      )?.value ||
+      ""
+
+  };
+
+
+  try {
+
+    let result;
+
+
+    if (id) {
+
+      result =
+        await apiPost(
+          "updateRecommendation",
+          data
+        );
+
+    }
+
+    else {
+
+      result =
+        await apiPost(
+          "addRecommendation",
+          data
+        );
+
+    }
+
+
+    if (
+      result &&
+      result.success === false
+    ) {
+
+      throw new Error(
+        result.message ||
+        "Unable to save"
+      );
+
+    }
+
+
+    showToast(
+      id
+        ? "Recommendation updated"
+        : "Recommendation saved"
+    );
+
+
+    closeRecommendationForm();
+
+
+    await loadData();
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Save Recommendation Error:",
+      error
+    );
+
+
+    showToast(
+      "Unable to save recommendation"
+    );
+
+  }
+
+}
+
+
+// ==========================================
+// CLOSE RECOMMENDATION FORM
 // ==========================================
 
 function closeRecommendationForm() {
 
-  document
-    .getElementById(
+  const container =
+    getElement(
       "recommendationFormContainer"
-    )
-    .classList.add(
+    );
+
+
+  if (container) {
+
+    container.classList.add(
       "hidden"
     );
+
+  }
+
+}
+
+
+// ==========================================
+// FILTER RECOMMENDATIONS
+// ==========================================
+
+function getFilteredRecommendations() {
+
+  const search =
+    (
+      getElement(
+        "recommendationSearch"
+      )?.value ||
+      ""
+    )
+      .toLowerCase()
+      .trim();
+
+
+  const month =
+    getElement(
+      "recommendationMonthFilter"
+    )?.value ||
+    "";
+
+
+  const type =
+    getElement(
+      "recommendationTypeFilter"
+    )?.value ||
+    "";
+
+
+  const status =
+    getElement(
+      "recommendationStatusFilter"
+    )?.value ||
+    "";
+
+
+  return recommendations.filter(
+    item => {
+
+      const name =
+        String(
+          item.Name ||
+          ""
+        )
+          .toLowerCase();
+
+
+      const symbol =
+        String(
+          item.Symbol ||
+          ""
+        )
+          .toLowerCase();
+
+
+      const searchMatch =
+        !search ||
+        name.includes(
+          search
+        ) ||
+        symbol.includes(
+          search
+        );
+
+
+      const monthMatch =
+        !month ||
+        String(
+          item.Date ||
+          ""
+        ).startsWith(
+          month
+        );
+
+
+      const typeMatch =
+        !type ||
+        item.Type ===
+        type;
+
+
+      const statusMatch =
+        !status ||
+        item.Status ===
+        status;
+
+
+      return (
+        searchMatch &&
+        monthMatch &&
+        typeMatch &&
+        statusMatch
+      );
+
+    }
+  );
 
 }
 
@@ -1075,118 +1571,43 @@ function closeRecommendationForm() {
 
 function renderRecommendations() {
 
-  const search =
-    document
-      .getElementById(
-        "recommendationSearch"
-      )
-      .value
-      .toLowerCase();
-
-
-  const month =
-    document
-      .getElementById(
-        "recommendationMonthFilter"
-      )
-      .value;
-
-
-  const type =
-    document
-      .getElementById(
-        "recommendationTypeFilter"
-      )
-      .value;
-
-
-  const status =
-    document
-      .getElementById(
-        "recommendationStatusFilter"
-      )
-      .value;
-
-
   const tbody =
-    document
-      .getElementById(
-        "recommendationsTable"
-      );
-
-
-  let data =
-    [...recommendations];
-
-
-  data =
-    data.filter(
-      item => {
-
-        const name =
-          String(
-            item.Name ||
-            ""
-          )
-          .toLowerCase();
-
-
-        const symbol =
-          String(
-            item.Symbol ||
-            ""
-          )
-          .toLowerCase();
-
-
-        return (
-
-          (!search ||
-
-            name.includes(
-              search
-            ) ||
-
-            symbol.includes(
-              search
-            )
-          )
-
-          &&
-
-          (!month ||
-
-            String(
-              item.Date
-            ).startsWith(
-              month
-            )
-          )
-
-          &&
-
-          (!type ||
-
-            item.Type ===
-            type
-          )
-
-          &&
-
-          (!status ||
-
-            item.Status ===
-            status
-          )
-
-        );
-
-      }
+    getElement(
+      "recommendationsTable"
     );
+
+
+  if (!tbody) {
+
+    return;
+
+  }
+
+
+  const data =
+    getFilteredRecommendations();
 
 
   tbody.innerHTML =
     "";
+
+
+  if (
+    data.length === 0
+  ) {
+
+    tbody.innerHTML =
+      `
+      <tr>
+        <td colspan="11">
+          No recommendations found.
+        </td>
+      </tr>
+      `;
+
+    return;
+
+  }
 
 
   data.forEach(
@@ -1198,15 +1619,15 @@ function renderRecommendations() {
         );
 
 
-      row.innerHTML = `
+      row.innerHTML =
+        `
+        <td>${escapeHtml(item.Date || "")}</td>
 
-        <td>${item.Date || ""}</td>
+        <td>${escapeHtml(item.Name || "")}</td>
 
-        <td>${item.Name || ""}</td>
+        <td>${escapeHtml(item.Symbol || "")}</td>
 
-        <td>${item.Symbol || ""}</td>
-
-        <td>${item.Type || ""}</td>
+        <td>${escapeHtml(item.Type || "")}</td>
 
         <td>
           ₹${formatNumber(item.Entry_CMP)}
@@ -1224,9 +1645,13 @@ function renderRecommendations() {
           ₹${formatNumber(item.Stop_Loss)}
         </td>
 
-        <td
-          class="${Number(item.Return_Percent) >= 0 ? "positive" : "negative"}"
-        >
+        <td class="${
+          Number(
+            item.Return_Percent
+          ) >= 0
+            ? "positive"
+            : "negative"
+        }">
 
           ${formatNumber(
             item.Return_Percent
@@ -1241,24 +1666,67 @@ function renderRecommendations() {
         </td>
 
         <td>
-
           <button
             class="action-btn edit-btn"
-            onclick="editRecommendation('${item.ID}')"
+            data-action="edit"
+            data-id="${escapeAttribute(item.ID)}"
           >
             Edit
           </button>
 
           <button
             class="action-btn delete-btn"
-            onclick="deleteRecommendation('${item.ID}')"
+            data-action="delete"
+            data-id="${escapeAttribute(item.ID)}"
           >
             Delete
           </button>
-
         </td>
+        `;
 
-      `;
+
+      const editButton =
+        row.querySelector(
+          '[data-action="edit"]'
+        );
+
+
+      const deleteButton =
+        row.querySelector(
+          '[data-action="delete"]'
+        );
+
+
+      if (editButton) {
+
+        editButton.addEventListener(
+          "click",
+          () => {
+
+            editRecommendation(
+              item.ID
+            );
+
+          }
+        );
+
+      }
+
+
+      if (deleteButton) {
+
+        deleteButton.addEventListener(
+          "click",
+          () => {
+
+            deleteRecommendation(
+              item.ID
+            );
+
+          }
+        );
+
+      }
 
 
       tbody.appendChild(
@@ -1275,15 +1743,14 @@ function renderRecommendations() {
 // EDIT RECOMMENDATION
 // ==========================================
 
-function editRecommendation(
-  id
-) {
+function editRecommendation(id) {
 
   const item =
     recommendations.find(
-      r =>
+      recommendation =>
+
         String(
-          r.ID
+          recommendation.ID
         ) ===
         String(
           id
@@ -1292,125 +1759,130 @@ function editRecommendation(
 
 
   if (!item) {
+
+    showToast(
+      "Recommendation not found"
+    );
+
     return;
+
   }
 
 
-  document
-    .getElementById(
+  const container =
+    getElement(
       "recommendationFormContainer"
-    )
-    .classList.remove(
+    );
+
+
+  if (container) {
+
+    container.classList.remove(
       "hidden"
     );
 
-
-  document
-    .getElementById(
-      "recommendationFormTitle"
-    )
-    .textContent =
-    "Edit Recommendation";
+  }
 
 
-  document
-    .getElementById(
-      "recommendationId"
-    )
-    .value =
-    item.ID;
+  setText(
+    "recommendationFormTitle",
+    "Edit Recommendation"
+  );
 
 
-  document
-    .getElementById(
-      "recDate"
-    )
-    .value =
+  setValue(
+    "recommendationId",
+    item.ID
+  );
+
+
+  setValue(
+    "recDate",
     String(
-      item.Date
-    )
-    .substring(
+      item.Date ||
+      ""
+    ).substring(
       0,
       10
+    )
+  );
+
+
+  setValue(
+    "recName",
+    item.Name ||
+    ""
+  );
+
+
+  setValue(
+    "recSymbol",
+    item.Symbol ||
+    ""
+  );
+
+
+  setValue(
+    "recType",
+    item.Type ||
+    "Stock"
+  );
+
+
+  setValue(
+    "recEntry",
+    item.Entry_CMP ||
+    ""
+  );
+
+
+  setValue(
+    "recTarget",
+    item.Target ||
+    ""
+  );
+
+
+  setValue(
+    "recStopLoss",
+    item.Stop_Loss ||
+    ""
+  );
+
+
+  setValue(
+    "recTimeFrame",
+    item.Time_Frame ||
+    ""
+  );
+
+
+  setValue(
+    "recRemarks",
+    item.Remarks ||
+    ""
+  );
+
+
+  const page =
+    getElement(
+      "recommendations"
     );
 
 
-  document
-    .getElementById(
-      "recName"
-    )
-    .value =
-    item.Name ||
-    "";
+  if (page) {
 
+    page.scrollIntoView(
+      {
 
-  document
-    .getElementById(
-      "recSymbol"
-    )
-    .value =
-    item.Symbol ||
-    "";
+        behavior: "smooth",
 
+        block: "start"
 
-  document
-    .getElementById(
-      "recType"
-    )
-    .value =
-    item.Type ||
-    "Stock";
+      }
+    );
 
-
-  document
-    .getElementById(
-      "recEntry"
-    )
-    .value =
-    item.Entry_CMP ||
-    "";
-
-
-  document
-    .getElementById(
-      "recTarget"
-    )
-    .value =
-    item.Target ||
-    "";
-
-
-  document
-    .getElementById(
-      "recStopLoss"
-    )
-    .value =
-    item.Stop_Loss ||
-    "";
-
-
-  document
-    .getElementById(
-      "recTimeFrame"
-    )
-    .value =
-    item.Time_Frame ||
-    "";
-
-
-  document
-    .getElementById(
-      "recRemarks"
-    )
-    .value =
-    item.Remarks ||
-    "";
-
-
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
+  }
 
 }
 
@@ -1429,10 +1901,10 @@ async function deleteRecommendation(
     );
 
 
-  if (
-    !confirmed
-  ) {
+  if (!confirmed) {
+
     return;
+
   }
 
 
@@ -1441,17 +1913,21 @@ async function deleteRecommendation(
     const result =
       await apiPost(
         "deleteRecommendation",
-        { id }
+        {
+          id
+        }
       );
 
 
     if (
+      result &&
       result.success
     ) {
 
       showToast(
         "Recommendation deleted"
       );
+
 
       await loadData();
 
@@ -1460,20 +1936,24 @@ async function deleteRecommendation(
     else {
 
       showToast(
-        result.message ||
-        "Unable to delete"
+        result?.message ||
+        "Unable to delete recommendation"
       );
 
     }
 
   }
 
-  catch (
-    error
-  ) {
+  catch (error) {
+
+    console.error(
+      "Delete Error:",
+      error
+    );
+
 
     showToast(
-      "Unable to delete"
+      "Unable to delete recommendation"
     );
 
   }
@@ -1482,133 +1962,77 @@ async function deleteRecommendation(
 
 
 // ==========================================
-// SIP
+// SIP SETUP
 // ==========================================
 
 function setupSIP() {
 
-  document
-    .getElementById(
+  const filter =
+    getElement(
       "sipAmountFilter"
-    )
-    .addEventListener(
+    );
+
+
+  if (filter) {
+
+    filter.addEventListener(
       "change",
       renderSIPBasket
     );
 
+  }
 
-  document
-    .getElementById(
+
+  const form =
+    getElement(
       "customSIPForm"
-    )
-    .addEventListener(
-      "submit",
-      async event => {
-
-        event.preventDefault();
-
-
-        const data = {
-
-          planName:
-            document
-              .getElementById(
-                "sipPlanName"
-              ).value,
-
-          monthlyAmount:
-            Number(
-              document
-                .getElementById(
-                  "sipMonthlyAmount"
-                ).value
-            ),
-
-          investmentName:
-            document
-              .getElementById(
-                "sipInvestmentName"
-              ).value,
-
-          investmentType:
-            document
-              .getElementById(
-                "sipInvestmentType"
-              ).value,
-
-          allocationPercent:
-            Number(
-              document
-                .getElementById(
-                  "sipAllocationPercent"
-                ).value
-            )
-
-        };
-
-
-        try {
-
-          await apiPost(
-            "addCustomSIP",
-            data
-          );
-
-
-          showToast(
-            "Custom SIP added"
-          );
-
-
-          event.target.reset();
-
-        }
-
-        catch (
-          error
-        ) {
-
-          showToast(
-            "Unable to save SIP"
-          );
-
-        }
-
-      }
     );
+
+
+  if (form) {
+
+    form.addEventListener(
+      "submit",
+      saveCustomSIP
+    );
+
+  }
 
 }
 
 
 // ==========================================
-// RENDER SIP
+// RENDER SIP BASKET
 // ==========================================
 
 function renderSIPBasket() {
 
   const amount =
-    document
-      .getElementById(
-        "sipAmountFilter"
-      )
-      .value;
+    getElement(
+      "sipAmountFilter"
+    )?.value ||
+    "";
 
 
   const container =
-    document
-      .getElementById(
-        "sipBasketContainer"
-      );
+    getElement(
+      "sipBasketContainer"
+    );
 
 
-  if (
-    !amount
-  ) {
+  if (!container) {
+
+    return;
+
+  }
+
+
+  if (!amount) {
 
     container.innerHTML =
       `
       <div class="empty-state">
-        Select a monthly SIP amount.
+        Select a monthly SIP amount to view the allocation.
       </div>
       `;
 
@@ -1624,11 +2048,26 @@ function renderSIPBasket() {
         String(
           item.Monthly_Amount
         ) ===
-
         String(
           amount
         )
     );
+
+
+  if (
+    basket.length === 0
+  ) {
+
+    container.innerHTML =
+      `
+      <div class="empty-state">
+        No SIP basket found.
+      </div>
+      `;
+
+    return;
+
+  }
 
 
   let html =
@@ -1645,22 +2084,24 @@ function renderSIPBasket() {
     item => {
 
       html +=
-
         `
         <div class="sip-row">
 
           <div>
 
             <strong>
-              ${item.Investment_Name}
+              ${escapeHtml(
+                item.Investment_Name
+              )}
             </strong>
 
             <div>
-              ${item.Investment_Type}
+              ${escapeHtml(
+                item.Investment_Type
+              )}
             </div>
 
           </div>
-
 
           <div>
 
@@ -1688,32 +2129,155 @@ function renderSIPBasket() {
 
 
 // ==========================================
+// SAVE CUSTOM SIP
+// ==========================================
+
+async function saveCustomSIP(
+  event
+) {
+
+  event.preventDefault();
+
+
+  const data = {
+
+    planName:
+      getElement(
+        "sipPlanName"
+      )?.value ||
+      "",
+
+    monthlyAmount:
+      Number(
+        getElement(
+          "sipMonthlyAmount"
+        )?.value ||
+        0
+      ),
+
+    investmentName:
+      getElement(
+        "sipInvestmentName"
+      )?.value ||
+      "",
+
+    investmentType:
+      getElement(
+        "sipInvestmentType"
+      )?.value ||
+      "",
+
+    allocationPercent:
+      Number(
+        getElement(
+          "sipAllocationPercent"
+        )?.value ||
+        0
+      )
+
+  };
+
+
+  try {
+
+    const result =
+      await apiPost(
+        "addCustomSIP",
+        data
+      );
+
+
+    if (
+      result &&
+      result.success === false
+    ) {
+
+      throw new Error(
+        result.message ||
+        "Unable to save SIP"
+      );
+
+    }
+
+
+    showToast(
+      "Custom SIP added"
+    );
+
+
+    event.target.reset();
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "SIP Error:",
+      error
+    );
+
+
+    showToast(
+      "Unable to save SIP"
+    );
+
+  }
+
+}
+
+
+// ==========================================
 // OPTIONS SETUP
 // ==========================================
 
 function setupOptions() {
 
-  addOptionLeg();
+  const legsContainer =
+    getElement(
+      "optionLegsContainer"
+    );
 
 
-  document
-    .getElementById(
+  if (
+    legsContainer &&
+    legsContainer.children.length === 0
+  ) {
+
+    addOptionLeg();
+
+  }
+
+
+  const addButton =
+    getElement(
       "addOptionLegBtn"
-    )
-    .addEventListener(
+    );
+
+
+  if (addButton) {
+
+    addButton.addEventListener(
       "click",
       addOptionLeg
     );
 
+  }
 
-  document
-    .getElementById(
+
+  const form =
+    getElement(
       "optionTradeForm"
-    )
-    .addEventListener(
+    );
+
+
+  if (form) {
+
+    form.addEventListener(
       "submit",
       saveOptionTrade
     );
+
+  }
 
 
   [
@@ -1724,24 +2288,29 @@ function setupOptions() {
     .forEach(
       id => {
 
-        document
-          .getElementById(
+        const element =
+          getElement(
             id
-          )
-          .addEventListener(
-            "input",
-            renderOptions
           );
 
 
-        document
-          .getElementById(
-            id
-          )
-          .addEventListener(
-            "change",
-            renderOptions
-          );
+        if (!element) {
+
+          return;
+
+        }
+
+
+        element.addEventListener(
+          "input",
+          renderOptions
+        );
+
+
+        element.addEventListener(
+          "change",
+          renderOptions
+        );
 
       }
     );
@@ -1756,10 +2325,16 @@ function setupOptions() {
 function addOptionLeg() {
 
   const container =
-    document
-      .getElementById(
-        "optionLegsContainer"
-      );
+    getElement(
+      "optionLegsContainer"
+    );
+
+
+  if (!container) {
+
+    return;
+
+  }
 
 
   const leg =
@@ -1774,7 +2349,6 @@ function addOptionLeg() {
 
   leg.innerHTML =
     `
-
     <input
       class="strike-price"
       type="number"
@@ -1782,10 +2356,7 @@ function addOptionLeg() {
       required
     >
 
-
-    <select
-      class="option-type"
-    >
+    <select class="option-type">
 
       <option value="CE">
         CE
@@ -1798,9 +2369,7 @@ function addOptionLeg() {
     </select>
 
 
-    <select
-      class="position"
-    >
+    <select class="position">
 
       <option value="BUY">
         BUY
@@ -1836,26 +2405,29 @@ function addOptionLeg() {
     >
       ×
     </button>
-
     `;
 
 
-  leg
-    .querySelector(
+  const removeButton =
+    leg.querySelector(
       ".remove-leg"
-    )
-    .addEventListener(
+    );
+
+
+  if (removeButton) {
+
+    removeButton.addEventListener(
       "click",
       () => {
 
+        const legs =
+          document.querySelectorAll(
+            ".option-leg"
+          );
+
+
         if (
-
-          document
-            .querySelectorAll(
-              ".option-leg"
-            )
-            .length > 1
-
+          legs.length > 1
         ) {
 
           leg.remove();
@@ -1864,6 +2436,8 @@ function addOptionLeg() {
 
       }
     );
+
+  }
 
 
   container.appendChild(
@@ -1895,6 +2469,30 @@ async function saveOptionTrade(
     .forEach(
       leg => {
 
+        const entry =
+          Number(
+            leg
+              .querySelector(
+                ".entry-premium"
+              )
+              ?.value ||
+            0
+          );
+
+
+        const currentField =
+          leg.querySelector(
+            ".current-premium"
+          );
+
+
+        const current =
+          Number(
+            currentField?.value ||
+            entry
+          );
+
+
         legs.push({
 
           strikePrice:
@@ -1903,7 +2501,8 @@ async function saveOptionTrade(
                 .querySelector(
                   ".strike-price"
                 )
-                .value
+                ?.value ||
+              0
             ),
 
           optionType:
@@ -1911,32 +2510,22 @@ async function saveOptionTrade(
               .querySelector(
                 ".option-type"
               )
-              .value,
+              ?.value ||
+            "",
 
           position:
             leg
               .querySelector(
                 ".position"
               )
-              .value,
+              ?.value ||
+            "",
 
           entryPremium:
-            Number(
-              leg
-                .querySelector(
-                  ".entry-premium"
-                )
-                .value
-            ),
+            entry,
 
           currentPremium:
-            Number(
-              leg
-                .querySelector(
-                  ".current-premium"
-                )
-                .value
-            )
+            current
 
         });
 
@@ -1947,66 +2536,66 @@ async function saveOptionTrade(
   const data = {
 
     date:
-      document
-        .getElementById(
-          "optionDate"
-        ).value,
+      getElement(
+        "optionDate"
+      )?.value ||
+      "",
 
     underlying:
-      document
-        .getElementById(
-          "optionUnderlying"
-        ).value,
+      getElement(
+        "optionUnderlying"
+      )?.value ||
+      "",
 
     expiry:
-      document
-        .getElementById(
-          "optionExpiry"
-        ).value,
+      getElement(
+        "optionExpiry"
+      )?.value ||
+      "",
 
     strategy:
-      document
-        .getElementById(
-          "optionStrategy"
-        ).value,
+      getElement(
+        "optionStrategy"
+      )?.value ||
+      "",
 
     lotSize:
       Number(
-        document
-          .getElementById(
-            "optionLotSize"
-          ).value
+        getElement(
+          "optionLotSize"
+        )?.value ||
+        1
       ),
 
     lots:
       Number(
-        document
-          .getElementById(
-            "optionLots"
-          ).value
+        getElement(
+          "optionLots"
+        )?.value ||
+        1
       ),
 
     targetPercent:
       Number(
-        document
-          .getElementById(
-            "optionTargetPercent"
-          ).value
+        getElement(
+          "optionTargetPercent"
+        )?.value ||
+        0
       ),
 
     slPercent:
       Number(
-        document
-          .getElementById(
-            "optionSLPercent"
-          ).value
+        getElement(
+          "optionSLPercent"
+        )?.value ||
+        0
       ),
 
     remarks:
-      document
-        .getElementById(
-          "optionRemarks"
-        ).value,
+      getElement(
+        "optionRemarks"
+      )?.value ||
+      "",
 
     legs
 
@@ -2015,10 +2604,24 @@ async function saveOptionTrade(
 
   try {
 
-    await apiPost(
-      "addOptionTrade",
-      data
-    );
+    const result =
+      await apiPost(
+        "addOptionTrade",
+        data
+      );
+
+
+    if (
+      result &&
+      result.success === false
+    ) {
+
+      throw new Error(
+        result.message ||
+        "Unable to save option trade"
+      );
+
+    }
 
 
     showToast(
@@ -2029,15 +2632,20 @@ async function saveOptionTrade(
     event.target.reset();
 
 
-    document
-      .getElementById(
+    const legsContainer =
+      getElement(
         "optionLegsContainer"
-      )
-      .innerHTML =
-      "";
+      );
 
 
-    addOptionLeg();
+    if (legsContainer) {
+
+      legsContainer.innerHTML =
+        "";
+
+      addOptionLeg();
+
+    }
 
 
     setTodayDates();
@@ -2047,9 +2655,13 @@ async function saveOptionTrade(
 
   }
 
-  catch (
-    error
-  ) {
+  catch (error) {
+
+    console.error(
+      "Option Save Error:",
+      error
+    );
+
 
     showToast(
       "Unable to save option trade"
@@ -2066,149 +2678,179 @@ async function saveOptionTrade(
 
 function renderOptions() {
 
+  const tbody =
+    getElement(
+      "optionTradesTable"
+    );
+
+
+  if (!tbody) {
+
+    return;
+
+  }
+
+
   const search =
-    document
-      .getElementById(
+    (
+      getElement(
         "optionSearch"
-      )
-      .value
-      .toLowerCase();
+      )?.value ||
+      ""
+    )
+      .toLowerCase()
+      .trim();
 
 
   const month =
-    document
-      .getElementById(
-        "optionMonthFilter"
-      )
-      .value;
+    getElement(
+      "optionMonthFilter"
+    )?.value ||
+    "";
 
 
   const status =
-    document
-      .getElementById(
-        "optionStatusFilter"
-      )
-      .value;
+    getElement(
+      "optionStatusFilter"
+    )?.value ||
+    "";
 
 
-  let data =
-    [...optionTrades];
+  const data =
+    optionTrades.filter(
+      item => {
 
-
-  data =
-    data.filter(
-      item =>
-
-        (
-
-          !search ||
-
+        const underlying =
           String(
             item.Underlying ||
             ""
           )
-          .toLowerCase()
-          .includes(
+            .toLowerCase();
+
+
+        const searchMatch =
+          !search ||
+          underlying.includes(
             search
-          )
+          );
 
-        )
 
-        &&
-
-        (
-
+        const monthMatch =
           !month ||
-
           String(
-            item.Date
-          )
-          .startsWith(
+            item.Date ||
+            ""
+          ).startsWith(
             month
-          )
+          );
 
-        )
 
-        &&
-
-        (
-
+        const statusMatch =
           !status ||
-
           item.Status ===
-          status
+          status;
 
-        )
+
+        return (
+          searchMatch &&
+          monthMatch &&
+          statusMatch
+        );
+
+      }
     );
-
-
-  const tbody =
-    document
-      .getElementById(
-        "optionTradesTable"
-      );
 
 
   tbody.innerHTML =
     "";
 
 
+  if (
+    data.length === 0
+  ) {
+
+    tbody.innerHTML =
+      `
+      <tr>
+        <td colspan="8">
+          No option trades found.
+        </td>
+      </tr>
+      `;
+
+    return;
+
+  }
+
+
   data.forEach(
     item => {
 
-      tbody.innerHTML +=
+      const row =
+        document.createElement(
+          "tr"
+        );
 
+
+      row.innerHTML =
         `
+        <td>${escapeHtml(item.Date || "")}</td>
 
-        <tr>
+        <td>
+          ${escapeHtml(
+            item.Underlying || ""
+          )}
+        </td>
 
-          <td>
-            ${item.Date || ""}
-          </td>
+        <td>
+          ${escapeHtml(
+            item.Expiry || ""
+          )}
+        </td>
 
-          <td>
-            ${item.Underlying || ""}
-          </td>
+        <td>
+          ${escapeHtml(
+            item.Strategy || ""
+          )}
+        </td>
 
-          <td>
-            ${item.Expiry || ""}
-          </td>
+        <td>
+          ₹${formatNumber(
+            item.Combined_Entry_Premium
+          )}
+        </td>
 
-          <td>
-            ${item.Strategy || ""}
-          </td>
+        <td>
+          ₹${formatNumber(
+            item.Combined_Current_Premium
+          )}
+        </td>
 
-          <td>
-            ₹${formatNumber(
-              item.Combined_Entry_Premium
-            )}
-          </td>
+        <td class="${
+          Number(
+            item.Net_PL
+          ) >= 0
+            ? "positive"
+            : "negative"
+        }">
 
-          <td>
-            ₹${formatNumber(
-              item.Combined_Current_Premium
-            )}
-          </td>
+          ₹${formatNumber(
+            item.Net_PL
+          )}
 
-          <td
-            class="${Number(item.Net_PL) >= 0 ? "positive" : "negative"}"
-          >
+        </td>
 
-            ₹${formatNumber(
-              item.Net_PL
-            )}
-
-          </td>
-
-          <td>
-            ${statusBadge(
-              item.Status
-            )}
-          </td>
-
-        </tr>
-
+        <td>
+          ${statusBadge(
+            item.Status
+          )}
+        </td>
         `;
+
+
+      tbody.appendChild(
+        row
+      );
 
     }
   );
@@ -2239,7 +2881,7 @@ function statusBadge(
   }
 
 
-  if (
+  else if (
     status ===
     "SL Hit"
   ) {
@@ -2250,16 +2892,24 @@ function statusBadge(
   }
 
 
+  else if (
+    status ===
+    "Open"
+  ) {
+
+    className =
+      "active";
+
+  }
+
+
   return `
-
-    <span
-      class="badge ${className}"
-    >
-
-      ${status || "Active"}
-
+    <span class="badge ${className}">
+      ${escapeHtml(
+        status ||
+        "Active"
+      )}
     </span>
-
   `;
 
 }
@@ -2275,14 +2925,29 @@ function formatNumber(
 
   const number =
     Number(
-      value || 0
+      value ||
+      0
     );
+
+
+  if (
+    Number.isNaN(
+      number
+    )
+  ) {
+
+    return "0";
+
+  }
 
 
   return number.toLocaleString(
     "en-IN",
     {
-      maximumFractionDigits: 2
+
+      maximumFractionDigits:
+        2
+
     }
   );
 
@@ -2290,7 +2955,106 @@ function formatNumber(
 
 
 // ==========================================
-// TOAST
+// SET TEXT
+// ==========================================
+
+function setText(
+  id,
+  value
+) {
+
+  const element =
+    getElement(
+      id
+    );
+
+
+  if (element) {
+
+    element.textContent =
+      value;
+
+  }
+
+}
+
+
+// ==========================================
+// SET VALUE
+// ==========================================
+
+function setValue(
+  id,
+  value
+) {
+
+  const element =
+    getElement(
+      id
+    );
+
+
+  if (element) {
+
+    element.value =
+      value;
+
+  }
+
+}
+
+
+// ==========================================
+// ESCAPE HTML
+// ==========================================
+
+function escapeHtml(value) {
+
+  return String(
+    value ??
+    ""
+  )
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+
+}
+
+
+// ==========================================
+// ESCAPE ATTRIBUTE
+// ==========================================
+
+function escapeAttribute(
+  value
+) {
+
+  return escapeHtml(
+    value
+  );
+
+}
+
+
+// ==========================================
+// TOAST MESSAGE
 // ==========================================
 
 function showToast(
@@ -2298,9 +3062,20 @@ function showToast(
 ) {
 
   const toast =
-    document.getElementById(
+    getElement(
       "toast"
     );
+
+
+  if (!toast) {
+
+    console.log(
+      message
+    );
+
+    return;
+
+  }
 
 
   toast.textContent =
@@ -2312,15 +3087,22 @@ function showToast(
   );
 
 
-  setTimeout(
-    () => {
-
-      toast.classList.remove(
-        "show"
-      );
-
-    },
-    2500
+  clearTimeout(
+    window.toastTimer
   );
+
+
+  window.toastTimer =
+    setTimeout(
+      () => {
+
+        toast.classList.remove(
+          "show"
+        );
+
+      },
+
+      2500
+    );
 
 }
