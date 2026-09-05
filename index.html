@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ankit Investment Hub - Offline</title>
+<title>Ankit Investment Hub</title>
 <style>
 :root{--bg:#f4f6f9;--card:#fff;--ink:#1d2633;--muted:#6c7785;--line:#e4e8ee;--brand:#2563eb;--good:#16a34a;--bad:#dc2626;--warn:#d97706}
 *{box-sizing:border-box} body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink)}
@@ -24,13 +24,18 @@ label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bot
 @media(max-width:800px){.split,.two{grid-template-columns:1fr}.container{padding:10px}.kpi .value{font-size:20px}}
 
 body.dark{--bg:#0b1220;--card:#111827;--ink:#e5e7eb;--muted:#94a3b8;--line:#253044}
+body.dark{background:#0b1220;color:#e5e7eb}
+body.dark .card,body.dark .filters,body.dark .form-grid,body.dark .kpi,body.dark .result{background:#111827;color:#e5e7eb;border-color:#253044}
 body.dark input,body.dark select,body.dark textarea{background:#0f172a;color:#e5e7eb;border-color:#334155}
 body.dark nav{background:#111827;border-color:#253044}body.dark nav button{background:#1f2937;color:#cbd5e1}
 body.dark th{background:#172033;color:#cbd5e1}.theme-btn{margin-left:auto}
+body.dark td{color:#e5e7eb;border-color:#253044}
+body.dark .note{background:#3a2f12;color:#fde68a} 
+body.dark header{border-bottom:1px solid #253044}
 </style>
 </head>
 <body>
-<header><h1>📈 Ankit Investment Hub</h1><p>Offline recommendation, SIP and hedge performance tracker</p></header>
+<header><h1>📈 Ankit Investment Hub</h1><p>Cloud recommendation, SIP and hedge performance tracker</p></header>
 <nav>
 <button class="active" data-page="dashboard">🏠 Dashboard</button>
 <button data-page="recommendations">📈 Recommendations</button>
@@ -75,7 +80,7 @@ body.dark th{background:#172033;color:#cbd5e1}.theme-btn{margin-left:auto}
 <div><label>Target</label><input id="rTarget" type="number" step="0.01"></div>
 <div><label>Stop Loss</label><input id="rSL" type="number" step="0.01"></div>
 <div><label>Time Frame</label><input id="rTime" placeholder="Till Dec"></div>
-<div><label>Current CMP / NAV</label><input id="rCurrent" type="number" step="0.01" placeholder="Update manually offline"></div>
+<div><label>Current CMP / NAV</label><input id="rCurrent" type="number" step="0.01" placeholder="Enter current CMP (optional)"></div>
 <div><label>Status</label><select id="rStatus"><option>Active</option><option>Target Hit</option><option>SL Hit</option><option>Closed</option></select></div>
 </div>
 <div><label>Remarks</label><textarea id="rRemarks" placeholder="Fresh breakout, momentum, reason for recommendation..."></textarea></div>
@@ -157,7 +162,7 @@ body.dark th{background:#172033;color:#cbd5e1}.theme-btn{margin-left:auto}
 </section>
 <section id="settings" class="page">
 <div class="card"><h2>💾 Offline Data Management</h2>
-<div class="note"><b>Offline mode:</b> Recommendations are stored only in this browser using Local Storage. Automatic live CMP requires an internet connection and a market-data API. In this offline version, enter or update the current CMP manually; all returns and dashboard performance calculate automatically.</div>
+<div class="note"><b>Cloud mode:</b> Recommendations and options are stored in Google Sheets. Current CMP can be entered manually, and supported Stock/ETF symbols may use the backend CMP lookup.</div>
 <div class="actions">
 <button class="btn primary" onclick="exportData()">Export Backup</button>
 <label class="btn success">Import Backup<input type="file" hidden onchange="importData(event)"></label>
@@ -307,13 +312,79 @@ function renderCloudBasket() {
 }
 const oldShowBasket = window.showBasket;
 window.showBasket = function() { if(data.sipBaskets && data.sipBaskets.length) renderCloudBasket(); else if(oldShowBasket) oldShowBasket(); };
-const oldAddRec = window.addRecommendation;
 window.addRecommendation = async function() {
-  const payload={date:rDate.value,name:rName.value,symbol:rSymbol.value,type:rType.value,entryCMP:+rEntry.value||0,target:+rTarget.value||0,stopLoss:+rSL.value||0,timeFrame:rTime.value,remarks:rRemarks.value};
-  try { const res=await apiPost('addRecommendation',payload); if(!res.success) throw new Error(res.message||'Save failed'); await loadCloudData(); alert('Recommendation saved to Google Sheet'); } catch(e) { alert('Save failed: '+e.message); }
+  const payload={
+    date:rDate.value,
+    name:rName.value.trim(),
+    symbol:rSymbol.value.trim(),
+    type:rType.value,
+    entryCMP:+rEntry.value||0,
+    target:+rTarget.value||0,
+    stopLoss:+rSL.value||0,
+    timeFrame:rTime.value.trim(),
+    currentCMP:rCurrent.value==='' ? null : (+rCurrent.value||0),
+    remarks:rRemarks.value.trim()
+  };
+  if(!payload.date || !payload.name || !payload.entryCMP){
+    alert('Please enter Date, Name and Entry CMP.'); return;
+  }
+  try {
+    const res=await apiPost('addRecommendation',payload);
+    if(!res.success) throw new Error(res.message||res.error||'Save failed');
+    ['rName','rSymbol','rEntry','rTarget','rSL','rTime','rCurrent','rRemarks'].forEach(id=>document.getElementById(id).value='');
+    rDate.value=new Date().toISOString().slice(0,10);
+    rStatus.value='Active';
+    await loadCloudData();
+    alert('Recommendation saved to Google Sheet.');
+  } catch(e) { console.error(e); alert('Save failed: '+e.message); }
 };
+
+window.updateRec = async function(id) {
+  const input=document.getElementById('cmp'+id);
+  if(!input){ alert('CMP field not found.'); return; }
+  const currentCMP=+input.value;
+  if(!Number.isFinite(currentCMP) || currentCMP<=0){ alert('Please enter a valid Current CMP.'); return; }
+  try {
+    const res=await apiPost('updateCMP',{id,currentCMP});
+    if(!res.success) throw new Error(res.message||res.error||'Update failed');
+    await loadCloudData();
+    alert('Current CMP and performance updated.');
+  } catch(e){ console.error(e); alert('Update failed: '+e.message); }
+};
+
+window.deleteRec = async function(id) {
+  if(!confirm('Delete this recommendation permanently from Google Sheet?')) return;
+  try {
+    const res=await apiPost('deleteRecommendation',{id});
+    if(!res.success) throw new Error(res.message||res.error||'Delete failed');
+    await loadCloudData();
+    alert('Recommendation deleted.');
+  } catch(e){ console.error(e); alert('Delete failed: '+e.message); }
+};
+
+window.renderRecommendations = function(){
+  document.getElementById('recRows').innerHTML=data.recommendations.map(r=>`<tr>
+    <td>${r.date||''}</td>
+    <td><b>${r.name}</b><br><span class="muted">${r.symbol||''}</span></td>
+    <td>${r.type}</td>
+    <td>${fmt(r.entry)}</td>
+    <td><input id="cmp${r.id}" type="number" step="0.01" value="${Number(r.current||0)}" style="width:120px"></td>
+    <td class="${ret(r)>=0?'positive':'negative'}">${ret(r).toFixed(2)}%</td>
+    <td>${badge(r.status)}</td>
+    <td><button class="btn primary" onclick="updateRec('${r.id}')">Update</button> <button class="btn danger" onclick="deleteRec('${r.id}')">Delete</button></td>
+  </tr>`).join('')||'<tr><td colspan="8">No recommendations yet.</td></tr>';
+};
+
+window.toggleDark = function(){
+  document.body.classList.toggle('dark');
+  localStorage.setItem('investmentHubDark',document.body.classList.contains('dark')?'1':'0');
+};
+
 const oldSaveOption = window.saveOptionTrade || window.addOptionTrade;
-window.saveOptionTrade = async function() { if(oldSaveOption) return oldSaveOption(); alert('Use the Options Trade form to save trade.'); };
+window.saveOptionTrade = async function() {
+  if(oldSaveOption) return oldSaveOption();
+  alert('Use the Options Trade form to save trade.');
+};
 window.addEventListener('load',()=>setTimeout(loadCloudData,500));
 // ==============================================================
 </script>
