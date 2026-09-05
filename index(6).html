@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ankit Investment Hub - Offline</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--ink:#1d2633;--muted:#6c7785;--line:#e4e8ee;--brand:#2563eb;--good:#16a34a;--bad:#dc2626;--warn:#d97706}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:linear-gradient(135deg,#172554,#2563eb);color:#fff;padding:18px 22px;position:sticky;top:0;z-index:10}
+header h1{margin:0;font-size:22px} header p{margin:5px 0 0;opacity:.8;font-size:13px}
+nav{display:flex;gap:8px;overflow:auto;background:#fff;padding:10px;border-bottom:1px solid var(--line)}
+nav button,.btn{border:0;border-radius:9px;padding:10px 14px;cursor:pointer;font-weight:600;background:#eef2ff;color:#334155;white-space:nowrap}
+nav button.active{background:var(--brand);color:#fff}.btn.primary{background:var(--brand);color:#fff}.btn.danger{background:var(--bad);color:#fff}.btn.success{background:var(--good);color:#fff}
+.container{max-width:1300px;margin:auto;padding:18px}.page{display:none}.page.active{display:block}
+.filters,.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;background:#fff;padding:15px;border:1px solid var(--line);border-radius:14px;margin-bottom:16px}
+label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px} input,select,textarea{width:100%;padding:10px;border:1px solid #d7dde6;border-radius:8px;font:inherit;background:#fff}textarea{min-height:80px;resize:vertical}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}.kpi{background:#fff;padding:17px;border-radius:14px;border:1px solid var(--line);box-shadow:0 2px 8px #00000008}.kpi .label{font-size:12px;color:var(--muted)}.kpi .value{font-size:24px;font-weight:800;margin-top:5px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}.card h2{margin:0 0 14px;font-size:18px}.split{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
+.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:900px}th,td{padding:11px 9px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}th{background:#f8fafc;color:#475569;position:sticky;top:0}.positive{color:var(--good);font-weight:800}.negative{color:var(--bad);font-weight:800}
+.badge{display:inline-block;padding:4px 8px;border-radius:20px;font-size:11px;font-weight:800}.active-b{background:#dcfce7;color:#166534}.target{background:#dbeafe;color:#1d4ed8}.sl{background:#fee2e2;color:#b91c1c}.closed{background:#e5e7eb;color:#374151}
+.chart{height:260px;display:flex;align-items:end;gap:16px;padding:15px 8px;border-top:1px solid var(--line)}.bar-wrap{flex:1;min-width:45px;text-align:center}.bar{background:linear-gradient(#60a5fa,#2563eb);border-radius:8px 8px 0 0;min-height:3px;position:relative}.bar.neg{background:linear-gradient(#fca5a5,#dc2626)}.bar span{position:absolute;top:-22px;left:0;right:0;font-size:11px}.bar-label{font-size:10px;margin-top:6px;color:var(--muted)}
+.muted{color:var(--muted);font-size:13px}.hidden{display:none}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.result{padding:14px;background:#f8fafc;border-radius:10px;line-height:1.8}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.note{background:#fffbeb;border-left:4px solid var(--warn);padding:12px;border-radius:8px;font-size:13px}
+@media(max-width:800px){.split,.two{grid-template-columns:1fr}.container{padding:10px}.kpi .value{font-size:20px}}
+
+body.dark{--bg:#0b1220;--card:#111827;--ink:#e5e7eb;--muted:#94a3b8;--line:#253044}
+body.dark input,body.dark select,body.dark textarea{background:#0f172a;color:#e5e7eb;border-color:#334155}
+body.dark nav{background:#111827;border-color:#253044}body.dark nav button{background:#1f2937;color:#cbd5e1}
+body.dark th{background:#172033;color:#cbd5e1}.theme-btn{margin-left:auto}
+</style>
+</head>
+<body>
+<header><h1>📈 Ankit Investment Hub</h1><p>Offline recommendation, SIP and hedge performance tracker</p></header>
+<nav>
+<button class="active" data-page="dashboard">🏠 Dashboard</button>
+<button data-page="recommendations">📈 Recommendations</button>
+<button data-page="sip">💰 SIP Suggestions</button>
+<button data-page="hedge">🛡️ Options Trade</button>
+<button data-page="options">📜 Options History</button>
+<button data-page="settings">⚙️ Data</button><button onclick="toggleDark()">🌙 Dark Mode</button>
+</nav>
+
+<div class="container">
+<section id="dashboard" class="page active">
+<div class="filters">
+<div><label>Month</label><select id="monthFilter"></select></div>
+<div><label>Type</label><select id="typeFilter"><option value="All">All</option><option>Stock</option><option>ETF</option><option>Mutual Fund</option><option>Options</option></select></div>
+<div><label>Status</label><select id="statusFilter"><option value="All">All</option><option>Active</option><option>Target Hit</option><option>SL Hit</option><option>Closed</option></select></div>
+<div style="align-self:end"><button class="btn primary" onclick="renderDashboard()">Apply Filter</button></div>
+</div>
+<div class="kpis">
+<div class="kpi"><div class="label">Total Recommendations</div><div class="value" id="kTotal">0</div></div>
+<div class="kpi"><div class="label">Average Return</div><div class="value" id="kAvg">0%</div></div>
+<div class="kpi"><div class="label">Best Performer</div><div class="value" id="kBest">—</div></div>
+<div class="kpi"><div class="label">Target Hit</div><div class="value" id="kTarget">0</div></div>
+<div class="kpi"><div class="label">SL Hit</div><div class="value" id="kSL">0</div></div>
+<div class="kpi"><div class="label">Success Rate</div><div class="value" id="kSuccess">0%</div></div>
+</div>
+<div class="split">
+<div class="card"><h2>📊 Monthly Average Return</h2><div id="monthlyChart" class="chart"></div></div>
+<div class="card"><h2>📈 Stock vs ETF</h2><div id="typeSummary" class="result"></div></div>
+</div>
+<div class="card"><h2>📋 Filtered Recommendations</h2><div class="table-wrap"><table><thead><tr><th>Date</th><th>Name</th><th>Type</th><th>Entry</th><th>Current CMP</th><th>Return</th><th>Target</th><th>SL</th><th>Status</th></tr></thead><tbody id="dashRows"></tbody></table></div></div>
+</section>
+
+<section id="recommendations" class="page">
+<div class="card">
+<h2>➕ Add Recommendation</h2>
+<div class="form-grid">
+<div><label>Date</label><input id="rDate" type="date"></div>
+<div><label>Name</label><input id="rName" placeholder="PAYTM"></div>
+<div><label>Symbol</label><input id="rSymbol" placeholder="PAYTM"></div>
+<div><label>Type</label><select id="rType"><option>Stock</option><option>ETF</option><option>Mutual Fund</option></select></div>
+<div><label>Entry CMP / NAV</label><input id="rEntry" type="number" step="0.01"></div>
+<div><label>Target</label><input id="rTarget" type="number" step="0.01"></div>
+<div><label>Stop Loss</label><input id="rSL" type="number" step="0.01"></div>
+<div><label>Time Frame</label><input id="rTime" placeholder="Till Dec"></div>
+<div><label>Current CMP / NAV</label><input id="rCurrent" type="number" step="0.01" placeholder="Update manually offline"></div>
+<div><label>Status</label><select id="rStatus"><option>Active</option><option>Target Hit</option><option>SL Hit</option><option>Closed</option></select></div>
+</div>
+<div><label>Remarks</label><textarea id="rRemarks" placeholder="Fresh breakout, momentum, reason for recommendation..."></textarea></div>
+<div class="actions"><button class="btn primary" onclick="addRecommendation()">Save Recommendation</button><button class="btn" onclick="loadDemo()">Load Demo Data</button></div>
+</div>
+<div class="card"><h2>✏️ Update Current CMP / Performance</h2><div class="table-wrap"><table><thead><tr><th>Date</th><th>Name</th><th>Type</th><th>Entry</th><th>Current CMP</th><th>Return</th><th>Status</th><th>Action</th></tr></thead><tbody id="recRows"></tbody></table></div></div>
+</section>
+
+<section id="sip" class="page">
+<div class="card">
+<h2>💰 Predefined SIP Baskets</h2>
+<p class="muted">Select a monthly investment amount to view your predefined portfolio breakup.</p>
+<div class="form-grid">
+<div><label>Select Monthly SIP Basket</label>
+<select id="basketSelect" onchange="showBasket()">
+<option value="5000">₹5,000 Monthly Basket</option>
+<option value="10000">₹10,000 Monthly Basket</option>
+<option value="15000">₹15,000 Monthly Basket</option>
+<option value="20000">₹20,000 Monthly Basket</option>
+</select></div>
+<div style="align-self:end"><button class="btn primary" onclick="showBasket()">Show SIP Breakup</button></div>
+</div>
+<div id="basketView" class="result"></div>
+</div>
+<div class="card">
+<h2>➕ Custom SIP Recommendation Builder</h2>
+<div class="form-grid">
+<div><label>Plan Name</label><input id="sipPlan" placeholder="My Custom SIP"></div>
+<div><label>Monthly Amount</label><input id="sipAmount" type="number" value="20000" oninput="calculateSIP()"></div>
+</div>
+<div class="form-grid">
+<div><label>Investment Name</label><input id="sipName" placeholder="NIFTYBEES"></div>
+<div><label>Type</label><select id="sipType"><option>ETF</option><option>Mutual Fund</option><option>Crypto</option></select></div>
+<div><label>Allocation %</label><input id="sipPct" type="number" value="25"></div>
+<div style="align-self:end"><button class="btn primary" onclick="addSIP()">Add Allocation</button></div>
+</div>
+<div id="sipList" class="result">No custom SIP allocations yet.</div>
+</div>
+</section>
+
+<section id="hedge" class="page">
+<div class="card"><h2>🛡️ Options & Hedge Trade Entry</h2>
+<div class="form-grid">
+<div><label>Trade Date</label><input id="hDate" type="date"></div>
+<div><label>Underlying</label><select id="hUnderlying"><option>NIFTY</option><option>BANKNIFTY</option><option>FINNIFTY</option><option>SENSEX</option><option>Stock</option></select></div>
+<div><label>Custom Stock</label><input id="hCustom" placeholder="Optional"></div>
+<div><label>Expiry</label><input id="hExpiry" type="date"></div>
+<div><label>Strategy</label><select id="hName"><option>Custom Hedge</option><option>Straddle</option><option>Strangle</option><option>Iron Condor</option><option>Spread</option></select></div>
+<div><label>Lot Size</label><input id="hLot" type="number" value="75" oninput="calculateHedge()"></div>
+<div><label>Lots</label><input id="hLots" type="number" value="1" oninput="calculateHedge()"></div>
+<div><label>Target %</label><input id="hTarget" type="number" value="20" oninput="calculateHedge()"></div>
+<div><label>SL %</label><input id="hSL" type="number" value="10" oninput="calculateHedge()"></div>
+</div>
+<h3>Leg 1</h3><div class="form-grid">
+<div><label>Strike</label><input id="hStrike1" type="number" value="24000"></div><div><label>Type</label><select id="hType1"><option>CE</option><option>PE</option></select></div><div><label>Position</label><select id="hPos1"><option>BUY</option><option>SELL</option></select></div><div><label>Entry Premium</label><input id="hP1" type="number" value="23" oninput="calculateHedge()"></div><div><label>Current Premium</label><input id="hCur1" type="number" value="23" oninput="calculateHedge()"></div>
+</div>
+<h3>Leg 2</h3><div class="form-grid">
+<div><label>Strike</label><input id="hStrike2" type="number" value="24500"></div><div><label>Type</label><select id="hType2"><option>PE</option><option>CE</option></select></div><div><label>Position</label><select id="hPos2"><option>BUY</option><option>SELL</option></select></div><div><label>Entry Premium</label><input id="hP2" type="number" value="30" oninput="calculateHedge()"></div><div><label>Current Premium</label><input id="hCur2" type="number" value="30" oninput="calculateHedge()"></div>
+</div>
+<div class="result" id="hedgeResult"></div>
+<div class="actions"><button class="btn primary" onclick="saveOptionTrade()">💾 Save Date-Wise Trade</button><button class="btn" onclick="loadOptionDemo()">Load Demo</button></div>
+</div>
+</section>
+<section id="options" class="page">
+<div class="filters">
+<div><label>Month</label><select id="optMonthFilter"></select></div>
+<div><label>Underlying</label><select id="optUnderlyingFilter"><option value="All">All</option></select></div>
+<div><label>Status</label><select id="optStatusFilter"><option value="All">All</option><option>Open</option><option>Target Hit</option><option>SL Hit</option><option>Closed</option></select></div>
+<div style="align-self:end"><button class="btn primary" onclick="renderOptions()">Apply Filter</button></div>
+</div>
+<div class="kpis">
+<div class="kpi"><div class="label">Total Trades</div><div class="value" id="oTotal">0</div></div>
+<div class="kpi"><div class="label">Winning Trades</div><div class="value" id="oWin">0</div></div>
+<div class="kpi"><div class="label">Losing Trades</div><div class="value" id="oLoss">0</div></div>
+<div class="kpi"><div class="label">Win Rate</div><div class="value" id="oRate">0%</div></div>
+<div class="kpi"><div class="label">Net P/L</div><div class="value" id="oNet">₹0</div></div>
+</div>
+<div class="card"><h2>📜 Date-Wise Options Trade History</h2><div class="table-wrap"><table><thead><tr><th>Date</th><th>Underlying</th><th>Expiry</th><th>Strategy</th><th>Leg 1</th><th>Leg 2</th><th>Entry</th><th>Current</th><th>Net P/L</th><th>Status</th></tr></thead><tbody id="optRows"></tbody></table></div></div>
+</section>
+<section id="settings" class="page">
+<div class="card"><h2>💾 Offline Data Management</h2>
+<div class="note"><b>Offline mode:</b> Recommendations are stored only in this browser using Local Storage. Automatic live CMP requires an internet connection and a market-data API. In this offline version, enter or update the current CMP manually; all returns and dashboard performance calculate automatically.</div>
+<div class="actions">
+<button class="btn primary" onclick="exportData()">Export Backup</button>
+<label class="btn success">Import Backup<input type="file" hidden onchange="importData(event)"></label>
+<button class="btn danger" onclick="clearAll()">Clear All Data</button>
+</div></div>
+</section>
+</div>
+
+<script>
+const KEY='ankit_investment_hub_v1';
+let data=JSON.parse(localStorage.getItem(KEY)||'{"recommendations":[],"sip":[]}');
+const save=()=>localStorage.setItem(KEY,JSON.stringify(data));
+const fmt=n=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});
+const ret=r=>{
+ if(r.type==='Options' && r.pl!==undefined){return r.entry?Number(r.pl)/(Number(r.entry)*75)*100:0;}
+ return r.entry?((Number(r.current||r.entry)-Number(r.entry))/Number(r.entry))*100:0;
+};
+function badge(s){let c=s==='Target Hit'?'target':s==='SL Hit'?'sl':s==='Closed'?'closed':'active-b';return `<span class="badge ${c}">${s}</span>`}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(b.dataset.page).classList.add('active');if(b.dataset.page==='dashboard')renderDashboard();if(b.dataset.page==='recommendations')renderRecommendations();if(b.dataset.page==='sip')renderSIP();});
+function fillMonths(){
+ const s=document.getElementById('monthFilter'), old=s.value; const months=['All',...new Set(data.recommendations.map(r=>r.date? r.date.slice(0,7):'').filter(Boolean))];
+ s.innerHTML=months.map(m=>m==='All'?'<option value="All">All Months</option>':`<option value="${m}">${new Date(m+'-01').toLocaleString('en-IN',{month:'long',year:'numeric'})}</option>`).join('');
+ if(months.includes(old))s.value=old;
+}
+function filtered(){
+ const m=document.getElementById('monthFilter').value,t=document.getElementById('typeFilter').value,s=document.getElementById('statusFilter').value;
+ let rec=data.recommendations.filter(r=>(m==='All'||r.date?.startsWith(m))&&(t==='All'||r.type===t)&&(s==='All'||r.status===s)).map(r=>({...r,category:'recommendation'}));
+ if(t==='All'||t==='Options'){
+   let opts=(data.options||[]).filter(o=>(m==='All'||o.date?.startsWith(m))&&(s==='All'||s==='Active'||o.status===s)).map(o=>({
+     date:o.date,name:o.strategy+' - '+o.underlying,symbol:o.underlying,type:'Options',
+     entry:o.entry,current:o.current,target:0,sl:0,status:o.status,pl:o.pl,category:'option'
+   }));
+   rec=rec.concat(opts);
+ }
+ return rec;
+}
+function renderDashboard(){
+ fillMonths(); const a=filtered(), avg=a.length?a.reduce((x,r)=>x+ret(r),0)/a.length:0,best=a.slice().sort((x,y)=>ret(y)-ret(x))[0],th=a.filter(r=>r.status==='Target Hit').length,sl=a.filter(r=>r.status==='SL Hit').length,success=a.length?((a.filter(r=>ret(r)>0).length/a.length)*100):0;
+ document.getElementById('kTotal').textContent=a.length;document.getElementById('kAvg').textContent=avg.toFixed(2)+'%';document.getElementById('kAvg').className='value '+(avg>=0?'positive':'negative');document.getElementById('kBest').textContent=best?best.name+' '+ret(best).toFixed(1)+'%':'—';document.getElementById('kTarget').textContent=th;document.getElementById('kSL').textContent=sl;document.getElementById('kSuccess').textContent=success.toFixed(1)+'%';
+ document.getElementById('dashRows').innerHTML=a.map(r=>`<tr><td>${r.date||''}</td><td><b>${r.name}</b></td><td>${r.type}</td><td>${fmt(r.entry)}</td><td>${fmt(r.current)}</td><td class="${ret(r)>=0?'positive':'negative'}">${ret(r).toFixed(2)}%</td><td>${r.target?fmt(r.target):'—'}</td><td>${r.sl?fmt(r.sl):'—'}</td><td>${badge(r.status)}</td></tr>`).join('')||'<tr><td colspan="9" class="muted">No recommendations match the filter.</td></tr>';
+ const byMonth={};data.recommendations.forEach(r=>{if(!r.date)return;let k=r.date.slice(0,7);(byMonth[k]??=[]).push(ret(r))});const entries=Object.entries(byMonth).sort((a,b)=>a[0].localeCompare(b[0])).slice(-8);let max=Math.max(...entries.map(([,v])=>Math.abs(v.reduce((x,y)=>x+y,0)/v.length)),1);
+ document.getElementById('monthlyChart').innerHTML=entries.map(([k,v])=>{let z=v.reduce((x,y)=>x+y,0)/v.length,h=Math.max(5,Math.abs(z)/max*180);return `<div class="bar-wrap"><div class="bar ${z<0?'neg':''}" style="height:${h}px"><span>${z.toFixed(1)}%</span></div><div class="bar-label">${k}</div></div>`}).join('')||'<div class="muted">Add recommendations to see monthly performance.</div>';
+ const groups=['Stock','ETF','Mutual Fund','Options'];document.getElementById('typeSummary').innerHTML=groups.map(g=>{let x=a.filter(r=>r.type===g),av=x.length?x.reduce((z,r)=>z+ret(r),0)/x.length:0;return `<b>${g}</b><br>${x.length} recommendations · <span class="${av>=0?'positive':'negative'}">${av.toFixed(2)}% avg return</span><hr style="border:0;border-top:1px solid var(--line)">`}).join('');
+}
+function addRecommendation(){
+ const r={id:Date.now(),date:rDate.value,name:rName.value.trim(),symbol:rSymbol.value.trim(),type:rType.value,entry:+rEntry.value,target:+rTarget.value||0,sl:+rSL.value||0,time:rTime.value.trim(),current:+rCurrent.value||+rEntry.value,status:rStatus.value,remarks:rRemarks.value.trim()};
+ if(!r.date||!r.name||!r.entry){alert('Please enter Date, Name and Entry CMP.');return} data.recommendations.unshift(r);save();document.querySelectorAll('#recommendations input:not([type=date]),#recommendations textarea').forEach(x=>{if(x.id!=='rType')x.value=''});rDate.value=new Date().toISOString().slice(0,10);renderRecommendations();alert('Recommendation saved offline. Return is calculated automatically.');
+}
+function renderRecommendations(){document.getElementById('recRows').innerHTML=data.recommendations.map(r=>`<tr><td>${r.date}</td><td><b>${r.name}</b></td><td>${r.type}</td><td>${fmt(r.entry)}</td><td><input id="cmp${r.id}" type="number" step="0.01" value="${r.current}" style="width:120px"></td><td class="${ret(r)>=0?'positive':'negative'}">${ret(r).toFixed(2)}%</td><td><select id="st${r.id}">${['Active','Target Hit','SL Hit','Closed'].map(s=>`<option ${r.status===s?'selected':''}>${s}</option>`).join('')}</select></td><td><button class="btn primary" onclick="updateRec(${r.id})">Update</button> <button class="btn danger" onclick="deleteRec(${r.id})">Delete</button></td></tr>`).join('')||'<tr><td colspan="8">No recommendations yet.</td></tr>'}
+function updateRec(id){let r=data.recommendations.find(x=>x.id===id);r.current=+document.getElementById('cmp'+id).value;r.status=document.getElementById('st'+id).value;if(r.target&&r.current>=r.target)r.status='Target Hit';else if(r.sl&&r.current<=r.sl)r.status='SL Hit';save();renderRecommendations();renderDashboard()}
+function deleteRec(id){if(confirm('Delete this recommendation?')){data.recommendations=data.recommendations.filter(r=>r.id!==id);save();renderRecommendations();}}
+function addSIP(){let x={id:Date.now(),plan:sipPlan.value||'SIP Plan',amount:+sipAmount.value,name:sipName.value,type:sipType.value,pct:+sipPct.value};if(!x.name||!x.pct)return alert('Enter investment name and allocation %.');data.sip.push(x);save();renderSIP()}
+function renderSIP(){let total=+sipAmount.value||0,arr=data.sip;document.getElementById('sipList').innerHTML=arr.length?`<table style="min-width:0"><tr><th>Name</th><th>Type</th><th>Allocation</th><th>Monthly Amount</th><th></th></tr>${arr.map(x=>`<tr><td>${x.name}</td><td>${x.type}</td><td>${x.pct}%</td><td>${fmt(total*x.pct/100)}</td><td><button class="btn danger" onclick="data.sip=data.sip.filter(y=>y.id!==${x.id});save();renderSIP()">Remove</button></td></tr>`).join('')}</table><p><b>Total allocation: ${arr.reduce((s,x)=>s+x.pct,0)}%</b> · Monthly SIP: ${fmt(total)}</p>`:'No SIP allocations yet.'}
+function calculateSIP(){renderSIP()}
+function calculateHedge(){let p1=+hP1.value||0,p2=+hP2.value||0,entry=p1+p2,lot=(+hLot.value||0)*(+hLots.value||0),target=entry*(1+(+hTarget.value||0)/100),sl=entry*(1-(+hSL.value||0)/100),cur=+hCurrent.value||0,pl=(cur-entry)*lot;hCurrent.value=cur;hedgeResult.innerHTML=`<b>Combined Entry Premium:</b> ${fmt(entry)}<br><b>Target Premium:</b> ${fmt(target)} · <b>Target P/L:</b> <span class="positive">${fmt((target-entry)*lot)}</span><br><b>Stop Loss Premium:</b> ${fmt(sl)} · <b>SL P/L:</b> <span class="negative">${fmt((sl-entry)*lot)}</span><br><b>Current P/L:</b> <span class="${pl>=0?'positive':'negative'}">${fmt(pl)} (${lot?((pl/(entry*lot))*100).toFixed(2):0}%)</span>`}
+function exportData(){let b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='ankit-investment-hub-backup.json';a.click()}
+function importData(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{data=JSON.parse(r.result);save();renderDashboard();renderRecommendations();renderSIP();alert('Backup imported.')}catch(x){alert('Invalid backup file.')}};r.readAsText(f)}
+function clearAll(){if(confirm('Delete all offline data?')){data={recommendations:[],sip:[]};save();renderDashboard();renderRecommendations();renderSIP()}}
+function loadDemo(){if(data.recommendations.length&& !confirm('Add demo data?'))return;data.recommendations.push(
+{id:Date.now()+1,date:'2026-08-03',name:'PAYTM',symbol:'PAYTM',type:'Stock',entry:1411.1,target:1622.765,sl:1320,time:'Till Dec',current:1716,status:'Target Hit',remarks:'Fresh momentum breakout'},
+{id:Date.now()+2,date:'2026-08-03',name:'ABC Capital',symbol:'ABCAPITAL',type:'Stock',entry:420.4,target:480,sl:395,time:'Till Dec',current:410,status:'Active',remarks:'Breakout above resistance'},
+{id:Date.now()+3,date:'2026-08-03',name:'SIEMENS',symbol:'SIEMENS',type:'Stock',entry:3905,target:4500,sl:3620,time:'Till Dec',current:4050,status:'Active',remarks:'Large-cap breakout'},
+{id:Date.now()+4,date:'2026-08-03',name:'RATNAVEER',symbol:'RATNAVEER',type:'Stock',entry:205.5,target:260,sl:180,time:'Till Dec',current:279.27,status:'Target Hit',remarks:'Year-long base breakout'}
+);save();renderRecommendations();renderDashboard()}
+rDate.value=new Date().toISOString().slice(0,10);fillMonths();renderDashboard();renderRecommendations();renderSIP();calculateHedge();
+
+if(!data.options) data.options=[];
+function calculateHedge(){
+ const p1=+hP1.value||0,p2=+hP2.value||0,c1=+hCur1.value||0,c2=+hCur2.value||0,qty=(+hLot.value||0)*(+hLots.value||0);
+ const pl1=(hPos1.value==='BUY'?c1-p1:p1-c1)*qty,pl2=(hPos2.value==='BUY'?c2-p2:p2-c2)*qty,entry=p1+p2,current=c1+c2,pl=pl1+pl2,targetPL=Math.abs(entry*qty)*(+hTarget.value||0)/100,slPL=Math.abs(entry*qty)*(+hSL.value||0)/100;
+ hedgeResult.innerHTML=`<b>Leg 1 P/L:</b> <span class="${pl1>=0?'positive':'negative'}">${fmt(pl1)}</span> &nbsp; <b>Leg 2 P/L:</b> <span class="${pl2>=0?'positive':'negative'}">${fmt(pl2)}</span><br><b>Total Entry Premium:</b> ${fmt(entry)} &nbsp; <b>Current Premium:</b> ${fmt(current)}<br><b>Target Profit:</b> <span class="positive">${fmt(targetPL)}</span> &nbsp; <b>Stop Loss:</b> <span class="negative">-${fmt(slPL)}</span><br><b>Net P/L:</b> <span class="${pl>=0?'positive':'negative'}">${fmt(pl)}</span>`;
+ return {p1,p2,c1,c2,qty,pl,entry,current,targetPL,slPL};
+}
+function saveOptionTrade(){
+ const x=calculateHedge(); if(!hDate.value||!hExpiry.value)return alert('Enter Trade Date and Expiry.');
+ let t={id:Date.now(),date:hDate.value,underlying:hUnderlying.value==='Stock'?(hCustom.value||'Stock'):hUnderlying.value,expiry:hExpiry.value,strategy:hName.value,leg1:{strike:+hStrike1.value,type:hType1.value,pos:hPos1.value,entry:x.p1,current:x.c1},leg2:{strike:+hStrike2.value,type:hType2.value,pos:hPos2.value,entry:x.p2,current:x.c2},entry:x.entry,current:x.current,pl:x.pl,status:x.pl>=x.targetPL?'Target Hit':x.pl<=-x.slPL?'SL Hit':'Open'};
+ data.options.unshift(t);save();renderOptions();alert('Date-wise option trade saved.');
+}
+function renderOptions(){
+ let months=['All',...new Set(data.options.map(x=>x.date?.slice(0,7)).filter(Boolean))];optMonthFilter.innerHTML=months.map(m=>m==='All'?'<option value="All">All Months</option>':`<option value="${m}">${m}</option>`).join('');
+ let under=['All',...new Set(data.options.map(x=>x.underlying))];optUnderlyingFilter.innerHTML=under.map(x=>`<option>${x}</option>`).join('');
+ let a=data.options.filter(x=>(optMonthFilter.value==='All'||x.date.startsWith(optMonthFilter.value))&&(optUnderlyingFilter.value==='All'||x.underlying===optUnderlyingFilter.value)&&(optStatusFilter.value==='All'||x.status===optStatusFilter.value));
+ let wins=a.filter(x=>x.pl>0).length,loss=a.filter(x=>x.pl<0).length,net=a.reduce((s,x)=>s+x.pl,0);
+ oTotal.textContent=a.length;oWin.textContent=wins;oLoss.textContent=loss;oRate.textContent=a.length?(wins/a.length*100).toFixed(1)+'%':'0%';oNet.textContent=fmt(net);oNet.className='value '+(net>=0?'positive':'negative');
+ optRows.innerHTML=a.map(x=>`<tr><td>${x.date}</td><td><b>${x.underlying}</b></td><td>${x.expiry}</td><td>${x.strategy}</td><td>${x.leg1.pos} ${x.leg1.strike} ${x.leg1.type} @ ${fmt(x.leg1.entry)}</td><td>${x.leg2.pos} ${x.leg2.strike} ${x.leg2.type} @ ${fmt(x.leg2.entry)}</td><td>${fmt(x.entry)}</td><td>${fmt(x.current)}</td><td class="${x.pl>=0?'positive':'negative'}">${fmt(x.pl)}</td><td>${badge(x.status)}</td></tr>`).join('')||'<tr><td colspan="10">No option trades yet.</td></tr>';
+}
+function loadOptionDemo(){hDate.value='2026-09-05';hExpiry.value='2026-09-24';hUnderlying.value='NIFTY';hStrike1.value=24000;hType1.value='CE';hPos1.value='BUY';hP1.value=23;hCur1.value=28;hStrike2.value=24500;hType2.value='PE';hPos2.value='BUY';hP2.value=30;hCur2.value=34;calculateHedge();}
+hDate.value=new Date().toISOString().slice(0,10);hExpiry.value=new Date(Date.now()+19*86400000).toISOString().slice(0,10);
+
+const predefinedBaskets={
+"5000":[["MOCAPITAL",2000],["NEXT50IETF",2000],["GOLDBEES",1000]],
+"10000":[["MOCAPITAL",3000],["NEXT50IETF",3000],["MOM30IETF",2000],["GOLDBEES",2000]],
+"15000":[["PARAG PARIKH FLEXICAP FUND GROWTH DIRECT",4000,"Largecap + USA Exposure (Stability)"],["MOCAPITAL",3000],["NEXT50IETF",3000],["MOM30IETF",2000],["GOLDBEES",2000],["HANGSENBEES",1000]],
+"20000":[["PARAG PARIKH FLEXICAP FUND GROWTH DIRECT",4000,"Largecap + USA Exposure (Stability)"],["MOCAPITAL",4000],["NEXT50IETF",4000],["MOM30IETF",3000],["GOLDBEES",2000],["BTC & ETH",2000],["HANGSENBEES",1000]]
+};
+function showBasket(){
+ const amount=basketSelect.value,items=predefinedBaskets[amount]||[];
+ basketView.innerHTML=`<h3>📦 SIP Breakup for ${fmt(amount)} Monthly</h3>
+ <table style="min-width:0"><thead><tr><th>Investment</th><th>Monthly Amount</th><th>Allocation</th><th>Purpose</th></tr></thead>
+ <tbody>${items.map(x=>`<tr><td><b>${x[0]}</b></td><td>${fmt(x[1])}</td><td>${(x[1]/amount*100).toFixed(1)}%</td><td>${x[2]||'—'}</td></tr>`).join('')}
+ <tr><th>Total</th><th>${fmt(items.reduce((s,x)=>s+x[1],0))}</th><th>100%</th><th></th></tr></tbody></table>`;
+}
+function toggleDark(){
+ document.body.classList.toggle('dark');
+ localStorage.setItem('investmentHubDark',document.body.classList.contains('dark')?'1':'0');
+}
+if(localStorage.getItem('investmentHubDark')==='1')document.body.classList.add('dark');
+showBasket();
+
+
+// ================= CLOUD DATABASE CONNECTION =================
+const API_URL = "https://script.google.com/macros/s/AKfycbw3HjV_sDrY8KNmGge2ChFLyg3gicZlNFfw_4xTspr3ZodPpmbJBmZsdMiu26f51R_5/exec";
+const CLOUD_MODE = true;
+
+async function apiGet(action, params={}) {
+  const u=new URL(API_URL); u.searchParams.set('action',action);
+  Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v));
+  const r=await fetch(u.toString());
+  return await r.json();
+}
+async function apiPost(action,data) {
+  const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,data})});
+  return await r.json();
+}
+function mapRecommendation(r) {
+  return {id:r.ID,date:String(r.Date||'').slice(0,10),name:r.Name||'',symbol:r.Symbol||'',type:r.Type||'Stock',entry:+r.Entry_CMP||0,target:+r.Target||0,sl:+r.Stop_Loss||0,time:r.Time_Frame||'',current:+r.Current_CMP||+r.Entry_CMP||0,status:r.Status||'Active',remarks:r.Remarks||''};
+}
+function mapOption(o) {
+  return {id:o.Trade_ID,date:String(o.Date||'').slice(0,10),underlying:o.Underlying||'',strategy:o.Strategy||'',entry:+o.Combined_Entry_Premium||0,current:+o.Combined_Current_Premium||0,pl:+o.Net_PL||0,status:o.Status||'Open',expiry:o.Expiry||''};
+}
+async function loadCloudData() {
+  try {
+    const d=await apiGet('dashboard');
+    data.recommendations=(d.recommendations||[]).map(mapRecommendation);
+    data.options=(d.options||[]).map(mapOption);
+    data.sipBaskets=d.sipBaskets||[];
+    fillMonths(); renderDashboard(); renderRecommendations();
+    renderCloudBasket();
+  } catch(e) { console.error(e); alert('Cloud sync failed. Check internet/API deployment.'); }
+}
+function renderCloudBasket() {
+  if(!window.basketSelect || !data.sipBaskets) return;
+  const amount=basketSelect.value||'5000';
+  const items=data.sipBaskets.filter(x=>String(x.Monthly_Amount)==String(amount));
+  if(!items.length) return;
+  basketView.innerHTML=`<h3>📦 SIP Breakup for ₹${Number(amount).toLocaleString('en-IN')} Monthly</h3><table style="min-width:0"><thead><tr><th>Investment</th><th>Type</th><th>Monthly Amount</th><th>Allocation</th><th>Purpose</th></tr></thead><tbody>${items.map(x=>`<tr><td><b>${x.Investment_Name}</b></td><td>${x.Investment_Type}</td><td>${fmt(x.Allocation_Amount)}</td><td>${x.Allocation_Percent}%</td><td>${x.Purpose||'—'}</td></tr>`).join('')}<tr><th>Total</th><th></th><th>${fmt(items.reduce((a,x)=>a+Number(x.Allocation_Amount||0),0))}</th><th>100%</th><th></th></tr></tbody></table>`;
+}
+const oldShowBasket = window.showBasket;
+window.showBasket = function() { if(data.sipBaskets && data.sipBaskets.length) renderCloudBasket(); else if(oldShowBasket) oldShowBasket(); };
+const oldAddRec = window.addRecommendation;
+window.addRecommendation = async function() {
+  const payload={date:rDate.value,name:rName.value,symbol:rSymbol.value,type:rType.value,entryCMP:+rEntry.value||0,target:+rTarget.value||0,stopLoss:+rSL.value||0,timeFrame:rTime.value,remarks:rRemarks.value};
+  try { const res=await apiPost('addRecommendation',payload); if(!res.success) throw new Error(res.message||'Save failed'); await loadCloudData(); alert('Recommendation saved to Google Sheet'); } catch(e) { alert('Save failed: '+e.message); }
+};
+const oldSaveOption = window.saveOptionTrade || window.addOptionTrade;
+window.saveOptionTrade = async function() { if(oldSaveOption) return oldSaveOption(); alert('Use the Options Trade form to save trade.'); };
+window.addEventListener('load',()=>setTimeout(loadCloudData,500));
+// ==============================================================
+</script>
+</body></html>
