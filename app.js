@@ -784,178 +784,90 @@ function renderDashboard() {
 
 
 // ==========================================
-// DASHBOARD TABLE
+// STATUS BADGE
 // ==========================================
 
-function renderDashboardTable(
-  items
+function statusBadge(
+  status
 ) {
 
-  const tbody =
-    document.getElementById(
-      "dashboardRecommendationsTable"
-    );
+  let className =
+    "active";
 
 
-  if (!tbody) {
-    return;
-  }
-
-
-  tbody.innerHTML =
-    "";
-
-
-  const recent =
-    [...items]
-      .sort(
-        (
-          a,
-          b
-        ) =>
-          new Date(
-            b.Date
-          ) -
-          new Date(
-            a.Date
-          )
-      )
-      .slice(
-        0,
-        10
-      );
+  let label =
+    status;
 
 
   if (
-    recent.length === 0
+    status ===
+    "Target Hit"
   ) {
 
-    tbody.innerHTML =
+    className =
+      "target";
 
-      `<tr>
-
-        <td colspan="9">
-          No recommendations found.
-        </td>
-
-      </tr>`;
-
-    return;
+    label =
+      "🎯 Target Hit";
 
   }
 
 
-  recent.forEach(
-    item => {
+  if (
+    status ===
+    "Target After Due"
+  ) {
 
-      const holding =
-        getHoldingStatus(
-          item
-        );
+    className =
+      "target";
 
+    label =
+      "⚠️ Target After Due";
 
-      const progress =
-        getTargetProgress(
-          item
-        );
-
-
-      const row =
-        document.createElement(
-          "tr"
-        );
+  }
 
 
-      row.innerHTML = `
+  if (
+    status ===
+    "SL Hit"
+  ) {
 
-        <td>
-          ${formatDate(
-            item.Date
-          )}
-        </td>
+    className =
+      "sl";
 
+    label =
+      "🛑 SL Hit";
 
-        <td>
-          <strong>
-            ${escapeHtml(
-              item.Name
-            )}
-          </strong>
-        </td>
+  }
 
 
-        <td>
-          ${escapeHtml(
-            item.Type
-          )}
-        </td>
+  if (
+    status ===
+    "SL After Due"
+  ) {
+
+    className =
+      "sl";
+
+    label =
+      "⚠️ SL After Due";
+
+  }
 
 
-        <td>
-          ₹${formatNumber(
-            item.Entry_CMP
-          )}
-        </td>
+  return `
 
+    <span
+      class="badge ${className}"
+    >
 
-        <td>
-          ₹${formatNumber(
-            item.Current_CMP
-          )}
-        </td>
+      ${label}
 
+    </span>
 
-        <td
-          class="${
-            Number(
-              item.Return_Percent
-            ) >= 0
-              ? "positive"
-              : "negative"
-          }"
-        >
-
-          ${formatNumber(
-            item.Return_Percent
-          )}%
-
-        </td>
-
-
-        <td>
-          ${progressBar(
-            progress
-          )}
-        </td>
-
-
-        <td>
-          ${timeBadge(
-            holding
-          )}
-        </td>
-
-
-        <td>
-          ${statusBadge(
-            item.Status
-          )}
-        </td>
-
-      `;
-
-
-      tbody.appendChild(
-        row
-      );
-
-    }
-  );
+  `;
 
 }
-
-
-
 // ==========================================
 // RECOMMENDATION FORM
 // ==========================================
@@ -1499,10 +1411,12 @@ function renderRecommendations() {
 
 
         <td>
-          ${statusBadge(
-            item.Status
-          )}
-        </td>
+        ${statusBadge(
+  getDisplayStatus(
+    item
+  )
+)}
+</td>
 
 
         <td>
@@ -2274,11 +2188,33 @@ function timeBadge(
 
   if (
     holding.status ===
+    "Target After Due"
+  ) {
+
+    className =
+      "near-due";
+
+  }
+
+
+  if (
+    holding.status ===
     "SL Hit"
   ) {
 
     className =
       "time-sl";
+
+  }
+
+
+  if (
+    holding.status ===
+    "SL After Due"
+  ) {
+
+    className =
+      "overdue";
 
   }
 
@@ -2296,9 +2232,6 @@ function timeBadge(
   `;
 
 }
-
-
-
 // ==========================================
 // SIP
 // ==========================================
@@ -3137,8 +3070,10 @@ function renderOptions() {
 
         <td>
           ${statusBadge(
-            item.Status
-          )}
+  getDisplayStatus(
+    item
+  )
+)}
         </td>
 
       `;
@@ -3582,5 +3517,56 @@ function showToast(
 
     2500
   );
+
+}
+// ==========================================
+// DISPLAY STATUS
+// ==========================================
+
+function getDisplayStatus(
+  item
+) {
+
+  const status =
+    String(
+      item.Status || ""
+    ).trim();
+
+
+  const timingStatus =
+    String(
+      item.Timing_Status || ""
+    ).trim();
+
+
+  if (
+    status ===
+    "Target Hit"
+    &&
+    timingStatus ===
+    "After Due"
+  ) {
+
+    return
+      "Target After Due";
+
+  }
+
+
+  if (
+    status ===
+    "SL Hit"
+    &&
+    timingStatus ===
+    "After Due"
+  ) {
+
+    return
+      "SL After Due";
+
+  }
+
+
+  return status;
 
 }
