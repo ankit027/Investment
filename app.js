@@ -1950,7 +1950,6 @@ function parseHoldingPeriod(
 }
 
 
-
 // ==========================================
 // HOLDING STATUS
 // ==========================================
@@ -1959,12 +1958,44 @@ function getHoldingStatus(
   item
 ) {
 
-  // FINAL STATUS OVERRIDES TIME
+  const finalStatus =
+    String(
+      item.Status || ""
+    ).trim();
+
+
+  const timingStatus =
+    String(
+      item.Timing_Status || ""
+    ).trim();
+
+
+  // ========================================
+  // FINAL RESULT - TARGET
+  // ========================================
 
   if (
-    item.Status ===
+    finalStatus ===
     "Target Hit"
   ) {
+
+    if (
+      timingStatus ===
+      "After Due"
+    ) {
+
+      return {
+
+        status:
+          "Target After Due",
+
+        label:
+          "⚠️ Target After Due"
+
+      };
+
+    }
+
 
     return {
 
@@ -1979,10 +2010,32 @@ function getHoldingStatus(
   }
 
 
+  // ========================================
+  // FINAL RESULT - STOP LOSS
+  // ========================================
+
   if (
-    item.Status ===
+    finalStatus ===
     "SL Hit"
   ) {
+
+    if (
+      timingStatus ===
+      "After Due"
+    ) {
+
+      return {
+
+        status:
+          "SL After Due",
+
+        label:
+          "⚠️ SL After Due"
+
+      };
+
+    }
+
 
     return {
 
@@ -1996,6 +2049,10 @@ function getHoldingStatus(
 
   }
 
+
+  // ========================================
+  // ACTIVE RECOMMENDATION
+  // ========================================
 
   const startDate =
     new Date(
@@ -2081,9 +2138,28 @@ function getHoldingStatus(
     today;
 
 
+  // ========================================
+  // OVERDUE
+  // ========================================
+
   if (
     remaining < 0
   ) {
+
+    const daysLate =
+      Math.floor(
+        (
+          today -
+          dueDate
+        ) /
+        (
+          1000 *
+          60 *
+          60 *
+          24
+        )
+      );
+
 
     return {
 
@@ -2091,21 +2167,31 @@ function getHoldingStatus(
         "Overdue",
 
       label:
-        "Overdue"
+        `Overdue (${daysLate} Days)`
 
     };
 
   }
 
 
+  // ========================================
+  // NEAR DUE
+  // ========================================
+
   const remainingPercent =
     totalDuration > 0
-      ? (
-          remaining /
-          totalDuration
-        )
-        * 100
-      : 0;
+      ?
+
+      (
+        remaining /
+        totalDuration
+      )
+      *
+      100
+
+      :
+
+      0;
 
 
   if (
@@ -2126,6 +2212,10 @@ function getHoldingStatus(
   }
 
 
+  // ========================================
+  // WITHIN TIME
+  // ========================================
+
   return {
 
     status:
@@ -2137,9 +2227,6 @@ function getHoldingStatus(
   };
 
 }
-
-
-
 // ==========================================
 // TIME BADGE
 // ==========================================
