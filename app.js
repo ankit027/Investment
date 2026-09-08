@@ -4,15 +4,18 @@
 // ==========================================
 
 
+// ==========================================
+// API URL
+// IMPORTANT: Keep only the plain URL
+// ==========================================
+
 const API_URL =
   "https://script.google.com/macros/s/AKfycbw3HjV_sDrY8KNmGge2ChFLyg3gicZlNFfw_4xTspr3ZodPpmbJBmZsdMiu26f51R_5/exec";
 
 
 
 let recommendations = [];
-
 let sipBaskets = [];
-
 let optionTrades = [];
 
 
@@ -26,15 +29,10 @@ document.addEventListener(
   async () => {
 
     setupNavigation();
-
     setupDarkMode();
-
     setupRecommendationForm();
-
     setupSIP();
-
     setupOptions();
-
     setupFilters();
 
     setTodayDates();
@@ -52,18 +50,47 @@ document.addEventListener(
 
 async function apiGet(action) {
 
+  const url =
+    `${API_URL}?action=${encodeURIComponent(action)}&t=${Date.now()}`;
+
   const response =
-    await fetch(
-      `${API_URL}?action=${encodeURIComponent(action)}`
-    );
+    await fetch(url, {
+      method: "GET",
+      redirect: "follow"
+    });
+
 
   if (!response.ok) {
+
     throw new Error(
-      "Unable to connect to API"
+      `Unable to connect to API. HTTP ${response.status}`
     );
+
   }
 
-  return await response.json();
+
+  const text =
+    await response.text();
+
+
+  try {
+
+    return JSON.parse(text);
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Invalid API response:",
+      text
+    );
+
+    throw new Error(
+      "API returned an invalid response"
+    );
+
+  }
 
 }
 
@@ -82,8 +109,9 @@ async function apiPost(
     await fetch(
       API_URL,
       {
-
         method: "POST",
+
+        redirect: "follow",
 
         headers: {
           "Content-Type":
@@ -103,13 +131,34 @@ async function apiPost(
   if (!response.ok) {
 
     throw new Error(
-      "API request failed"
+      `API request failed. HTTP ${response.status}`
     );
 
   }
 
 
-  return await response.json();
+  const text =
+    await response.text();
+
+
+  try {
+
+    return JSON.parse(text);
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Invalid API response:",
+      text
+    );
+
+    throw new Error(
+      "API returned an invalid response"
+    );
+
+  }
 
 }
 
@@ -134,6 +183,12 @@ async function loadData() {
       );
 
 
+    console.log(
+      "Dashboard API Response:",
+      data
+    );
+
+
     if (
       data.success === false
     ) {
@@ -148,25 +203,28 @@ async function loadData() {
 
 
     recommendations =
-      data.recommendations || [];
+      Array.isArray(data.recommendations)
+        ? data.recommendations
+        : [];
 
 
     sipBaskets =
-      data.sipBaskets || [];
+      Array.isArray(data.sipBaskets)
+        ? data.sipBaskets
+        : [];
 
 
     optionTrades =
-      data.options || [];
+      Array.isArray(data.options)
+        ? data.options
+        : [];
 
 
     populateMonthFilters();
 
     renderDashboard();
-
     renderRecommendations();
-
     renderOptions();
-
     renderSIPBasket();
 
 
@@ -179,11 +237,13 @@ async function loadData() {
   catch (error) {
 
     console.error(
+      "Load Data Error:",
       error
     );
 
 
     showToast(
+      error.message ||
       "Unable to load data"
     );
 
@@ -574,8 +634,20 @@ function populateMonthFilters() {
       );
 
 
-      select.value =
-        previous;
+      if (
+        previous &&
+        [...select.options]
+          .some(
+            option =>
+              option.value ===
+              previous
+          )
+      ) {
+
+        select.value =
+          previous;
+
+      }
 
     }
   );
@@ -612,10 +684,10 @@ function renderDashboard() {
     recommendations.filter(
       item => {
 
-        const itemTimeStatus =
+        const holding =
           getHoldingStatus(
             item
-          ).status;
+          );
 
 
         return (
@@ -638,7 +710,7 @@ function renderDashboard() {
 
           (
             !timeStatus ||
-            itemTimeStatus ===
+            holding.status ===
             timeStatus
           )
 
@@ -702,7 +774,6 @@ function renderDashboard() {
               item.Return_Percent ||
               0
             ),
-
           0
         ) / total
       : 0;
@@ -772,6 +843,8 @@ function renderDashboard() {
   );
 
 
+  // IMPORTANT:
+  // This function was missing in your old file.
   renderDashboardTable(
     filtered
   );
@@ -784,90 +857,165 @@ function renderDashboard() {
 
 
 // ==========================================
-// STATUS BADGE
+// DASHBOARD RECENT TABLE
 // ==========================================
 
-function statusBadge(
-  status
+function renderDashboardTable(
+  items
 ) {
 
-  let className =
-    "active";
+  const tbody =
+    document.getElementById(
+      "dashboardRecommendationsTable"
+    )
+    ||
+    document.getElementById(
+      "recentRecommendationsTable"
+    );
 
 
-  let label =
-    status;
+  if (!tbody) {
 
+    console.warn(
+      "Dashboard recommendation table ID not found"
+    );
 
-  if (
-    status ===
-    "Target Hit"
-  ) {
-
-    className =
-      "target";
-
-    label =
-      "🎯 Target Hit";
-
-  }
-
-
-  if (
-    status ===
-    "Target After Due"
-  ) {
-
-    className =
-      "target";
-
-    label =
-      "⚠️ Target After Due";
+    return;
 
   }
 
 
+  tbody.innerHTML =
+    "";
+
+
+  const recentItems =
+    [...items]
+      .sort(
+        (a, b) => {
+
+          const dateA =
+            new Date(
+              formatInputDate(
+                a.Date
+              )
+            );
+
+          const dateB =
+            new Date(
+              formatInputDate(
+                b.Date
+              )
+            );
+
+          return dateB - dateA;
+
+        }
+      )
+      .slice(
+        0,
+        10
+      );
+
+
   if (
-    status ===
-    "SL Hit"
+    recentItems.length === 0
   ) {
 
-    className =
-      "sl";
+    tbody.innerHTML =
+      `
+      <tr>
+        <td colspan="8">
+          No recommendations found.
+        </td>
+      </tr>
+      `;
 
-    label =
-      "🛑 SL Hit";
+    return;
 
   }
 
 
-  if (
-    status ===
-    "SL After Due"
-  ) {
+  recentItems.forEach(
+    item => {
 
-    className =
-      "sl";
-
-    label =
-      "⚠️ SL After Due";
-
-  }
+      const progress =
+        getTargetProgress(
+          item
+        );
 
 
-  return `
+      const holding =
+        getHoldingStatus(
+          item
+        );
 
-    <span
-      class="badge ${className}"
-    >
 
-      ${label}
+      const row =
+        document.createElement(
+          "tr"
+        );
 
-    </span>
 
-  `;
+      row.innerHTML =
+        `
+        <td>
+          ${formatDate(item.Date)}
+        </td>
+
+        <td>
+          <strong>
+            ${escapeHtml(item.Name)}
+          </strong>
+        </td>
+
+        <td>
+          ${escapeHtml(item.Type)}
+        </td>
+
+        <td>
+          ₹${formatNumber(item.Entry_CMP)}
+        </td>
+
+        <td>
+          ₹${formatNumber(item.Current_CMP)}
+        </td>
+
+        <td class="${
+          Number(item.Return_Percent) >= 0
+            ? "positive"
+            : "negative"
+        }">
+          ${formatNumber(item.Return_Percent)}%
+        </td>
+
+        <td>
+          ${progressBar(progress)}
+        </td>
+
+        <td>
+          ${timeBadge(holding)}
+        </td>
+
+        <td>
+          ${statusBadge(
+            getDisplayStatus(item)
+          )}
+        </td>
+        `;
+
+
+      tbody.appendChild(
+        row
+      );
+
+    }
+  );
 
 }
+
+
+
 // ==========================================
 // RECOMMENDATION FORM
 // ==========================================
@@ -898,14 +1046,16 @@ function setupRecommendationForm() {
     );
 
 
-  if (showButton) {
+  if (
+    showButton &&
+    container
+  ) {
 
     showButton.addEventListener(
       "click",
       () => {
 
         resetRecommendationForm();
-
 
         container.classList.remove(
           "hidden"
@@ -917,7 +1067,10 @@ function setupRecommendationForm() {
   }
 
 
-  if (cancelButton) {
+  if (
+    cancelButton &&
+    container
+  ) {
 
     cancelButton.addEventListener(
       "click",
@@ -1019,8 +1172,7 @@ function setupRecommendationForm() {
             ).value
           ),
 
-        timeFrame:
-          timeFrame,
+        timeFrame,
 
         remarks:
           document.getElementById(
@@ -1032,28 +1184,16 @@ function setupRecommendationForm() {
 
       try {
 
-        let result;
-
-
-        if (id) {
-
-          result =
-            await apiPost(
-              "updateRecommendation",
-              data
-            );
-
-        }
-
-        else {
-
-          result =
-            await apiPost(
-              "addRecommendation",
-              data
-            );
-
-        }
+        const result =
+          id
+            ? await apiPost(
+                "updateRecommendation",
+                data
+              )
+            : await apiPost(
+                "addRecommendation",
+                data
+              );
 
 
         if (
@@ -1076,7 +1216,7 @@ function setupRecommendationForm() {
         );
 
 
-        container.classList.add(
+        container?.classList.add(
           "hidden"
         );
 
@@ -1096,6 +1236,7 @@ function setupRecommendationForm() {
 
 
         showToast(
+          error.message ||
           "Unable to save recommendation"
         );
 
@@ -1130,28 +1271,46 @@ function resetRecommendationForm() {
   setTodayDates();
 
 
-  document
-    .getElementById(
+  const id =
+    document.getElementById(
       "recommendationId"
-    )
-    .value =
-    "";
+    );
 
 
-  document
-    .getElementById(
+  if (id) {
+
+    id.value =
+      "";
+
+  }
+
+
+  const title =
+    document.getElementById(
       "recommendationFormTitle"
-    )
-    .textContent =
-    "Add Recommendation";
+    );
 
 
-  document
-    .getElementById(
+  if (title) {
+
+    title.textContent =
+      "Add Recommendation";
+
+  }
+
+
+  const holdingUnit =
+    document.getElementById(
       "recHoldingUnit"
-    )
-    .value =
-    "Months";
+    );
+
+
+  if (holdingUnit) {
+
+    holdingUnit.value =
+      "Months";
+
+  }
 
 }
 
@@ -1225,18 +1384,14 @@ function renderRecommendations() {
 
           (
             !search ||
-            searchText.includes(
-              search
-            )
+            searchText.includes(search)
           )
 
           &&
 
           (
             !month ||
-            getMonthKey(
-              item.Date
-            ) === month
+            getMonthKey(item.Date) === month
           )
 
           &&
@@ -1257,8 +1412,7 @@ function renderRecommendations() {
 
           (
             !timeStatus ||
-            holding.status ===
-            timeStatus
+            holding.status === timeStatus
           )
 
         );
@@ -1276,14 +1430,13 @@ function renderRecommendations() {
   ) {
 
     tbody.innerHTML =
-
-      `<tr>
-
+      `
+      <tr>
         <td colspan="14">
           No recommendations found.
         </td>
-
-      </tr>`;
+      </tr>
+      `;
 
     return;
 
@@ -1311,89 +1464,51 @@ function renderRecommendations() {
         );
 
 
-      row.innerHTML = `
-
-        <td>
-          ${formatDate(
-            item.Date
-          )}
-        </td>
-
+      row.innerHTML =
+        `
+        <td>${formatDate(item.Date)}</td>
 
         <td>
           <strong>
-            ${escapeHtml(
-              item.Name
-            )}
+            ${escapeHtml(item.Name)}
           </strong>
         </td>
 
+        <td>
+          ${escapeHtml(item.Symbol)}
+        </td>
 
         <td>
-          ${escapeHtml(
-            item.Symbol
-          )}
+          ${escapeHtml(item.Type)}
         </td>
-
 
         <td>
-          ${escapeHtml(
-            item.Type
-          )}
+          ₹${formatNumber(item.Entry_CMP)}
         </td>
-
 
         <td>
-          ₹${formatNumber(
-            item.Entry_CMP
-          )}
+          ₹${formatNumber(item.Current_CMP)}
         </td>
-
 
         <td>
-          ₹${formatNumber(
-            item.Current_CMP
-          )}
+          ₹${formatNumber(item.Target)}
         </td>
-
 
         <td>
-          ₹${formatNumber(
-            item.Target
-          )}
+          ₹${formatNumber(item.Stop_Loss)}
         </td>
 
+        <td class="${
+          Number(item.Return_Percent) >= 0
+            ? "positive"
+            : "negative"
+        }">
+          ${formatNumber(item.Return_Percent)}%
+        </td>
 
         <td>
-          ₹${formatNumber(
-            item.Stop_Loss
-          )}
+          ${progressBar(progress)}
         </td>
-
-
-        <td
-          class="${
-            Number(
-              item.Return_Percent
-            ) >= 0
-              ? "positive"
-              : "negative"
-          }"
-        >
-
-          ${formatNumber(
-            item.Return_Percent
-          )}%
-
-        </td>
-
-
-        <td>
-          ${progressBar(
-            progress
-          )}
-        </td>
-
 
         <td>
           ${escapeHtml(
@@ -1402,22 +1517,15 @@ function renderRecommendations() {
           )}
         </td>
 
-
         <td>
-          ${timeBadge(
-            holding
-          )}
+          ${timeBadge(holding)}
         </td>
 
-
         <td>
-        ${statusBadge(
-  getDisplayStatus(
-    item
-  )
-)}
-</td>
-
+          ${statusBadge(
+            getDisplayStatus(item)
+          )}
+        </td>
 
         <td>
 
@@ -1428,7 +1536,6 @@ function renderRecommendations() {
             Edit
           </button>
 
-
           <button
             class="action-btn delete-btn"
             onclick="deleteRecommendation('${item.ID}')"
@@ -1437,8 +1544,7 @@ function renderRecommendations() {
           </button>
 
         </td>
-
-      `;
+        `;
 
 
       tbody.appendChild(
@@ -1457,9 +1563,7 @@ function renderRecommendations() {
 // ==========================================
 
 window.editRecommendation =
-  function (
-    id
-  ) {
+  function(id) {
 
     const item =
       recommendations.find(
@@ -1467,9 +1571,7 @@ window.editRecommendation =
           String(
             recommendation.ID
           ) ===
-          String(
-            id
-          )
+          String(id)
       );
 
 
@@ -1484,91 +1586,75 @@ window.editRecommendation =
     }
 
 
-    document
-      .getElementById(
+    const container =
+      document.getElementById(
         "recommendationFormContainer"
-      )
-      .classList.remove(
-        "hidden"
       );
 
 
-    document
-      .getElementById(
-        "recommendationFormTitle"
-      )
-      .textContent =
-      "Edit Recommendation";
+    container?.classList.remove(
+      "hidden"
+    );
 
 
-    document
-      .getElementById(
-        "recommendationId"
-      )
-      .value =
+    setText(
+      "recommendationFormTitle",
+      "Edit Recommendation"
+    );
+
+
+    document.getElementById(
+      "recommendationId"
+    ).value =
       item.ID;
 
 
-    document
-      .getElementById(
-        "recDate"
-      )
-      .value =
+    document.getElementById(
+      "recDate"
+    ).value =
       formatInputDate(
         item.Date
       );
 
 
-    document
-      .getElementById(
-        "recName"
-      )
-      .value =
+    document.getElementById(
+      "recName"
+    ).value =
       item.Name ||
       "";
 
 
-    document
-      .getElementById(
-        "recSymbol"
-      )
-      .value =
+    document.getElementById(
+      "recSymbol"
+    ).value =
       item.Symbol ||
       "";
 
 
-    document
-      .getElementById(
-        "recType"
-      )
-      .value =
+    document.getElementById(
+      "recType"
+    ).value =
       item.Type ||
       "Stock";
 
 
-    document
-      .getElementById(
-        "recEntry"
-      )
-      .value =
+    document.getElementById(
+      "recEntry"
+    ).value =
       item.Entry_CMP ||
       "";
 
 
-    document
-      .getElementById(
-        "recTarget"
-      )
-      .value =
+    document.getElementById(
+      "recTarget"
+    ).value =
       item.Target ||
       "";
 
 
-    document
-      .getElementById(
-        "recStopLoss"
-      )
-      .value =
+    document.getElementById(
+      "recStopLoss"
+    ).value =
       item.Stop_Loss ||
       "";
 
@@ -1579,27 +1665,21 @@ window.editRecommendation =
       );
 
 
-    document
-      .getElementById(
-        "recHoldingValue"
-      )
-      .value =
+    document.getElementById(
+      "recHoldingValue"
+    ).value =
       parsed.value;
 
 
-    document
-      .getElementById(
-        "recHoldingUnit"
-      )
-      .value =
+    document.getElementById(
+      "recHoldingUnit"
+    ).value =
       parsed.unit;
 
 
-    document
-      .getElementById(
-        "recRemarks"
-      )
-      .value =
+    document.getElementById(
+      "recRemarks"
+    ).value =
       item.Remarks ||
       "";
 
@@ -1622,9 +1702,7 @@ window.editRecommendation =
 // ==========================================
 
 window.deleteRecommendation =
-  async function (
-    id
-  ) {
+  async function(id) {
 
     const confirmed =
       confirm(
@@ -1654,7 +1732,6 @@ window.deleteRecommendation =
           "Recommendation deleted"
         );
 
-
         await loadData();
 
       }
@@ -1672,12 +1749,10 @@ window.deleteRecommendation =
 
     catch (error) {
 
-      console.error(
-        error
-      );
-
+      console.error(error);
 
       showToast(
+        error.message ||
         "Unable to delete recommendation"
       );
 
@@ -1691,21 +1766,17 @@ window.deleteRecommendation =
 // TARGET PROGRESS
 // ==========================================
 
-function getTargetProgress(
-  item
-) {
+function getTargetProgress(item) {
 
   const entry =
     Number(
-      item.Entry_CMP ||
-      0
+      item.Entry_CMP || 0
     );
 
 
   const target =
     Number(
-      item.Target ||
-      0
+      item.Target || 0
     );
 
 
@@ -1739,8 +1810,7 @@ function getTargetProgress(
         entry
       )
     )
-    *
-    100;
+    * 100;
 
 
   return Math.max(
@@ -1759,49 +1829,33 @@ function getTargetProgress(
 // PROGRESS BAR
 // ==========================================
 
-function progressBar(
-  progress
-) {
+function progressBar(progress) {
 
   const safeProgress =
     Math.max(
       0,
       Math.min(
-        Number(
-          progress || 0
-        ),
+        Number(progress || 0),
         100
       )
     );
 
 
   return `
+    <div class="progress-wrapper">
 
-    <div
-      class="progress-wrapper"
-    >
-
-      <div
-        class="progress-track"
-      >
-
+      <div class="progress-track">
         <div
           class="progress-fill"
           style="width:${safeProgress}%"
-        >
-        </div>
-
+        ></div>
       </div>
 
-
       <span>
-        ${formatNumber(
-          safeProgress
-        )}%
+        ${formatNumber(safeProgress)}%
       </span>
 
     </div>
-
   `;
 
 }
@@ -1812,16 +1866,12 @@ function progressBar(
 // HOLDING PERIOD PARSER
 // ==========================================
 
-function parseHoldingPeriod(
-  value
-) {
+function parseHoldingPeriod(value) {
 
   const text =
-    String(
-      value || ""
-    )
-    .trim()
-    .toLowerCase();
+    String(value || "")
+      .trim()
+      .toLowerCase();
 
 
   const match =
@@ -1847,15 +1897,11 @@ function parseHoldingPeriod(
   return {
 
     value:
-      Number(
-        match[1]
-      ),
+      Number(match[1]),
 
     unit:
       match[2]
-        .startsWith(
-          "day"
-        )
+        .startsWith("day")
         ? "Days"
         : "Months"
 
@@ -1864,13 +1910,12 @@ function parseHoldingPeriod(
 }
 
 
+
 // ==========================================
 // HOLDING STATUS
 // ==========================================
 
-function getHoldingStatus(
-  item
-) {
+function getHoldingStatus(item) {
 
   const finalStatus =
     String(
@@ -1883,10 +1928,6 @@ function getHoldingStatus(
       item.Timing_Status || ""
     ).trim();
 
-
-  // ========================================
-  // FINAL RESULT - TARGET
-  // ========================================
 
   if (
     finalStatus ===
@@ -1924,10 +1965,6 @@ function getHoldingStatus(
   }
 
 
-  // ========================================
-  // FINAL RESULT - STOP LOSS
-  // ========================================
-
   if (
     finalStatus ===
     "SL Hit"
@@ -1964,16 +2001,15 @@ function getHoldingStatus(
   }
 
 
-  // ========================================
-  // ACTIVE RECOMMENDATION
-  // ========================================
+  const inputDate =
+    formatInputDate(
+      item.Date
+    );
+
 
   const startDate =
     new Date(
-      formatInputDate(
-        item.Date
-      ) +
-      "T00:00:00"
+      `${inputDate}T00:00:00`
     );
 
 
@@ -2052,10 +2088,6 @@ function getHoldingStatus(
     today;
 
 
-  // ========================================
-  // OVERDUE
-  // ========================================
-
   if (
     remaining < 0
   ) {
@@ -2065,7 +2097,8 @@ function getHoldingStatus(
         (
           today -
           dueDate
-        ) /
+        )
+        /
         (
           1000 *
           60 *
@@ -2088,29 +2121,17 @@ function getHoldingStatus(
   }
 
 
-  // ========================================
-  // NEAR DUE
-  // ========================================
-
   const remainingPercent =
     totalDuration > 0
-      ?
-
-      (
-        remaining /
-        totalDuration
-      )
-      *
-      100
-
-      :
-
-      0;
+      ? (
+          remaining /
+          totalDuration
+        ) * 100
+      : 0;
 
 
   if (
-    remainingPercent <=
-    25
+    remainingPercent <= 25
   ) {
 
     return {
@@ -2126,10 +2147,6 @@ function getHoldingStatus(
   }
 
 
-  // ========================================
-  // WITHIN TIME
-  // ========================================
-
   return {
 
     status:
@@ -2141,13 +2158,14 @@ function getHoldingStatus(
   };
 
 }
+
+
+
 // ==========================================
 // TIME BADGE
 // ==========================================
 
-function timeBadge(
-  holding
-) {
+function timeBadge(holding) {
 
   let className =
     "within-time";
@@ -2220,18 +2238,17 @@ function timeBadge(
 
 
   return `
-
     <span
       class="time-badge ${className}"
     >
-
       ${holding.label}
-
     </span>
-
   `;
 
 }
+
+
+
 // ==========================================
 // SIP
 // ==========================================
@@ -2275,37 +2292,32 @@ function setupSIP() {
       const data = {
 
         planName:
-          document
-            .getElementById(
-              "sipPlanName"
-            ).value,
+          document.getElementById(
+            "sipPlanName"
+          ).value,
 
         monthlyAmount:
           Number(
-            document
-              .getElementById(
-                "sipMonthlyAmount"
-              ).value
+            document.getElementById(
+              "sipMonthlyAmount"
+            ).value
           ),
 
         investmentName:
-          document
-            .getElementById(
-              "sipInvestmentName"
-            ).value,
+          document.getElementById(
+            "sipInvestmentName"
+          ).value,
 
         investmentType:
-          document
-            .getElementById(
-              "sipInvestmentType"
-            ).value,
+          document.getElementById(
+            "sipInvestmentType"
+          ).value,
 
         allocationPercent:
           Number(
-            document
-              .getElementById(
-                "sipAllocationPercent"
-              ).value
+            document.getElementById(
+              "sipAllocationPercent"
+            ).value
           )
 
       };
@@ -2339,11 +2351,15 @@ function setupSIP() {
 
         event.target.reset();
 
+
+        await loadData();
+
       }
 
       catch (error) {
 
         showToast(
+          error.message ||
           "Unable to save SIP"
         );
 
@@ -2384,73 +2400,61 @@ function renderSIPBasket() {
   }
 
 
-  if (
-    select.options.length <= 1
-  ) {
+  select.innerHTML =
+    '<option value="">Select Monthly SIP</option>';
 
-    const amounts =
-      [
-        ...new Set(
-          sipBaskets.map(
-            item =>
-              String(
-                item.Monthly_Amount
-              )
-          )
+
+  const amounts =
+    [
+      ...new Set(
+        sipBaskets.map(
+          item =>
+            String(
+              item.Monthly_Amount
+            )
         )
-      ];
-
-
-    amounts
-      .sort(
-        (
-          a,
-          b
-        ) =>
-          Number(a) -
-          Number(b)
       )
-      .forEach(
-        amount => {
-
-          const option =
-            document.createElement(
-              "option"
-            );
+    ];
 
 
-          option.value =
-            amount;
+  amounts
+    .sort(
+      (a, b) =>
+        Number(a) -
+        Number(b)
+    )
+    .forEach(
+      amount => {
 
-
-          option.textContent =
-            `₹${Number(
-              amount
-            ).toLocaleString(
-              "en-IN"
-            )} Monthly`;
-
-
-          select.appendChild(
-            option
+        const option =
+          document.createElement(
+            "option"
           );
 
-        }
-      );
 
-  }
+        option.value =
+          amount;
+
+
+        option.textContent =
+          `₹${Number(amount).toLocaleString("en-IN")} Monthly`;
+
+
+        select.appendChild(
+          option
+        );
+
+      }
+    );
 
 
   if (
     !select.value &&
-    sipBaskets.length
+    amounts.length
   ) {
 
     select.value =
-      String(
-        sipBaskets[0]
-          .Monthly_Amount
-      );
+      amounts[0];
 
   }
 
@@ -2471,6 +2475,18 @@ function renderSIPBasket() {
     "";
 
 
+  if (
+    items.length === 0
+  ) {
+
+    container.innerHTML =
+      "<p>No SIP basket available.</p>";
+
+    return;
+
+  }
+
+
   items.forEach(
     item => {
 
@@ -2484,8 +2500,8 @@ function renderSIPBasket() {
         "sip-card";
 
 
-      card.innerHTML = `
-
+      card.innerHTML =
+        `
         <div>
 
           <strong>
@@ -2502,7 +2518,6 @@ function renderSIPBasket() {
 
         </div>
 
-
         <div class="sip-row">
 
           <span>
@@ -2517,7 +2532,6 @@ function renderSIPBasket() {
 
         </div>
 
-
         <div class="sip-row">
 
           <span>
@@ -2531,8 +2545,7 @@ function renderSIPBasket() {
           </strong>
 
         </div>
-
-      `;
+        `;
 
 
       container.appendChild(
@@ -2562,11 +2575,7 @@ function setupOptions() {
 
     addLegButton.addEventListener(
       "click",
-      () => {
-
-        addOptionLeg();
-
-      }
+      addOptionLeg
     );
 
   }
@@ -2607,66 +2616,57 @@ function setupOptions() {
         const data = {
 
           date:
-            document
-              .getElementById(
-                "optionDate"
-              ).value,
+            document.getElementById(
+              "optionDate"
+            ).value,
 
           underlying:
-            document
-              .getElementById(
-                "optionUnderlying"
-              ).value,
+            document.getElementById(
+              "optionUnderlying"
+            ).value,
 
           expiry:
-            document
-              .getElementById(
-                "optionExpiry"
-              ).value,
+            document.getElementById(
+              "optionExpiry"
+            ).value,
 
           strategy:
-            document
-              .getElementById(
-                "optionStrategy"
-              ).value,
+            document.getElementById(
+              "optionStrategy"
+            ).value,
 
           lotSize:
             Number(
-              document
-                .getElementById(
-                  "optionLotSize"
-                ).value
+              document.getElementById(
+                "optionLotSize"
+              ).value
             ),
 
           lots:
             Number(
-              document
-                .getElementById(
-                  "optionLots"
-                ).value
+              document.getElementById(
+                "optionLots"
+              ).value
             ),
 
           targetPercent:
             Number(
-              document
-                .getElementById(
-                  "optionTargetPercent"
-                ).value
+              document.getElementById(
+                "optionTargetPercent"
+              ).value
             ),
 
           slPercent:
             Number(
-              document
-                .getElementById(
-                  "optionSLPercent"
-                ).value
+              document.getElementById(
+                "optionSLPercent"
+              ).value
             ),
 
           remarks:
-            document
-              .getElementById(
-                "optionRemarks"
-              ).value,
+            document.getElementById(
+              "optionRemarks"
+            ).value,
 
           legs
 
@@ -2702,16 +2702,23 @@ function setupOptions() {
           form.reset();
 
 
-          document
-            .getElementById(
+          const legsContainer =
+            document.getElementById(
               "optionLegsContainer"
-            )
-            .innerHTML =
-            "";
+            );
 
+
+          if (legsContainer) {
+
+            legsContainer.innerHTML =
+              "";
+
+          }
+
+
+          addOptionLeg();
 
           setTodayDates();
-
 
           await loadData();
 
@@ -2719,12 +2726,10 @@ function setupOptions() {
 
         catch (error) {
 
-          console.error(
-            error
-          );
-
+          console.error(error);
 
           showToast(
+            error.message ||
             "Unable to save option trade"
           );
 
@@ -2737,15 +2742,12 @@ function setupOptions() {
 
 
   if (
-    document
-      .getElementById(
-        "optionLegsContainer"
-      ) &&
-    document
-      .querySelectorAll(
-        ".option-leg"
-      )
-      .length === 0
+    document.getElementById(
+      "optionLegsContainer"
+    ) &&
+    document.querySelectorAll(
+      ".option-leg"
+    ).length === 0
   ) {
 
     addOptionLeg();
@@ -2783,19 +2785,15 @@ function addOptionLeg() {
     "option-leg";
 
 
-  leg.innerHTML = `
-
+  leg.innerHTML =
+    `
     <input
       type="number"
       class="leg-strike"
       placeholder="Strike"
     >
 
-
-    <select
-      class="leg-type"
-    >
-
+    <select class="leg-type">
       <option value="CE">
         CE
       </option>
@@ -2803,14 +2801,9 @@ function addOptionLeg() {
       <option value="PE">
         PE
       </option>
-
     </select>
 
-
-    <select
-      class="leg-position"
-    >
-
+    <select class="leg-position">
       <option value="BUY">
         BUY
       </option>
@@ -2818,9 +2811,7 @@ function addOptionLeg() {
       <option value="SELL">
         SELL
       </option>
-
     </select>
-
 
     <input
       type="number"
@@ -2829,7 +2820,6 @@ function addOptionLeg() {
       placeholder="Entry Premium"
     >
 
-
     <input
       type="number"
       step="0.01"
@@ -2837,15 +2827,13 @@ function addOptionLeg() {
       placeholder="Current Premium"
     >
 
-
     <button
       type="button"
       class="remove-leg"
     >
       ×
     </button>
-
-  `;
+    `;
 
 
   leg
@@ -2882,49 +2870,40 @@ function getOptionLegs() {
     )
   ]
   .map(
-    leg => {
+    leg => ({
 
-      return {
+      strikePrice:
+        Number(
+          leg.querySelector(
+            ".leg-strike"
+          ).value
+        ),
 
-        strikePrice:
-          Number(
-            leg
-              .querySelector(
-                ".leg-strike"
-              ).value
-          ),
+      optionType:
+        leg.querySelector(
+          ".leg-type"
+        ).value,
 
-        optionType:
-          leg
-            .querySelector(
-              ".leg-type"
-            ).value,
+      position:
+        leg.querySelector(
+          ".leg-position"
+        ).value,
 
-        position:
-          leg
-            .querySelector(
-              ".leg-position"
-            ).value,
+      entryPremium:
+        Number(
+          leg.querySelector(
+            ".leg-entry"
+          ).value
+        ),
 
-        entryPremium:
-          Number(
-            leg
-              .querySelector(
-                ".leg-entry"
-              ).value
-          ),
+      currentPremium:
+        Number(
+          leg.querySelector(
+            ".leg-current"
+          ).value
+        )
 
-        currentPremium:
-          Number(
-            leg
-              .querySelector(
-                ".leg-current"
-              ).value
-          )
-
-      };
-
-    }
+    })
   )
   .filter(
     leg =>
@@ -2969,9 +2948,7 @@ function renderOptions() {
           ""
         )
         .toLowerCase()
-        .includes(
-          search
-        )
+        .includes(search)
     );
 
 
@@ -2984,14 +2961,13 @@ function renderOptions() {
   ) {
 
     tbody.innerHTML =
-
-      `<tr>
-
+      `
+      <tr>
         <td colspan="8">
           No option trades found.
         </td>
-
-      </tr>`;
+      </tr>
+      `;
 
     return;
 
@@ -3007,35 +2983,21 @@ function renderOptions() {
         );
 
 
-      row.innerHTML = `
+      row.innerHTML =
+        `
+        <td>${formatDate(item.Date)}</td>
 
         <td>
-          ${formatDate(
-            item.Date
-          )}
+          ${escapeHtml(item.Underlying)}
         </td>
-
 
         <td>
-          ${escapeHtml(
-            item.Underlying
-          )}
+          ${formatDate(item.Expiry)}
         </td>
-
 
         <td>
-          ${formatDate(
-            item.Expiry
-          )}
+          ${escapeHtml(item.Strategy)}
         </td>
-
-
-        <td>
-          ${escapeHtml(
-            item.Strategy
-          )}
-        </td>
-
 
         <td>
           ₹${formatNumber(
@@ -3043,40 +3005,28 @@ function renderOptions() {
           )}
         </td>
 
-
         <td>
           ₹${formatNumber(
             item.Combined_Current_Premium
           )}
         </td>
 
-
-        <td
-          class="${
-            Number(
-              item.Net_PL
-            ) >= 0
-              ? "positive"
-              : "negative"
-          }"
-        >
-
+        <td class="${
+          Number(item.Net_PL) >= 0
+            ? "positive"
+            : "negative"
+        }">
           ₹${formatNumber(
             item.Net_PL
           )}
-
         </td>
-
 
         <td>
           ${statusBadge(
-  getDisplayStatus(
-    item
-  )
-)}
+            getDisplayStatus(item)
+          )}
         </td>
-
-      `;
+        `;
 
 
       tbody.appendChild(
@@ -3132,10 +3082,8 @@ function renderOptionsDashboard() {
       ) =>
         sum +
         Number(
-          item.Net_PL ||
-          0
+          item.Net_PL || 0
         ),
-
       0
     );
 
@@ -3166,9 +3114,7 @@ function renderOptionsDashboard() {
 
   setText(
     "optionNetPL",
-    `₹${formatNumber(
-      netPL
-    )}`
+    `₹${formatNumber(netPL)}`
   );
 
 }
@@ -3179,12 +3125,15 @@ function renderOptionsDashboard() {
 // STATUS BADGE
 // ==========================================
 
-function statusBadge(
-  status
-) {
+function statusBadge(status) {
 
   let className =
     "active";
+
+
+  let label =
+    status ||
+    "Active";
 
 
   if (
@@ -3195,8 +3144,23 @@ function statusBadge(
     className =
       "target";
 
+    label =
+      "🎯 Target Hit";
+
   }
 
+  else if (
+    status ===
+    "Target After Due"
+  ) {
+
+    className =
+      "target";
+
+    label =
+      "⚠️ Target After Due";
+
+  }
 
   else if (
     status ===
@@ -3206,23 +3170,82 @@ function statusBadge(
     className =
       "sl";
 
+    label =
+      "🛑 SL Hit";
+
+  }
+
+  else if (
+    status ===
+    "SL After Due"
+  ) {
+
+    className =
+      "sl";
+
+    label =
+      "⚠️ SL After Due";
+
   }
 
 
   return `
-
     <span
       class="badge ${className}"
     >
-
-      ${escapeHtml(
-        status ||
-        "Active"
-      )}
-
+      ${escapeHtml(label)}
     </span>
-
   `;
+
+}
+
+
+
+// ==========================================
+// DISPLAY STATUS
+// ==========================================
+
+function getDisplayStatus(item) {
+
+  const status =
+    String(
+      item.Status || ""
+    ).trim();
+
+
+  const timingStatus =
+    String(
+      item.Timing_Status || ""
+    ).trim();
+
+
+  if (
+    status ===
+    "Target Hit"
+    &&
+    timingStatus ===
+    "After Due"
+  ) {
+
+    return "Target After Due";
+
+  }
+
+
+  if (
+    status ===
+    "SL Hit"
+    &&
+    timingStatus ===
+    "After Due"
+  ) {
+
+    return "SL After Due";
+
+  }
+
+
+  return status;
 
 }
 
@@ -3232,37 +3255,24 @@ function statusBadge(
 // HELPERS
 // ==========================================
 
-function getMonthKey(
-  value
-) {
+function getMonthKey(value) {
 
   const date =
-    formatInputDate(
-      value
-    );
+    formatInputDate(value);
 
 
   return date
-    ? date.substring(
-        0,
-        7
-      )
+    ? date.substring(0, 7)
     : "";
 
 }
 
 
 
-function formatMonth(
-  value
-) {
+function formatMonth(value) {
 
   const parts =
-    String(
-      value
-    ).split(
-      "-"
-    );
+    String(value).split("-");
 
 
   if (
@@ -3276,14 +3286,8 @@ function formatMonth(
 
   const date =
     new Date(
-      Number(
-        parts[0]
-      ),
-
-      Number(
-        parts[1]
-      ) - 1,
-
+      Number(parts[0]),
+      Number(parts[1]) - 1,
       1
     );
 
@@ -3291,13 +3295,8 @@ function formatMonth(
   return date.toLocaleDateString(
     "en-IN",
     {
-
-      month:
-        "long",
-
-      year:
-        "numeric"
-
+      month: "long",
+      year: "numeric"
     }
   );
 
@@ -3305,9 +3304,7 @@ function formatMonth(
 
 
 
-function formatDate(
-  value
-) {
+function formatDate(value) {
 
   if (!value) {
     return "-";
@@ -3315,9 +3312,7 @@ function formatDate(
 
 
   const text =
-    String(
-      value
-    );
+    String(value);
 
 
   const match =
@@ -3339,9 +3334,7 @@ function formatDate(
 
 
 
-function formatInputDate(
-  value
-) {
+function formatInputDate(value) {
 
   if (!value) {
     return "";
@@ -3349,9 +3342,7 @@ function formatInputDate(
 
 
   const text =
-    String(
-      value
-    );
+    String(value);
 
 
   const match =
@@ -3368,9 +3359,7 @@ function formatInputDate(
 
 
   const date =
-    new Date(
-      value
-    );
+    new Date(value);
 
 
   if (
@@ -3386,32 +3375,22 @@ function formatInputDate(
 
   return date
     .toISOString()
-    .split(
-      "T"
-    )[0];
+    .split("T")[0];
 
 }
 
 
 
-function formatNumber(
-  value
-) {
+function formatNumber(value) {
 
   const number =
-    Number(
-      value ||
-      0
-    );
+    Number(value || 0);
 
 
   return number.toLocaleString(
     "en-IN",
     {
-
-      maximumFractionDigits:
-        2
-
+      maximumFractionDigits: 2
     }
   );
 
@@ -3425,9 +3404,7 @@ function setText(
 ) {
 
   const element =
-    document.getElementById(
-      id
-    );
+    document.getElementById(id);
 
 
   if (element) {
@@ -3441,38 +3418,18 @@ function setText(
 
 
 
-function escapeHtml(
-  value
-) {
+function escapeHtml(value) {
 
   const text =
-    String(
-      value ||
-      ""
-    );
+    String(value || "");
 
 
   return text
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
-    );
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
 }
 
@@ -3482,9 +3439,7 @@ function escapeHtml(
 // TOAST
 // ==========================================
 
-function showToast(
-  message
-) {
+function showToast(message) {
 
   const toast =
     document.getElementById(
@@ -3514,59 +3469,7 @@ function showToast(
       );
 
     },
-
     2500
   );
-
-}
-// ==========================================
-// DISPLAY STATUS
-// ==========================================
-
-function getDisplayStatus(
-  item
-) {
-
-  const status =
-    String(
-      item.Status || ""
-    ).trim();
-
-
-  const timingStatus =
-    String(
-      item.Timing_Status || ""
-    ).trim();
-
-
-  if (
-    status ===
-    "Target Hit"
-    &&
-    timingStatus ===
-    "After Due"
-  ) {
-
-    return
-      "Target After Due";
-
-  }
-
-
-  if (
-    status ===
-    "SL Hit"
-    &&
-    timingStatus ===
-    "After Due"
-  ) {
-
-    return
-      "SL After Due";
-
-  }
-
-
-  return status;
 
 }
