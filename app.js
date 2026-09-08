@@ -4,25 +4,21 @@
 // ==========================================
 
 
-// ==========================================
-// GOOGLE APPS SCRIPT API
-// ==========================================
-
 const API_URL =
   "https://script.google.com/macros/s/AKfycbw3HjV_sDrY8KNmGge2ChFLyg3gicZlNFfw_4xTspr3ZodPpmbJBmZsdMiu26f51R_5/exec";
 
 
-// ==========================================
-// GLOBAL DATA
-// ==========================================
 
 let recommendations = [];
+
 let sipBaskets = [];
+
 let optionTrades = [];
 
 
+
 // ==========================================
-// DOM READY
+// INITIALIZATION
 // ==========================================
 
 document.addEventListener(
@@ -39,7 +35,7 @@ document.addEventListener(
 
     setupOptions();
 
-    setupDashboard();
+    setupFilters();
 
     setTodayDates();
 
@@ -48,16 +44,6 @@ document.addEventListener(
   }
 );
 
-
-// ==========================================
-// SAFE ELEMENT HELPER
-// ==========================================
-
-function getElement(id) {
-
-  return document.getElementById(id);
-
-}
 
 
 // ==========================================
@@ -72,16 +58,15 @@ async function apiGet(action) {
     );
 
   if (!response.ok) {
-
     throw new Error(
-      `API request failed: ${response.status}`
+      "Unable to connect to API"
     );
-
   }
 
   return await response.json();
 
 }
+
 
 
 // ==========================================
@@ -100,12 +85,15 @@ async function apiPost(
 
         method: "POST",
 
+        headers: {
+          "Content-Type":
+            "text/plain;charset=utf-8"
+        },
+
         body:
           JSON.stringify({
-
             action,
             data
-
           })
 
       }
@@ -115,7 +103,7 @@ async function apiPost(
   if (!response.ok) {
 
     throw new Error(
-      `API request failed: ${response.status}`
+      "API request failed"
     );
 
   }
@@ -126,8 +114,9 @@ async function apiPost(
 }
 
 
+
 // ==========================================
-// LOAD ALL DATA
+// LOAD DATA
 // ==========================================
 
 async function loadData() {
@@ -159,27 +148,15 @@ async function loadData() {
 
 
     recommendations =
-      Array.isArray(
-        data.recommendations
-      )
-        ? data.recommendations
-        : [];
+      data.recommendations || [];
 
 
     sipBaskets =
-      Array.isArray(
-        data.sipBaskets
-      )
-        ? data.sipBaskets
-        : [];
+      data.sipBaskets || [];
 
 
     optionTrades =
-      Array.isArray(
-        data.options
-      )
-        ? data.options
-        : [];
+      data.options || [];
 
 
     populateMonthFilters();
@@ -188,9 +165,9 @@ async function loadData() {
 
     renderRecommendations();
 
-    renderSIPBasket();
-
     renderOptions();
+
+    renderSIPBasket();
 
 
     showToast(
@@ -202,7 +179,6 @@ async function loadData() {
   catch (error) {
 
     console.error(
-      "Load Data Error:",
       error
     );
 
@@ -216,88 +192,75 @@ async function loadData() {
 }
 
 
+
 // ==========================================
 // NAVIGATION
 // ==========================================
 
 function setupNavigation() {
 
-  const buttons =
-    document.querySelectorAll(
+  document
+    .querySelectorAll(
       ".nav-btn"
-    );
+    )
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            document
+              .querySelectorAll(
+                ".nav-btn"
+              )
+              .forEach(
+                item =>
+                  item.classList.remove(
+                    "active"
+                  )
+              );
 
 
-  buttons.forEach(
-    button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          const pageId =
-            button.dataset.page;
+            button.classList.add(
+              "active"
+            );
 
 
-          if (!pageId) {
+            document
+              .querySelectorAll(
+                ".page"
+              )
+              .forEach(
+                page =>
+                  page.classList.remove(
+                    "active"
+                  )
+              );
 
-            return;
 
-          }
+            const target =
+              document.getElementById(
+                button.dataset.page
+              );
 
 
-          buttons.forEach(
-            item => {
+            if (target) {
 
-              item.classList.remove(
+              target.classList.add(
                 "active"
               );
 
             }
-          );
-
-
-          button.classList.add(
-            "active"
-          );
-
-
-          document
-            .querySelectorAll(
-              ".page"
-            )
-            .forEach(
-              page => {
-
-                page.classList.remove(
-                  "active"
-                );
-
-              }
-            );
-
-
-          const page =
-            getElement(
-              pageId
-            );
-
-
-          if (page) {
-
-            page.classList.add(
-              "active"
-            );
 
           }
+        );
 
-        }
-      );
-
-    }
-  );
+      }
+    );
 
 }
+
 
 
 // ==========================================
@@ -307,22 +270,13 @@ function setupNavigation() {
 function setupDarkMode() {
 
   const button =
-    getElement(
+    document.getElementById(
       "darkModeBtn"
     );
 
 
-  // If button does not exist,
-  // do not stop entire application
-
   if (!button) {
-
-    console.warn(
-      "Dark mode button not found"
-    );
-
     return;
-
   }
 
 
@@ -340,10 +294,10 @@ function setupDarkMode() {
       "dark"
     );
 
+    button.textContent =
+      "☀️ Light Mode";
+
   }
-
-
-  updateThemeButton();
 
 
   button.addEventListener(
@@ -369,45 +323,16 @@ function setupDarkMode() {
       );
 
 
-      updateThemeButton();
+      button.textContent =
+        isDark
+          ? "☀️ Light Mode"
+          : "🌙 Dark Mode";
 
     }
   );
 
 }
 
-
-// ==========================================
-// UPDATE DARK MODE BUTTON
-// ==========================================
-
-function updateThemeButton() {
-
-  const button =
-    getElement(
-      "darkModeBtn"
-    );
-
-
-  if (!button) {
-
-    return;
-
-  }
-
-
-  const isDark =
-    document.body.classList.contains(
-      "dark"
-    );
-
-
-  button.textContent =
-    isDark
-      ? "☀️ Light Mode"
-      : "🌙 Dark Mode";
-
-}
 
 
 // ==========================================
@@ -423,8 +348,14 @@ function setTodayDates() {
 
 
   const recDate =
-    getElement(
+    document.getElementById(
       "recDate"
+    );
+
+
+  const optionDate =
+    document.getElementById(
+      "optionDate"
     );
 
 
@@ -437,12 +368,6 @@ function setTodayDates() {
       today;
 
   }
-
-
-  const optionDate =
-    getElement(
-      "optionDate"
-    );
 
 
   if (
@@ -458,78 +383,82 @@ function setTodayDates() {
 }
 
 
+
 // ==========================================
-// DASHBOARD EVENTS
+// FILTERS
 // ==========================================
 
-function setupDashboard() {
+function setupFilters() {
 
-  const dashboardMonth =
-    getElement(
-      "dashboardMonthFilter"
-    );
+  const filterIds = [
 
+    "dashboardMonthFilter",
+    "dashboardTypeFilter",
+    "dashboardTimeStatusFilter"
 
-  if (dashboardMonth) {
-
-    dashboardMonth.addEventListener(
-      "change",
-      renderDashboard
-    );
-
-  }
+  ];
 
 
-  const dashboardType =
-    getElement(
-      "dashboardTypeFilter"
-    );
+  filterIds.forEach(
+    id => {
+
+      const element =
+        document.getElementById(
+          id
+        );
 
 
-  if (dashboardType) {
+      if (element) {
 
-    dashboardType.addEventListener(
-      "change",
-      renderDashboard
-    );
+        element.addEventListener(
+          "change",
+          renderDashboard
+        );
 
-  }
+      }
 
-
-  const optionMonth =
-    getElement(
-      "dashboardOptionMonthFilter"
-    );
+    }
+  );
 
 
-  if (optionMonth) {
+  const recommendationFilters = [
 
-    optionMonth.addEventListener(
-      "change",
-      renderDashboard
-    );
+    "recommendationSearch",
+    "recommendationMonthFilter",
+    "recommendationTypeFilter",
+    "recommendationStatusFilter",
+    "recommendationTimeStatusFilter"
 
-  }
-
-
-  const optionStatus =
-    getElement(
-      "dashboardOptionStatusFilter"
-    );
+  ];
 
 
-  if (optionStatus) {
+  recommendationFilters.forEach(
+    id => {
 
-    optionStatus.addEventListener(
-      "change",
-      renderDashboard
-    );
+      const element =
+        document.getElementById(
+          id
+        );
 
-  }
+
+      if (element) {
+
+        element.addEventListener(
+          id === "recommendationSearch"
+            ? "input"
+            : "change",
+
+          renderRecommendations
+        );
+
+      }
+
+    }
+  );
 
 
   const refreshButton =
-    getElement(
+    document.getElementById(
       "refreshDashboardBtn"
     );
 
@@ -538,32 +467,29 @@ function setupDashboard() {
 
     refreshButton.addEventListener(
       "click",
-      async () => {
+      loadData
+    );
 
-        refreshButton.disabled =
-          true;
-
-
-        refreshButton.textContent =
-          "Loading...";
+  }
 
 
-        await loadData();
+  const optionSearch =
+    document.getElementById(
+      "optionSearch"
+    );
 
 
-        refreshButton.disabled =
-          false;
+  if (optionSearch) {
 
-
-        refreshButton.textContent =
-          "↻ Refresh";
-
-      }
+    optionSearch.addEventListener(
+      "input",
+      renderOptions
     );
 
   }
 
 }
+
 
 
 // ==========================================
@@ -572,208 +498,84 @@ function setupDashboard() {
 
 function populateMonthFilters() {
 
-  const recommendationMonths =
-    getUniqueMonths(
-      recommendations
-    );
-
-
-  const optionMonths =
-    getUniqueMonths(
-      optionTrades
-    );
-
-
-  populateSelect(
-    "recommendationMonthFilter",
-    recommendationMonths
-  );
-
-
-  populateSelect(
-    "dashboardMonthFilter",
-    recommendationMonths
-  );
-
-
-  populateSelect(
-    "optionMonthFilter",
-    optionMonths
-  );
-
-
-  populateSelect(
-    "dashboardOptionMonthFilter",
-    optionMonths
-  );
-
-}
-
-
-// ==========================================
-// UNIQUE MONTHS
-// ==========================================
-
-function getUniqueMonths(data) {
-
   const months =
-    new Set();
-
-
-  data.forEach(
-    item => {
-
-      if (
-        item.Date
-      ) {
-
-        const value =
-          String(
-            item.Date
-          );
-
-
-        const month =
-          value.substring(
-            0,
-            7
-          );
-
-
-        if (
-          month.length === 7
-        ) {
-
-          months.add(
-            month
-          );
-
-        }
-
-      }
-
-    }
-  );
-
-
-  return [
-    ...months
-  ]
+    [
+      ...new Set(
+        recommendations
+          .map(
+            item =>
+              getMonthKey(
+                item.Date
+              )
+          )
+          .filter(
+            Boolean
+          )
+      )
+    ]
     .sort()
     .reverse();
 
-}
+
+  const filterIds = [
+
+    "dashboardMonthFilter",
+    "recommendationMonthFilter"
+
+  ];
 
 
-// ==========================================
-// POPULATE SELECT
-// ==========================================
+  filterIds.forEach(
+    id => {
 
-function populateSelect(
-  id,
-  months
-) {
-
-  const select =
-    getElement(
-      id
-    );
-
-
-  if (!select) {
-
-    return;
-
-  }
-
-
-  const currentValue =
-    select.value;
-
-
-  select.innerHTML =
-    '<option value="">All Months</option>';
-
-
-  months.forEach(
-    month => {
-
-      const option =
-        document.createElement(
-          "option"
+      const select =
+        document.getElementById(
+          id
         );
 
 
-      option.value =
-        month;
+      if (!select) {
+        return;
+      }
 
 
-      option.textContent =
-        formatMonth(
-          month
-        );
+      const previous =
+        select.value;
 
 
-      select.appendChild(
-        option
+      select.innerHTML =
+        '<option value="">All Months</option>';
+
+
+      months.forEach(
+        month => {
+
+          const option =
+            document.createElement(
+              "option"
+            );
+
+
+          option.value =
+            month;
+
+
+          option.textContent =
+            formatMonth(
+              month
+            );
+
+
+          select.appendChild(
+            option
+          );
+
+        }
       );
 
-    }
-  );
 
-
-  if (
-    months.includes(
-      currentValue
-    )
-  ) {
-
-    select.value =
-      currentValue;
-
-  }
-
-}
-
-
-// ==========================================
-// FORMAT MONTH
-// ==========================================
-
-function formatMonth(value) {
-
-  if (!value) {
-
-    return "";
-
-  }
-
-
-  const date =
-    new Date(
-      value +
-      "-01"
-    );
-
-
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
-
-    return value;
-
-  }
-
-
-  return date.toLocaleDateString(
-    "en-IN",
-    {
-
-      month: "long",
-
-      year: "numeric"
+      select.value =
+        previous;
 
     }
   );
@@ -781,837 +583,282 @@ function formatMonth(value) {
 }
 
 
-// ==========================================
-// FILTER RECOMMENDATIONS
-// ==========================================
-
-function getFilteredDashboardRecommendations() {
-
-  const month =
-    getElement(
-      "dashboardMonthFilter"
-    )?.value ||
-    "";
-
-
-  const type =
-    getElement(
-      "dashboardTypeFilter"
-    )?.value ||
-    "";
-
-
-  return recommendations.filter(
-    item => {
-
-      const monthMatch =
-        !month ||
-        String(
-          item.Date ||
-          ""
-        ).startsWith(
-          month
-        );
-
-
-      const typeMatch =
-        !type ||
-        item.Type ===
-        type;
-
-
-      return (
-        monthMatch &&
-        typeMatch
-      );
-
-    }
-  );
-
-}
-
 
 // ==========================================
-// RENDER DASHBOARD
+// DASHBOARD
 // ==========================================
 
 function renderDashboard() {
 
-  const data =
-    getFilteredDashboardRecommendations();
+  const month =
+    document.getElementById(
+      "dashboardMonthFilter"
+    )?.value || "";
+
+
+  const type =
+    document.getElementById(
+      "dashboardTypeFilter"
+    )?.value || "";
+
+
+  const timeStatus =
+    document.getElementById(
+      "dashboardTimeStatusFilter"
+    )?.value || "";
+
+
+  const filtered =
+    recommendations.filter(
+      item => {
+
+        const itemTimeStatus =
+          getHoldingStatus(
+            item
+          ).status;
+
+
+        return (
+
+          (
+            !month ||
+            getMonthKey(
+              item.Date
+            ) === month
+          )
+
+          &&
+
+          (
+            !type ||
+            item.Type === type
+          )
+
+          &&
+
+          (
+            !timeStatus ||
+            itemTimeStatus ===
+            timeStatus
+          )
+
+        );
+
+      }
+    );
+
+
+  const total =
+    filtered.length;
+
+
+  const targetCount =
+    filtered.filter(
+      item =>
+        item.Status ===
+        "Target Hit"
+    ).length;
+
+
+  const slCount =
+    filtered.filter(
+      item =>
+        item.Status ===
+        "SL Hit"
+    ).length;
+
+
+  const activeCount =
+    filtered.filter(
+      item =>
+        ![
+          "Target Hit",
+          "SL Hit"
+        ].includes(
+          item.Status
+        )
+    ).length;
+
+
+  const overdueCount =
+    filtered.filter(
+      item =>
+        getHoldingStatus(
+          item
+        ).status ===
+        "Overdue"
+    ).length;
+
+
+  const averageReturn =
+    total
+      ? filtered.reduce(
+          (
+            sum,
+            item
+          ) =>
+            sum +
+            Number(
+              item.Return_Percent ||
+              0
+            ),
+
+          0
+        ) / total
+      : 0;
 
 
   setText(
     "totalRecommendations",
-    data.length
+    total
   );
 
 
   setText(
     "activeRecommendations",
-    data.filter(
-      item =>
-        item.Status ===
-        "Active"
-    ).length
+    activeCount
   );
 
 
   setText(
     "targetHit",
-    data.filter(
-      item =>
-        item.Status ===
-        "Target Hit"
-    ).length
+    targetCount
   );
 
 
   setText(
     "slHit",
-    data.filter(
-      item =>
-        item.Status ===
-        "SL Hit"
-    ).length
+    slCount
   );
-
-
-  const averageReturn =
-    data.length > 0
-
-      ?
-
-      data.reduce(
-        (
-          total,
-          item
-        ) =>
-
-          total +
-          Number(
-            item.Return_Percent ||
-            0
-          ),
-
-        0
-      )
-
-      /
-      data.length
-
-      :
-
-      0;
 
 
   setText(
     "averageReturn",
-    averageReturn.toFixed(2) +
-    "%"
+    `${formatNumber(
+      averageReturn
+    )}%`
   );
 
 
+  setText(
+    "overdueRecommendations",
+    overdueCount
+  );
+
+
+  setText(
+    "targetHitPercent",
+    total
+      ? `${formatNumber(
+          (
+            targetCount /
+            total
+          ) * 100
+        )}%`
+      : "0%"
+  );
+
+
+  setText(
+    "slHitPercent",
+    total
+      ? `${formatNumber(
+          (
+            slCount /
+            total
+          ) * 100
+        )}%`
+      : "0%"
+  );
+
+
+  renderDashboardTable(
+    filtered
+  );
+
+
+  renderOptionsDashboard();
+
+}
+
+
+
+// ==========================================
+// DASHBOARD TABLE
+// ==========================================
+
+function renderDashboardTable(
+  items
+) {
+
   const tbody =
-    getElement(
+    document.getElementById(
       "dashboardRecommendationsTable"
     );
 
 
-  if (tbody) {
-
-    tbody.innerHTML =
-      "";
-
-
-    data
-      .slice(
-        0,
-        10
-      )
-      .forEach(
-        item => {
-
-          const row =
-            document.createElement(
-              "tr"
-            );
-
-
-          row.innerHTML =
-            `
-            <td>${escapeHtml(item.Date || "")}</td>
-
-            <td>${escapeHtml(item.Name || "")}</td>
-
-            <td>${escapeHtml(item.Type || "")}</td>
-
-            <td>
-              ₹${formatNumber(item.Entry_CMP)}
-            </td>
-
-            <td>
-              ₹${formatNumber(item.Current_CMP)}
-            </td>
-
-            <td class="${
-              Number(
-                item.Return_Percent
-              ) >= 0
-                ? "positive"
-                : "negative"
-            }">
-              ${formatNumber(
-                item.Return_Percent
-              )}%
-            </td>
-
-            <td>
-              ${statusBadge(
-                item.Status
-              )}
-            </td>
-            `;
-
-
-          tbody.appendChild(
-            row
-          );
-
-        }
-      );
-
-  }
-
-
-  renderOptionDashboard();
-
-}
-
-
-// ==========================================
-// RENDER OPTION DASHBOARD
-// ==========================================
-
-function renderOptionDashboard() {
-
-  const month =
-    getElement(
-      "dashboardOptionMonthFilter"
-    )?.value ||
-    "";
-
-
-  const status =
-    getElement(
-      "dashboardOptionStatusFilter"
-    )?.value ||
-    "";
-
-
-  const data =
-    optionTrades.filter(
-      item => {
-
-        const monthMatch =
-          !month ||
-          String(
-            item.Date ||
-            ""
-          ).startsWith(
-            month
-          );
-
-
-        const statusMatch =
-          !status ||
-          item.Status ===
-          status;
-
-
-        return (
-          monthMatch &&
-          statusMatch
-        );
-
-      }
-    );
-
-
-  setText(
-    "totalOptionTrades",
-    data.length
-  );
-
-
-  setText(
-    "openOptionTrades",
-    data.filter(
-      item =>
-        item.Status ===
-        "Open"
-    ).length
-  );
-
-
-  setText(
-    "optionTargetHit",
-    data.filter(
-      item =>
-        item.Status ===
-        "Target Hit"
-    ).length
-  );
-
-
-  setText(
-    "optionSLHit",
-    data.filter(
-      item =>
-        item.Status ===
-        "SL Hit"
-    ).length
-  );
-
-
-  const netPL =
-    data.reduce(
-      (
-        total,
-        item
-      ) =>
-
-        total +
-        Number(
-          item.Net_PL ||
-          0
-        ),
-
-      0
-    );
-
-
-  const netPLField =
-    getElement(
-      "optionNetPL"
-    );
-
-
-  if (netPLField) {
-
-    netPLField.textContent =
-      "₹" +
-      formatNumber(
-        netPL
-      );
-
-
-    netPLField.className =
-      netPL >= 0
-        ? "positive"
-        : "negative";
-
-  }
-
-}
-
-
-// ==========================================
-// RECOMMENDATION FORM
-// ==========================================
-
-function setupRecommendationForm() {
-
-  const form =
-    getElement(
-      "recommendationForm"
-    );
-
-
-  const showButton =
-    getElement(
-      "showRecommendationFormBtn"
-    );
-
-
-  if (showButton) {
-
-    showButton.addEventListener(
-      "click",
-      openNewRecommendationForm
-    );
-
-  }
-
-
-  const cancelButton =
-    getElement(
-      "cancelRecommendationBtn"
-    );
-
-
-  if (cancelButton) {
-
-    cancelButton.addEventListener(
-      "click",
-      closeRecommendationForm
-    );
-
-  }
-
-
-  if (form) {
-
-    form.addEventListener(
-      "submit",
-      saveRecommendation
-    );
-
-  }
-
-
-  [
-    "recommendationSearch",
-    "recommendationMonthFilter",
-    "recommendationTypeFilter",
-    "recommendationStatusFilter"
-  ]
-    .forEach(
-      id => {
-
-        const element =
-          getElement(
-            id
-          );
-
-
-        if (!element) {
-
-          return;
-
-        }
-
-
-        element.addEventListener(
-          "input",
-          renderRecommendations
-        );
-
-
-        element.addEventListener(
-          "change",
-          renderRecommendations
-        );
-
-      }
-    );
-
-}
-
-
-// ==========================================
-// OPEN NEW RECOMMENDATION FORM
-// ==========================================
-
-function openNewRecommendationForm() {
-
-  const container =
-    getElement(
-      "recommendationFormContainer"
-    );
-
-
-  const form =
-    getElement(
-      "recommendationForm"
-    );
-
-
-  if (container) {
-
-    container.classList.remove(
-      "hidden"
-    );
-
-  }
-
-
-  if (form) {
-
-    form.reset();
-
-  }
-
-
-  setText(
-    "recommendationFormTitle",
-    "Add Recommendation"
-  );
-
-
-  const idField =
-    getElement(
-      "recommendationId"
-    );
-
-
-  if (idField) {
-
-    idField.value =
-      "";
-
-  }
-
-
-  const dateField =
-    getElement(
-      "recDate"
-    );
-
-
-  if (dateField) {
-
-    dateField.value =
-      new Date()
-        .toISOString()
-        .split("T")[0];
-
-  }
-
-}
-
-
-// ==========================================
-// SAVE RECOMMENDATION
-// ==========================================
-
-async function saveRecommendation(
-  event
-) {
-
-  event.preventDefault();
-
-
-  const id =
-    getElement(
-      "recommendationId"
-    )?.value ||
-    "";
-
-
-  const data = {
-
-    id,
-
-    date:
-      getElement(
-        "recDate"
-      )?.value ||
-      "",
-
-    name:
-      getElement(
-        "recName"
-      )?.value ||
-      "",
-
-    symbol:
-      (
-        getElement(
-          "recSymbol"
-        )?.value ||
-        ""
-      )
-        .trim()
-        .toUpperCase(),
-
-    type:
-      getElement(
-        "recType"
-      )?.value ||
-      "Stock",
-
-    entryCMP:
-      Number(
-        getElement(
-          "recEntry"
-        )?.value ||
-        0
-      ),
-
-    target:
-      Number(
-        getElement(
-          "recTarget"
-        )?.value ||
-        0
-      ),
-
-    stopLoss:
-      Number(
-        getElement(
-          "recStopLoss"
-        )?.value ||
-        0
-      ),
-
-    timeFrame:
-      getElement(
-        "recTimeFrame"
-      )?.value ||
-      "",
-
-    remarks:
-      getElement(
-        "recRemarks"
-      )?.value ||
-      ""
-
-  };
-
-
-  try {
-
-    let result;
-
-
-    if (id) {
-
-      result =
-        await apiPost(
-          "updateRecommendation",
-          data
-        );
-
-    }
-
-    else {
-
-      result =
-        await apiPost(
-          "addRecommendation",
-          data
-        );
-
-    }
-
-
-    if (
-      result &&
-      result.success === false
-    ) {
-
-      throw new Error(
-        result.message ||
-        "Unable to save"
-      );
-
-    }
-
-
-    showToast(
-      id
-        ? "Recommendation updated"
-        : "Recommendation saved"
-    );
-
-
-    closeRecommendationForm();
-
-
-    await loadData();
-
-  }
-
-  catch (error) {
-
-    console.error(
-      "Save Recommendation Error:",
-      error
-    );
-
-
-    showToast(
-      "Unable to save recommendation"
-    );
-
-  }
-
-}
-
-
-// ==========================================
-// CLOSE RECOMMENDATION FORM
-// ==========================================
-
-function closeRecommendationForm() {
-
-  const container =
-    getElement(
-      "recommendationFormContainer"
-    );
-
-
-  if (container) {
-
-    container.classList.add(
-      "hidden"
-    );
-
-  }
-
-}
-
-
-// ==========================================
-// FILTER RECOMMENDATIONS
-// ==========================================
-
-function getFilteredRecommendations() {
-
-  const search =
-    (
-      getElement(
-        "recommendationSearch"
-      )?.value ||
-      ""
-    )
-      .toLowerCase()
-      .trim();
-
-
-  const month =
-    getElement(
-      "recommendationMonthFilter"
-    )?.value ||
-    "";
-
-
-  const type =
-    getElement(
-      "recommendationTypeFilter"
-    )?.value ||
-    "";
-
-
-  const status =
-    getElement(
-      "recommendationStatusFilter"
-    )?.value ||
-    "";
-
-
-  return recommendations.filter(
-    item => {
-
-      const name =
-        String(
-          item.Name ||
-          ""
-        )
-          .toLowerCase();
-
-
-      const symbol =
-        String(
-          item.Symbol ||
-          ""
-        )
-          .toLowerCase();
-
-
-      const searchMatch =
-        !search ||
-        name.includes(
-          search
-        ) ||
-        symbol.includes(
-          search
-        );
-
-
-      const monthMatch =
-        !month ||
-        String(
-          item.Date ||
-          ""
-        ).startsWith(
-          month
-        );
-
-
-      const typeMatch =
-        !type ||
-        item.Type ===
-        type;
-
-
-      const statusMatch =
-        !status ||
-        item.Status ===
-        status;
-
-
-      return (
-        searchMatch &&
-        monthMatch &&
-        typeMatch &&
-        statusMatch
-      );
-
-    }
-  );
-
-}
-
-
-// ==========================================
-// RENDER RECOMMENDATIONS
-// ==========================================
-
-function renderRecommendations() {
-
-  const tbody =
-    getElement(
-      "recommendationsTable"
-    );
-
-
   if (!tbody) {
-
     return;
-
   }
-
-
-  const data =
-    getFilteredRecommendations();
 
 
   tbody.innerHTML =
     "";
 
 
+  const recent =
+    [...items]
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          new Date(
+            b.Date
+          ) -
+          new Date(
+            a.Date
+          )
+      )
+      .slice(
+        0,
+        10
+      );
+
+
   if (
-    data.length === 0
+    recent.length === 0
   ) {
 
     tbody.innerHTML =
-      `
-      <tr>
-        <td colspan="11">
+
+      `<tr>
+
+        <td colspan="9">
           No recommendations found.
         </td>
-      </tr>
-      `;
+
+      </tr>`;
 
     return;
 
   }
 
 
-  data.forEach(
+  recent.forEach(
     item => {
+
+      const holding =
+        getHoldingStatus(
+          item
+        );
+
+
+      const progress =
+        getTargetProgress(
+          item
+        );
+
 
       const row =
         document.createElement(
@@ -1619,39 +866,54 @@ function renderRecommendations() {
         );
 
 
-      row.innerHTML =
-        `
-        <td>${escapeHtml(item.Date || "")}</td>
-
-        <td>${escapeHtml(item.Name || "")}</td>
-
-        <td>${escapeHtml(item.Symbol || "")}</td>
-
-        <td>${escapeHtml(item.Type || "")}</td>
+      row.innerHTML = `
 
         <td>
-          ₹${formatNumber(item.Entry_CMP)}
+          ${formatDate(
+            item.Date
+          )}
         </td>
+
 
         <td>
-          ₹${formatNumber(item.Current_CMP)}
+          <strong>
+            ${escapeHtml(
+              item.Name
+            )}
+          </strong>
         </td>
+
 
         <td>
-          ₹${formatNumber(item.Target)}
+          ${escapeHtml(
+            item.Type
+          )}
         </td>
+
 
         <td>
-          ₹${formatNumber(item.Stop_Loss)}
+          ₹${formatNumber(
+            item.Entry_CMP
+          )}
         </td>
 
-        <td class="${
-          Number(
-            item.Return_Percent
-          ) >= 0
-            ? "positive"
-            : "negative"
-        }">
+
+        <td>
+          ₹${formatNumber(
+            item.Current_CMP
+          )}
+        </td>
+
+
+        <td
+          class="${
+            Number(
+              item.Return_Percent
+            ) >= 0
+              ? "positive"
+              : "negative"
+          }"
+        >
 
           ${formatNumber(
             item.Return_Percent
@@ -1659,74 +921,28 @@ function renderRecommendations() {
 
         </td>
 
+
+        <td>
+          ${progressBar(
+            progress
+          )}
+        </td>
+
+
+        <td>
+          ${timeBadge(
+            holding
+          )}
+        </td>
+
+
         <td>
           ${statusBadge(
             item.Status
           )}
         </td>
 
-        <td>
-          <button
-            class="action-btn edit-btn"
-            data-action="edit"
-            data-id="${escapeAttribute(item.ID)}"
-          >
-            Edit
-          </button>
-
-          <button
-            class="action-btn delete-btn"
-            data-action="delete"
-            data-id="${escapeAttribute(item.ID)}"
-          >
-            Delete
-          </button>
-        </td>
-        `;
-
-
-      const editButton =
-        row.querySelector(
-          '[data-action="edit"]'
-        );
-
-
-      const deleteButton =
-        row.querySelector(
-          '[data-action="delete"]'
-        );
-
-
-      if (editButton) {
-
-        editButton.addEventListener(
-          "click",
-          () => {
-
-            editRecommendation(
-              item.ID
-            );
-
-          }
-        );
-
-      }
-
-
-      if (deleteButton) {
-
-        deleteButton.addEventListener(
-          "click",
-          () => {
-
-            deleteRecommendation(
-              item.ID
-            );
-
-          }
-        );
-
-      }
+      `;
 
 
       tbody.appendChild(
@@ -1739,243 +955,1278 @@ function renderRecommendations() {
 }
 
 
+
 // ==========================================
-// EDIT RECOMMENDATION
+// RECOMMENDATION FORM
 // ==========================================
 
-function editRecommendation(id) {
+function setupRecommendationForm() {
 
-  const item =
-    recommendations.find(
-      recommendation =>
-
-        String(
-          recommendation.ID
-        ) ===
-        String(
-          id
-        )
+  const form =
+    document.getElementById(
+      "recommendationForm"
     );
 
 
-  if (!item) {
-
-    showToast(
-      "Recommendation not found"
+  const showButton =
+    document.getElementById(
+      "showRecommendationFormBtn"
     );
 
-    return;
 
-  }
+  const cancelButton =
+    document.getElementById(
+      "cancelRecommendationBtn"
+    );
 
 
   const container =
-    getElement(
+    document.getElementById(
       "recommendationFormContainer"
     );
 
 
-  if (container) {
+  if (showButton) {
 
-    container.classList.remove(
-      "hidden"
-    );
+    showButton.addEventListener(
+      "click",
+      () => {
 
-  }
-
-
-  setText(
-    "recommendationFormTitle",
-    "Edit Recommendation"
-  );
+        resetRecommendationForm();
 
 
-  setValue(
-    "recommendationId",
-    item.ID
-  );
-
-
-  setValue(
-    "recDate",
-    String(
-      item.Date ||
-      ""
-    ).substring(
-      0,
-      10
-    )
-  );
-
-
-  setValue(
-    "recName",
-    item.Name ||
-    ""
-  );
-
-
-  setValue(
-    "recSymbol",
-    item.Symbol ||
-    ""
-  );
-
-
-  setValue(
-    "recType",
-    item.Type ||
-    "Stock"
-  );
-
-
-  setValue(
-    "recEntry",
-    item.Entry_CMP ||
-    ""
-  );
-
-
-  setValue(
-    "recTarget",
-    item.Target ||
-    ""
-  );
-
-
-  setValue(
-    "recStopLoss",
-    item.Stop_Loss ||
-    ""
-  );
-
-
-  setValue(
-    "recTimeFrame",
-    item.Time_Frame ||
-    ""
-  );
-
-
-  setValue(
-    "recRemarks",
-    item.Remarks ||
-    ""
-  );
-
-
-  const page =
-    getElement(
-      "recommendations"
-    );
-
-
-  if (page) {
-
-    page.scrollIntoView(
-      {
-
-        behavior: "smooth",
-
-        block: "start"
+        container.classList.remove(
+          "hidden"
+        );
 
       }
     );
 
   }
 
+
+  if (cancelButton) {
+
+    cancelButton.addEventListener(
+      "click",
+      () => {
+
+        container.classList.add(
+          "hidden"
+        );
+
+        resetRecommendationForm();
+
+      }
+    );
+
+  }
+
+
+  if (!form) {
+    return;
+  }
+
+
+  form.addEventListener(
+    "submit",
+    async event => {
+
+      event.preventDefault();
+
+
+      const id =
+        document.getElementById(
+          "recommendationId"
+        ).value;
+
+
+      const holdingValue =
+        Number(
+          document.getElementById(
+            "recHoldingValue"
+          ).value
+        );
+
+
+      const holdingUnit =
+        document.getElementById(
+          "recHoldingUnit"
+        ).value;
+
+
+      const timeFrame =
+        `${holdingValue} ${holdingUnit}`;
+
+
+      const data = {
+
+        id,
+
+        date:
+          document.getElementById(
+            "recDate"
+          ).value,
+
+        name:
+          document.getElementById(
+            "recName"
+          ).value.trim(),
+
+        symbol:
+          document.getElementById(
+            "recSymbol"
+          )
+          .value
+          .trim()
+          .toUpperCase(),
+
+        type:
+          document.getElementById(
+            "recType"
+          ).value,
+
+        entryCMP:
+          Number(
+            document.getElementById(
+              "recEntry"
+            ).value
+          ),
+
+        target:
+          Number(
+            document.getElementById(
+              "recTarget"
+            ).value
+          ),
+
+        stopLoss:
+          Number(
+            document.getElementById(
+              "recStopLoss"
+            ).value
+          ),
+
+        timeFrame:
+          timeFrame,
+
+        remarks:
+          document.getElementById(
+            "recRemarks"
+          ).value.trim()
+
+      };
+
+
+      try {
+
+        let result;
+
+
+        if (id) {
+
+          result =
+            await apiPost(
+              "updateRecommendation",
+              data
+            );
+
+        }
+
+        else {
+
+          result =
+            await apiPost(
+              "addRecommendation",
+              data
+            );
+
+        }
+
+
+        if (
+          !result.success
+        ) {
+
+          throw new Error(
+            result.message ||
+            result.error ||
+            "Unable to save recommendation"
+          );
+
+        }
+
+
+        showToast(
+          id
+            ? "Recommendation updated"
+            : "Recommendation saved"
+        );
+
+
+        container.classList.add(
+          "hidden"
+        );
+
+
+        resetRecommendationForm();
+
+
+        await loadData();
+
+      }
+
+      catch (error) {
+
+        console.error(
+          error
+        );
+
+
+        showToast(
+          "Unable to save recommendation"
+        );
+
+      }
+
+    }
+  );
+
 }
 
 
+
 // ==========================================
-// DELETE RECOMMENDATION
+// RESET RECOMMENDATION FORM
 // ==========================================
 
-async function deleteRecommendation(
-  id
-) {
+function resetRecommendationForm() {
 
-  const confirmed =
-    confirm(
-      "Delete this recommendation?"
+  const form =
+    document.getElementById(
+      "recommendationForm"
     );
 
 
-  if (!confirmed) {
+  if (form) {
+
+    form.reset();
+
+  }
+
+
+  setTodayDates();
+
+
+  document
+    .getElementById(
+      "recommendationId"
+    )
+    .value =
+    "";
+
+
+  document
+    .getElementById(
+      "recommendationFormTitle"
+    )
+    .textContent =
+    "Add Recommendation";
+
+
+  document
+    .getElementById(
+      "recHoldingUnit"
+    )
+    .value =
+    "Months";
+
+}
+
+
+
+// ==========================================
+// RENDER RECOMMENDATIONS
+// ==========================================
+
+function renderRecommendations() {
+
+  const tbody =
+    document.getElementById(
+      "recommendationsTable"
+    );
+
+
+  if (!tbody) {
+    return;
+  }
+
+
+  const search =
+    document.getElementById(
+      "recommendationSearch"
+    )?.value
+      .trim()
+      .toLowerCase() || "";
+
+
+  const month =
+    document.getElementById(
+      "recommendationMonthFilter"
+    )?.value || "";
+
+
+  const type =
+    document.getElementById(
+      "recommendationTypeFilter"
+    )?.value || "";
+
+
+  const status =
+    document.getElementById(
+      "recommendationStatusFilter"
+    )?.value || "";
+
+
+  const timeStatus =
+    document.getElementById(
+      "recommendationTimeStatusFilter"
+    )?.value || "";
+
+
+  const filtered =
+    recommendations.filter(
+      item => {
+
+        const holding =
+          getHoldingStatus(
+            item
+          );
+
+
+        const searchText =
+          `${item.Name || ""} ${item.Symbol || ""}`
+            .toLowerCase();
+
+
+        return (
+
+          (
+            !search ||
+            searchText.includes(
+              search
+            )
+          )
+
+          &&
+
+          (
+            !month ||
+            getMonthKey(
+              item.Date
+            ) === month
+          )
+
+          &&
+
+          (
+            !type ||
+            item.Type === type
+          )
+
+          &&
+
+          (
+            !status ||
+            item.Status === status
+          )
+
+          &&
+
+          (
+            !timeStatus ||
+            holding.status ===
+            timeStatus
+          )
+
+        );
+
+      }
+    );
+
+
+  tbody.innerHTML =
+    "";
+
+
+  if (
+    filtered.length === 0
+  ) {
+
+    tbody.innerHTML =
+
+      `<tr>
+
+        <td colspan="14">
+          No recommendations found.
+        </td>
+
+      </tr>`;
 
     return;
 
   }
 
 
-  try {
+  filtered.forEach(
+    item => {
 
-    const result =
-      await apiPost(
-        "deleteRecommendation",
-        {
-          id
-        }
+      const progress =
+        getTargetProgress(
+          item
+        );
+
+
+      const holding =
+        getHoldingStatus(
+          item
+        );
+
+
+      const row =
+        document.createElement(
+          "tr"
+        );
+
+
+      row.innerHTML = `
+
+        <td>
+          ${formatDate(
+            item.Date
+          )}
+        </td>
+
+
+        <td>
+          <strong>
+            ${escapeHtml(
+              item.Name
+            )}
+          </strong>
+        </td>
+
+
+        <td>
+          ${escapeHtml(
+            item.Symbol
+          )}
+        </td>
+
+
+        <td>
+          ${escapeHtml(
+            item.Type
+          )}
+        </td>
+
+
+        <td>
+          ₹${formatNumber(
+            item.Entry_CMP
+          )}
+        </td>
+
+
+        <td>
+          ₹${formatNumber(
+            item.Current_CMP
+          )}
+        </td>
+
+
+        <td>
+          ₹${formatNumber(
+            item.Target
+          )}
+        </td>
+
+
+        <td>
+          ₹${formatNumber(
+            item.Stop_Loss
+          )}
+        </td>
+
+
+        <td
+          class="${
+            Number(
+              item.Return_Percent
+            ) >= 0
+              ? "positive"
+              : "negative"
+          }"
+        >
+
+          ${formatNumber(
+            item.Return_Percent
+          )}%
+
+        </td>
+
+
+        <td>
+          ${progressBar(
+            progress
+          )}
+        </td>
+
+
+        <td>
+          ${escapeHtml(
+            item.Time_Frame ||
+            "-"
+          )}
+        </td>
+
+
+        <td>
+          ${timeBadge(
+            holding
+          )}
+        </td>
+
+
+        <td>
+          ${statusBadge(
+            item.Status
+          )}
+        </td>
+
+
+        <td>
+
+          <button
+            class="action-btn edit-btn"
+            onclick="editRecommendation('${item.ID}')"
+          >
+            Edit
+          </button>
+
+
+          <button
+            class="action-btn delete-btn"
+            onclick="deleteRecommendation('${item.ID}')"
+          >
+            Delete
+          </button>
+
+        </td>
+
+      `;
+
+
+      tbody.appendChild(
+        row
+      );
+
+    }
+  );
+
+}
+
+
+
+// ==========================================
+// EDIT RECOMMENDATION
+// ==========================================
+
+window.editRecommendation =
+  function (
+    id
+  ) {
+
+    const item =
+      recommendations.find(
+        recommendation =>
+          String(
+            recommendation.ID
+          ) ===
+          String(
+            id
+          )
       );
 
 
-    if (
-      result &&
-      result.success
-    ) {
+    if (!item) {
 
       showToast(
-        "Recommendation deleted"
+        "Recommendation not found"
       );
 
-
-      await loadData();
+      return;
 
     }
 
-    else {
+
+    document
+      .getElementById(
+        "recommendationFormContainer"
+      )
+      .classList.remove(
+        "hidden"
+      );
+
+
+    document
+      .getElementById(
+        "recommendationFormTitle"
+      )
+      .textContent =
+      "Edit Recommendation";
+
+
+    document
+      .getElementById(
+        "recommendationId"
+      )
+      .value =
+      item.ID;
+
+
+    document
+      .getElementById(
+        "recDate"
+      )
+      .value =
+      formatInputDate(
+        item.Date
+      );
+
+
+    document
+      .getElementById(
+        "recName"
+      )
+      .value =
+      item.Name ||
+      "";
+
+
+    document
+      .getElementById(
+        "recSymbol"
+      )
+      .value =
+      item.Symbol ||
+      "";
+
+
+    document
+      .getElementById(
+        "recType"
+      )
+      .value =
+      item.Type ||
+      "Stock";
+
+
+    document
+      .getElementById(
+        "recEntry"
+      )
+      .value =
+      item.Entry_CMP ||
+      "";
+
+
+    document
+      .getElementById(
+        "recTarget"
+      )
+      .value =
+      item.Target ||
+      "";
+
+
+    document
+      .getElementById(
+        "recStopLoss"
+      )
+      .value =
+      item.Stop_Loss ||
+      "";
+
+
+    const parsed =
+      parseHoldingPeriod(
+        item.Time_Frame
+      );
+
+
+    document
+      .getElementById(
+        "recHoldingValue"
+      )
+      .value =
+      parsed.value;
+
+
+    document
+      .getElementById(
+        "recHoldingUnit"
+      )
+      .value =
+      parsed.unit;
+
+
+    document
+      .getElementById(
+        "recRemarks"
+      )
+      .value =
+      item.Remarks ||
+      "";
+
+
+    window.scrollTo({
+
+      top: 0,
+
+      behavior:
+        "smooth"
+
+    });
+
+  };
+
+
+
+// ==========================================
+// DELETE RECOMMENDATION
+// ==========================================
+
+window.deleteRecommendation =
+  async function (
+    id
+  ) {
+
+    const confirmed =
+      confirm(
+        "Delete this recommendation?"
+      );
+
+
+    if (!confirmed) {
+      return;
+    }
+
+
+    try {
+
+      const result =
+        await apiPost(
+          "deleteRecommendation",
+          { id }
+        );
+
+
+      if (
+        result.success
+      ) {
+
+        showToast(
+          "Recommendation deleted"
+        );
+
+
+        await loadData();
+
+      }
+
+      else {
+
+        throw new Error(
+          result.message ||
+          "Unable to delete"
+        );
+
+      }
+
+    }
+
+    catch (error) {
+
+      console.error(
+        error
+      );
+
 
       showToast(
-        result?.message ||
         "Unable to delete recommendation"
       );
 
     }
 
-  }
+  };
 
-  catch (error) {
 
-    console.error(
-      "Delete Error:",
-      error
+
+// ==========================================
+// TARGET PROGRESS
+// ==========================================
+
+function getTargetProgress(
+  item
+) {
+
+  const entry =
+    Number(
+      item.Entry_CMP ||
+      0
     );
 
 
-    showToast(
-      "Unable to delete recommendation"
+  const target =
+    Number(
+      item.Target ||
+      0
     );
 
+
+  const current =
+    Number(
+      item.Current_CMP ||
+      entry
+    );
+
+
+  if (
+    !entry ||
+    !target ||
+    target === entry
+  ) {
+
+    return 0;
+
   }
+
+
+  const raw =
+    (
+      (
+        current -
+        entry
+      )
+      /
+      (
+        target -
+        entry
+      )
+    )
+    *
+    100;
+
+
+  return Math.max(
+    0,
+    Math.min(
+      raw,
+      100
+    )
+  );
 
 }
 
 
+
 // ==========================================
-// SIP SETUP
+// PROGRESS BAR
+// ==========================================
+
+function progressBar(
+  progress
+) {
+
+  const safeProgress =
+    Math.max(
+      0,
+      Math.min(
+        Number(
+          progress || 0
+        ),
+        100
+      )
+    );
+
+
+  return `
+
+    <div
+      class="progress-wrapper"
+    >
+
+      <div
+        class="progress-track"
+      >
+
+        <div
+          class="progress-fill"
+          style="width:${safeProgress}%"
+        >
+        </div>
+
+      </div>
+
+
+      <span>
+        ${formatNumber(
+          safeProgress
+        )}%
+      </span>
+
+    </div>
+
+  `;
+
+}
+
+
+
+// ==========================================
+// HOLDING PERIOD PARSER
+// ==========================================
+
+function parseHoldingPeriod(
+  value
+) {
+
+  const text =
+    String(
+      value || ""
+    )
+    .trim()
+    .toLowerCase();
+
+
+  const match =
+    text.match(
+      /(\d+(?:\.\d+)?)\s*(day|days|month|months)/
+    );
+
+
+  if (!match) {
+
+    return {
+
+      value: 1,
+
+      unit:
+        "Months"
+
+    };
+
+  }
+
+
+  return {
+
+    value:
+      Number(
+        match[1]
+      ),
+
+    unit:
+      match[2]
+        .startsWith(
+          "day"
+        )
+        ? "Days"
+        : "Months"
+
+  };
+
+}
+
+
+
+// ==========================================
+// HOLDING STATUS
+// ==========================================
+
+function getHoldingStatus(
+  item
+) {
+
+  // FINAL STATUS OVERRIDES TIME
+
+  if (
+    item.Status ===
+    "Target Hit"
+  ) {
+
+    return {
+
+      status:
+        "Target Hit",
+
+      label:
+        "🎯 Target Hit"
+
+    };
+
+  }
+
+
+  if (
+    item.Status ===
+    "SL Hit"
+  ) {
+
+    return {
+
+      status:
+        "SL Hit",
+
+      label:
+        "🛑 SL Hit"
+
+    };
+
+  }
+
+
+  const startDate =
+    new Date(
+      formatInputDate(
+        item.Date
+      ) +
+      "T00:00:00"
+    );
+
+
+  if (
+    Number.isNaN(
+      startDate.getTime()
+    )
+  ) {
+
+    return {
+
+      status:
+        "Within Time",
+
+      label:
+        "Within Time"
+
+    };
+
+  }
+
+
+  const holding =
+    parseHoldingPeriod(
+      item.Time_Frame
+    );
+
+
+  const dueDate =
+    new Date(
+      startDate
+    );
+
+
+  if (
+    holding.unit ===
+    "Days"
+  ) {
+
+    dueDate.setDate(
+      dueDate.getDate() +
+      holding.value
+    );
+
+  }
+
+  else {
+
+    dueDate.setMonth(
+      dueDate.getMonth() +
+      holding.value
+    );
+
+  }
+
+
+  const today =
+    new Date();
+
+
+  today.setHours(
+    0,
+    0,
+    0,
+    0
+  );
+
+
+  const totalDuration =
+    dueDate -
+    startDate;
+
+
+  const remaining =
+    dueDate -
+    today;
+
+
+  if (
+    remaining < 0
+  ) {
+
+    return {
+
+      status:
+        "Overdue",
+
+      label:
+        "Overdue"
+
+    };
+
+  }
+
+
+  const remainingPercent =
+    totalDuration > 0
+      ? (
+          remaining /
+          totalDuration
+        )
+        * 100
+      : 0;
+
+
+  if (
+    remainingPercent <=
+    25
+  ) {
+
+    return {
+
+      status:
+        "Near Due",
+
+      label:
+        "Near Due"
+
+    };
+
+  }
+
+
+  return {
+
+    status:
+      "Within Time",
+
+    label:
+      "Within Time"
+
+  };
+
+}
+
+
+
+// ==========================================
+// TIME BADGE
+// ==========================================
+
+function timeBadge(
+  holding
+) {
+
+  let className =
+    "within-time";
+
+
+  if (
+    holding.status ===
+    "Near Due"
+  ) {
+
+    className =
+      "near-due";
+
+  }
+
+
+  if (
+    holding.status ===
+    "Overdue"
+  ) {
+
+    className =
+      "overdue";
+
+  }
+
+
+  if (
+    holding.status ===
+    "Target Hit"
+  ) {
+
+    className =
+      "time-target";
+
+  }
+
+
+  if (
+    holding.status ===
+    "SL Hit"
+  ) {
+
+    className =
+      "time-sl";
+
+  }
+
+
+  return `
+
+    <span
+      class="time-badge ${className}"
+    >
+
+      ${holding.label}
+
+    </span>
+
+  `;
+
+}
+
+
+
+// ==========================================
+// SIP
 // ==========================================
 
 function setupSIP() {
 
-  const filter =
-    getElement(
+  const amountFilter =
+    document.getElementById(
       "sipAmountFilter"
     );
 
 
-  if (filter) {
+  if (amountFilter) {
 
-    filter.addEventListener(
+    amountFilter.addEventListener(
       "change",
       renderSIPBasket
     );
@@ -1984,21 +2235,105 @@ function setupSIP() {
 
 
   const form =
-    getElement(
+    document.getElementById(
       "customSIPForm"
     );
 
 
-  if (form) {
-
-    form.addEventListener(
-      "submit",
-      saveCustomSIP
-    );
-
+  if (!form) {
+    return;
   }
 
+
+  form.addEventListener(
+    "submit",
+    async event => {
+
+      event.preventDefault();
+
+
+      const data = {
+
+        planName:
+          document
+            .getElementById(
+              "sipPlanName"
+            ).value,
+
+        monthlyAmount:
+          Number(
+            document
+              .getElementById(
+                "sipMonthlyAmount"
+              ).value
+          ),
+
+        investmentName:
+          document
+            .getElementById(
+              "sipInvestmentName"
+            ).value,
+
+        investmentType:
+          document
+            .getElementById(
+              "sipInvestmentType"
+            ).value,
+
+        allocationPercent:
+          Number(
+            document
+              .getElementById(
+                "sipAllocationPercent"
+              ).value
+          )
+
+      };
+
+
+      try {
+
+        const result =
+          await apiPost(
+            "addCustomSIP",
+            data
+          );
+
+
+        if (
+          !result.success
+        ) {
+
+          throw new Error(
+            result.message ||
+            "Unable to save SIP"
+          );
+
+        }
+
+
+        showToast(
+          "Custom SIP added"
+        );
+
+
+        event.target.reset();
+
+      }
+
+      catch (error) {
+
+        showToast(
+          "Unable to save SIP"
+        );
+
+      }
+
+    }
+  );
+
 }
+
 
 
 // ==========================================
@@ -2007,265 +2342,218 @@ function setupSIP() {
 
 function renderSIPBasket() {
 
-  const amount =
-    getElement(
+  const select =
+    document.getElementById(
       "sipAmountFilter"
-    )?.value ||
-    "";
+    );
 
 
   const container =
-    getElement(
+    document.getElementById(
       "sipBasketContainer"
     );
 
 
-  if (!container) {
+  if (
+    !select ||
+    !container
+  ) {
 
     return;
 
   }
 
 
-  if (!amount) {
+  if (
+    select.options.length <= 1
+  ) {
 
-    container.innerHTML =
-      `
-      <div class="empty-state">
-        Select a monthly SIP amount to view the allocation.
-      </div>
-      `;
+    const amounts =
+      [
+        ...new Set(
+          sipBaskets.map(
+            item =>
+              String(
+                item.Monthly_Amount
+              )
+          )
+        )
+      ];
 
-    return;
+
+    amounts
+      .sort(
+        (
+          a,
+          b
+        ) =>
+          Number(a) -
+          Number(b)
+      )
+      .forEach(
+        amount => {
+
+          const option =
+            document.createElement(
+              "option"
+            );
+
+
+          option.value =
+            amount;
+
+
+          option.textContent =
+            `₹${Number(
+              amount
+            ).toLocaleString(
+              "en-IN"
+            )} Monthly`;
+
+
+          select.appendChild(
+            option
+          );
+
+        }
+      );
 
   }
 
 
-  const basket =
+  if (
+    !select.value &&
+    sipBaskets.length
+  ) {
+
+    select.value =
+      String(
+        sipBaskets[0]
+          .Monthly_Amount
+      );
+
+  }
+
+
+  const items =
     sipBaskets.filter(
       item =>
-
         String(
           item.Monthly_Amount
         ) ===
         String(
-          amount
+          select.value
         )
     );
 
 
-  if (
-    basket.length === 0
-  ) {
-
-    container.innerHTML =
-      `
-      <div class="empty-state">
-        No SIP basket found.
-      </div>
-      `;
-
-    return;
-
-  }
+  container.innerHTML =
+    "";
 
 
-  let html =
-    `
-    <div class="sip-card">
-
-      <h2>
-        SIP Breakup for ₹${formatNumber(amount)}
-      </h2>
-    `;
-
-
-  basket.forEach(
+  items.forEach(
     item => {
 
-      html +=
-        `
+      const card =
+        document.createElement(
+          "div"
+        );
+
+
+      card.className =
+        "sip-card";
+
+
+      card.innerHTML = `
+
+        <div>
+
+          <strong>
+            ${escapeHtml(
+              item.Investment_Name
+            )}
+          </strong>
+
+          <span>
+            ${escapeHtml(
+              item.Investment_Type
+            )}
+          </span>
+
+        </div>
+
+
         <div class="sip-row">
 
-          <div>
+          <span>
+            Monthly Allocation
+          </span>
 
-            <strong>
-              ${escapeHtml(
-                item.Investment_Name
-              )}
-            </strong>
-
-            <div>
-              ${escapeHtml(
-                item.Investment_Type
-              )}
-            </div>
-
-          </div>
-
-          <div>
-
+          <strong>
             ₹${formatNumber(
               item.Allocation_Amount
             )}
-
-          </div>
+          </strong>
 
         </div>
-        `;
+
+
+        <div class="sip-row">
+
+          <span>
+            Allocation
+          </span>
+
+          <strong>
+            ${formatNumber(
+              item.Allocation_Percent
+            )}%
+          </strong>
+
+        </div>
+
+      `;
+
+
+      container.appendChild(
+        card
+      );
 
     }
   );
 
-
-  html +=
-    `</div>`;
-
-
-  container.innerHTML =
-    html;
-
 }
 
 
-// ==========================================
-// SAVE CUSTOM SIP
-// ==========================================
-
-async function saveCustomSIP(
-  event
-) {
-
-  event.preventDefault();
-
-
-  const data = {
-
-    planName:
-      getElement(
-        "sipPlanName"
-      )?.value ||
-      "",
-
-    monthlyAmount:
-      Number(
-        getElement(
-          "sipMonthlyAmount"
-        )?.value ||
-        0
-      ),
-
-    investmentName:
-      getElement(
-        "sipInvestmentName"
-      )?.value ||
-      "",
-
-    investmentType:
-      getElement(
-        "sipInvestmentType"
-      )?.value ||
-      "",
-
-    allocationPercent:
-      Number(
-        getElement(
-          "sipAllocationPercent"
-        )?.value ||
-        0
-      )
-
-  };
-
-
-  try {
-
-    const result =
-      await apiPost(
-        "addCustomSIP",
-        data
-      );
-
-
-    if (
-      result &&
-      result.success === false
-    ) {
-
-      throw new Error(
-        result.message ||
-        "Unable to save SIP"
-      );
-
-    }
-
-
-    showToast(
-      "Custom SIP added"
-    );
-
-
-    event.target.reset();
-
-  }
-
-  catch (error) {
-
-    console.error(
-      "SIP Error:",
-      error
-    );
-
-
-    showToast(
-      "Unable to save SIP"
-    );
-
-  }
-
-}
-
 
 // ==========================================
-// OPTIONS SETUP
+// OPTIONS
 // ==========================================
 
 function setupOptions() {
 
-  const legsContainer =
-    getElement(
-      "optionLegsContainer"
-    );
-
-
-  if (
-    legsContainer &&
-    legsContainer.children.length === 0
-  ) {
-
-    addOptionLeg();
-
-  }
-
-
-  const addButton =
-    getElement(
+  const addLegButton =
+    document.getElementById(
       "addOptionLegBtn"
     );
 
 
-  if (addButton) {
+  if (addLegButton) {
 
-    addButton.addEventListener(
+    addLegButton.addEventListener(
       "click",
-      addOptionLeg
+      () => {
+
+        addOptionLeg();
+
+      }
     );
 
   }
 
 
   const form =
-    getElement(
+    document.getElementById(
       "optionTradeForm"
     );
 
@@ -2274,48 +2562,178 @@ function setupOptions() {
 
     form.addEventListener(
       "submit",
-      saveOptionTrade
-    );
+      async event => {
 
-  }
+        event.preventDefault();
 
 
-  [
-    "optionSearch",
-    "optionMonthFilter",
-    "optionStatusFilter"
-  ]
-    .forEach(
-      id => {
+        const legs =
+          getOptionLegs();
 
-        const element =
-          getElement(
-            id
+
+        if (
+          legs.length === 0
+        ) {
+
+          showToast(
+            "Add at least one option leg"
           );
-
-
-        if (!element) {
 
           return;
 
         }
 
 
-        element.addEventListener(
-          "input",
-          renderOptions
-        );
+        const data = {
+
+          date:
+            document
+              .getElementById(
+                "optionDate"
+              ).value,
+
+          underlying:
+            document
+              .getElementById(
+                "optionUnderlying"
+              ).value,
+
+          expiry:
+            document
+              .getElementById(
+                "optionExpiry"
+              ).value,
+
+          strategy:
+            document
+              .getElementById(
+                "optionStrategy"
+              ).value,
+
+          lotSize:
+            Number(
+              document
+                .getElementById(
+                  "optionLotSize"
+                ).value
+            ),
+
+          lots:
+            Number(
+              document
+                .getElementById(
+                  "optionLots"
+                ).value
+            ),
+
+          targetPercent:
+            Number(
+              document
+                .getElementById(
+                  "optionTargetPercent"
+                ).value
+            ),
+
+          slPercent:
+            Number(
+              document
+                .getElementById(
+                  "optionSLPercent"
+                ).value
+            ),
+
+          remarks:
+            document
+              .getElementById(
+                "optionRemarks"
+              ).value,
+
+          legs
+
+        };
 
 
-        element.addEventListener(
-          "change",
-          renderOptions
-        );
+        try {
+
+          const result =
+            await apiPost(
+              "addOptionTrade",
+              data
+            );
+
+
+          if (
+            !result.success
+          ) {
+
+            throw new Error(
+              result.message ||
+              "Unable to save option trade"
+            );
+
+          }
+
+
+          showToast(
+            "Option trade saved"
+          );
+
+
+          form.reset();
+
+
+          document
+            .getElementById(
+              "optionLegsContainer"
+            )
+            .innerHTML =
+            "";
+
+
+          setTodayDates();
+
+
+          await loadData();
+
+        }
+
+        catch (error) {
+
+          console.error(
+            error
+          );
+
+
+          showToast(
+            "Unable to save option trade"
+          );
+
+        }
 
       }
     );
 
+  }
+
+
+  if (
+    document
+      .getElementById(
+        "optionLegsContainer"
+      ) &&
+    document
+      .querySelectorAll(
+        ".option-leg"
+      )
+      .length === 0
+  ) {
+
+    addOptionLeg();
+
+  }
+
 }
+
 
 
 // ==========================================
@@ -2325,15 +2743,13 @@ function setupOptions() {
 function addOptionLeg() {
 
   const container =
-    getElement(
+    document.getElementById(
       "optionLegsContainer"
     );
 
 
   if (!container) {
-
     return;
-
   }
 
 
@@ -2347,16 +2763,18 @@ function addOptionLeg() {
     "option-leg";
 
 
-  leg.innerHTML =
-    `
+  leg.innerHTML = `
+
     <input
-      class="strike-price"
       type="number"
+      class="leg-strike"
       placeholder="Strike"
-      required
     >
 
-    <select class="option-type">
+
+    <select
+      class="leg-type"
+    >
 
       <option value="CE">
         CE
@@ -2369,7 +2787,9 @@ function addOptionLeg() {
     </select>
 
 
-    <select class="position">
+    <select
+      class="leg-position"
+    >
 
       <option value="BUY">
         BUY
@@ -2383,18 +2803,17 @@ function addOptionLeg() {
 
 
     <input
-      class="entry-premium"
       type="number"
       step="0.01"
+      class="leg-entry"
       placeholder="Entry Premium"
-      required
     >
 
 
     <input
-      class="current-premium"
       type="number"
       step="0.01"
+      class="leg-current"
       placeholder="Current Premium"
     >
 
@@ -2405,39 +2824,22 @@ function addOptionLeg() {
     >
       ×
     </button>
-    `;
+
+  `;
 
 
-  const removeButton =
-    leg.querySelector(
+  leg
+    .querySelector(
       ".remove-leg"
-    );
-
-
-  if (removeButton) {
-
-    removeButton.addEventListener(
+    )
+    .addEventListener(
       "click",
       () => {
 
-        const legs =
-          document.querySelectorAll(
-            ".option-leg"
-          );
-
-
-        if (
-          legs.length > 1
-        ) {
-
-          leg.remove();
-
-        }
+        leg.remove();
 
       }
     );
-
-  }
 
 
   container.appendChild(
@@ -2447,229 +2849,71 @@ function addOptionLeg() {
 }
 
 
+
 // ==========================================
-// SAVE OPTION TRADE
+// GET OPTION LEGS
 // ==========================================
 
-async function saveOptionTrade(
-  event
-) {
+function getOptionLegs() {
 
-  event.preventDefault();
-
-
-  const legs =
-    [];
-
-
-  document
-    .querySelectorAll(
+  return [
+    ...document.querySelectorAll(
       ".option-leg"
     )
-    .forEach(
-      leg => {
+  ]
+  .map(
+    leg => {
 
-        const entry =
+      return {
+
+        strikePrice:
           Number(
             leg
               .querySelector(
-                ".entry-premium"
-              )
-              ?.value ||
-            0
-          );
+                ".leg-strike"
+              ).value
+          ),
 
+        optionType:
+          leg
+            .querySelector(
+              ".leg-type"
+            ).value,
 
-        const currentField =
-          leg.querySelector(
-            ".current-premium"
-          );
+        position:
+          leg
+            .querySelector(
+              ".leg-position"
+            ).value,
 
-
-        const current =
+        entryPremium:
           Number(
-            currentField?.value ||
-            entry
-          );
-
-
-        legs.push({
-
-          strikePrice:
-            Number(
-              leg
-                .querySelector(
-                  ".strike-price"
-                )
-                ?.value ||
-              0
-            ),
-
-          optionType:
             leg
               .querySelector(
-                ".option-type"
-              )
-              ?.value ||
-            "",
+                ".leg-entry"
+              ).value
+          ),
 
-          position:
+        currentPremium:
+          Number(
             leg
               .querySelector(
-                ".position"
-              )
-              ?.value ||
-            "",
+                ".leg-current"
+              ).value
+          )
 
-          entryPremium:
-            entry,
-
-          currentPremium:
-            current
-
-        });
-
-      }
-    );
-
-
-  const data = {
-
-    date:
-      getElement(
-        "optionDate"
-      )?.value ||
-      "",
-
-    underlying:
-      getElement(
-        "optionUnderlying"
-      )?.value ||
-      "",
-
-    expiry:
-      getElement(
-        "optionExpiry"
-      )?.value ||
-      "",
-
-    strategy:
-      getElement(
-        "optionStrategy"
-      )?.value ||
-      "",
-
-    lotSize:
-      Number(
-        getElement(
-          "optionLotSize"
-        )?.value ||
-        1
-      ),
-
-    lots:
-      Number(
-        getElement(
-          "optionLots"
-        )?.value ||
-        1
-      ),
-
-    targetPercent:
-      Number(
-        getElement(
-          "optionTargetPercent"
-        )?.value ||
-        0
-      ),
-
-    slPercent:
-      Number(
-        getElement(
-          "optionSLPercent"
-        )?.value ||
-        0
-      ),
-
-    remarks:
-      getElement(
-        "optionRemarks"
-      )?.value ||
-      "",
-
-    legs
-
-  };
-
-
-  try {
-
-    const result =
-      await apiPost(
-        "addOptionTrade",
-        data
-      );
-
-
-    if (
-      result &&
-      result.success === false
-    ) {
-
-      throw new Error(
-        result.message ||
-        "Unable to save option trade"
-      );
+      };
 
     }
-
-
-    showToast(
-      "Option trade saved"
-    );
-
-
-    event.target.reset();
-
-
-    const legsContainer =
-      getElement(
-        "optionLegsContainer"
-      );
-
-
-    if (legsContainer) {
-
-      legsContainer.innerHTML =
-        "";
-
-      addOptionLeg();
-
-    }
-
-
-    setTodayDates();
-
-
-    await loadData();
-
-  }
-
-  catch (error) {
-
-    console.error(
-      "Option Save Error:",
-      error
-    );
-
-
-    showToast(
-      "Unable to save option trade"
-    );
-
-  }
+  )
+  .filter(
+    leg =>
+      leg.strikePrice > 0 &&
+      leg.entryPremium > 0
+  );
 
 }
+
 
 
 // ==========================================
@@ -2679,85 +2923,35 @@ async function saveOptionTrade(
 function renderOptions() {
 
   const tbody =
-    getElement(
+    document.getElementById(
       "optionTradesTable"
     );
 
 
   if (!tbody) {
-
     return;
-
   }
 
 
   const search =
-    (
-      getElement(
-        "optionSearch"
-      )?.value ||
-      ""
-    )
-      .toLowerCase()
-      .trim();
+    document.getElementById(
+      "optionSearch"
+    )?.value
+      .trim()
+      .toLowerCase() || "";
 
 
-  const month =
-    getElement(
-      "optionMonthFilter"
-    )?.value ||
-    "";
-
-
-  const status =
-    getElement(
-      "optionStatusFilter"
-    )?.value ||
-    "";
-
-
-  const data =
+  const filtered =
     optionTrades.filter(
-      item => {
-
-        const underlying =
-          String(
-            item.Underlying ||
-            ""
-          )
-            .toLowerCase();
-
-
-        const searchMatch =
-          !search ||
-          underlying.includes(
-            search
-          );
-
-
-        const monthMatch =
-          !month ||
-          String(
-            item.Date ||
-            ""
-          ).startsWith(
-            month
-          );
-
-
-        const statusMatch =
-          !status ||
-          item.Status ===
-          status;
-
-
-        return (
-          searchMatch &&
-          monthMatch &&
-          statusMatch
-        );
-
-      }
+      item =>
+        String(
+          item.Underlying ||
+          ""
+        )
+        .toLowerCase()
+        .includes(
+          search
+        )
     );
 
 
@@ -2766,24 +2960,25 @@ function renderOptions() {
 
 
   if (
-    data.length === 0
+    filtered.length === 0
   ) {
 
     tbody.innerHTML =
-      `
-      <tr>
+
+      `<tr>
+
         <td colspan="8">
           No option trades found.
         </td>
-      </tr>
-      `;
+
+      </tr>`;
 
     return;
 
   }
 
 
-  data.forEach(
+  filtered.forEach(
     item => {
 
       const row =
@@ -2792,27 +2987,35 @@ function renderOptions() {
         );
 
 
-      row.innerHTML =
-        `
-        <td>${escapeHtml(item.Date || "")}</td>
+      row.innerHTML = `
 
         <td>
-          ${escapeHtml(
-            item.Underlying || ""
+          ${formatDate(
+            item.Date
           )}
         </td>
 
-        <td>
-          ${escapeHtml(
-            item.Expiry || ""
-          )}
-        </td>
 
         <td>
           ${escapeHtml(
-            item.Strategy || ""
+            item.Underlying
           )}
         </td>
+
+
+        <td>
+          ${formatDate(
+            item.Expiry
+          )}
+        </td>
+
+
+        <td>
+          ${escapeHtml(
+            item.Strategy
+          )}
+        </td>
+
 
         <td>
           ₹${formatNumber(
@@ -2820,19 +3023,23 @@ function renderOptions() {
           )}
         </td>
 
+
         <td>
           ₹${formatNumber(
             item.Combined_Current_Premium
           )}
         </td>
 
-        <td class="${
-          Number(
-            item.Net_PL
-          ) >= 0
-            ? "positive"
-            : "negative"
-        }">
+
+        <td
+          class="${
+            Number(
+              item.Net_PL
+            ) >= 0
+              ? "positive"
+              : "negative"
+          }"
+        >
 
           ₹${formatNumber(
             item.Net_PL
@@ -2840,12 +3047,14 @@ function renderOptions() {
 
         </td>
 
+
         <td>
           ${statusBadge(
             item.Status
           )}
         </td>
-        `;
+
+      `;
 
 
       tbody.appendChild(
@@ -2856,6 +3065,92 @@ function renderOptions() {
   );
 
 }
+
+
+
+// ==========================================
+// OPTIONS DASHBOARD
+// ==========================================
+
+function renderOptionsDashboard() {
+
+  const total =
+    optionTrades.length;
+
+
+  const open =
+    optionTrades.filter(
+      item =>
+        item.Status ===
+        "Open"
+    ).length;
+
+
+  const target =
+    optionTrades.filter(
+      item =>
+        item.Status ===
+        "Target Hit"
+    ).length;
+
+
+  const sl =
+    optionTrades.filter(
+      item =>
+        item.Status ===
+        "SL Hit"
+    ).length;
+
+
+  const netPL =
+    optionTrades.reduce(
+      (
+        sum,
+        item
+      ) =>
+        sum +
+        Number(
+          item.Net_PL ||
+          0
+        ),
+
+      0
+    );
+
+
+  setText(
+    "totalOptionTrades",
+    total
+  );
+
+
+  setText(
+    "openOptionTrades",
+    open
+  );
+
+
+  setText(
+    "optionTargetHit",
+    target
+  );
+
+
+  setText(
+    "optionSLHit",
+    sl
+  );
+
+
+  setText(
+    "optionNetPL",
+    `₹${formatNumber(
+      netPL
+    )}`
+  );
+
+}
+
 
 
 // ==========================================
@@ -2892,32 +3187,190 @@ function statusBadge(
   }
 
 
-  else if (
-    status ===
-    "Open"
-  ) {
-
-    className =
-      "active";
-
-  }
-
-
   return `
-    <span class="badge ${className}">
+
+    <span
+      class="badge ${className}"
+    >
+
       ${escapeHtml(
         status ||
         "Active"
       )}
+
     </span>
+
   `;
 
 }
 
 
+
 // ==========================================
-// FORMAT NUMBER
+// HELPERS
 // ==========================================
+
+function getMonthKey(
+  value
+) {
+
+  const date =
+    formatInputDate(
+      value
+    );
+
+
+  return date
+    ? date.substring(
+        0,
+        7
+      )
+    : "";
+
+}
+
+
+
+function formatMonth(
+  value
+) {
+
+  const parts =
+    String(
+      value
+    ).split(
+      "-"
+    );
+
+
+  if (
+    parts.length !== 2
+  ) {
+
+    return value;
+
+  }
+
+
+  const date =
+    new Date(
+      Number(
+        parts[0]
+      ),
+
+      Number(
+        parts[1]
+      ) - 1,
+
+      1
+    );
+
+
+  return date.toLocaleDateString(
+    "en-IN",
+    {
+
+      month:
+        "long",
+
+      year:
+        "numeric"
+
+    }
+  );
+
+}
+
+
+
+function formatDate(
+  value
+) {
+
+  if (!value) {
+    return "-";
+  }
+
+
+  const text =
+    String(
+      value
+    );
+
+
+  const match =
+    text.match(
+      /^(\d{4})-(\d{2})-(\d{2})/
+    );
+
+
+  if (match) {
+
+    return `${match[3]}-${match[2]}-${match[1]}`;
+
+  }
+
+
+  return text;
+
+}
+
+
+
+function formatInputDate(
+  value
+) {
+
+  if (!value) {
+    return "";
+  }
+
+
+  const text =
+    String(
+      value
+    );
+
+
+  const match =
+    text.match(
+      /^(\d{4})-(\d{2})-(\d{2})/
+    );
+
+
+  if (match) {
+
+    return `${match[1]}-${match[2]}-${match[3]}`;
+
+  }
+
+
+  const date =
+    new Date(
+      value
+    );
+
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+
+    return "";
+
+  }
+
+
+  return date
+    .toISOString()
+    .split(
+      "T"
+    )[0];
+
+}
+
+
 
 function formatNumber(
   value
@@ -2928,17 +3381,6 @@ function formatNumber(
       value ||
       0
     );
-
-
-  if (
-    Number.isNaN(
-      number
-    )
-  ) {
-
-    return "0";
-
-  }
 
 
   return number.toLocaleString(
@@ -2954,9 +3396,6 @@ function formatNumber(
 }
 
 
-// ==========================================
-// SET TEXT
-// ==========================================
 
 function setText(
   id,
@@ -2964,7 +3403,7 @@ function setText(
 ) {
 
   const element =
-    getElement(
+    document.getElementById(
       id
     );
 
@@ -2979,41 +3418,19 @@ function setText(
 }
 
 
-// ==========================================
-// SET VALUE
-// ==========================================
 
-function setValue(
-  id,
+function escapeHtml(
   value
 ) {
 
-  const element =
-    getElement(
-      id
+  const text =
+    String(
+      value ||
+      ""
     );
 
 
-  if (element) {
-
-    element.value =
-      value;
-
-  }
-
-}
-
-
-// ==========================================
-// ESCAPE HTML
-// ==========================================
-
-function escapeHtml(value) {
-
-  return String(
-    value ??
-    ""
-  )
+  return text
     .replace(
       /&/g,
       "&amp;"
@@ -3038,23 +3455,9 @@ function escapeHtml(value) {
 }
 
 
-// ==========================================
-// ESCAPE ATTRIBUTE
-// ==========================================
-
-function escapeAttribute(
-  value
-) {
-
-  return escapeHtml(
-    value
-  );
-
-}
-
 
 // ==========================================
-// TOAST MESSAGE
+// TOAST
 // ==========================================
 
 function showToast(
@@ -3062,19 +3465,13 @@ function showToast(
 ) {
 
   const toast =
-    getElement(
+    document.getElementById(
       "toast"
     );
 
 
   if (!toast) {
-
-    console.log(
-      message
-    );
-
     return;
-
   }
 
 
@@ -3087,22 +3484,16 @@ function showToast(
   );
 
 
-  clearTimeout(
-    window.toastTimer
+  setTimeout(
+    () => {
+
+      toast.classList.remove(
+        "show"
+      );
+
+    },
+
+    2500
   );
-
-
-  window.toastTimer =
-    setTimeout(
-      () => {
-
-        toast.classList.remove(
-          "show"
-        );
-
-      },
-
-      2500
-    );
 
 }
