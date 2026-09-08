@@ -1,46 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
   <title>Ankit Investment Hub</title>
 
-  <link rel="stylesheet" href="style.css">
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
+
 </head>
+
 
 <body>
 
 <div class="app">
 
-  <!-- SIDEBAR -->
+
+  <!-- =========================================
+       SIDEBAR
+  ========================================== -->
+
   <aside class="sidebar">
 
     <div class="brand">
-      <div class="logo">₹</div>
+
+      <div class="logo">
+        ₹
+      </div>
 
       <div>
-        <h2>Investment Hub</h2>
-        <span>Ankit's Portfolio System</span>
+
+        <h2>
+          Investment Hub
+        </h2>
+
+        <span>
+          Ankit's Portfolio System
+        </span>
+
       </div>
+
     </div>
 
 
     <nav class="nav">
 
-      <button class="nav-btn active" data-page="dashboard">
+      <button
+        class="nav-btn active"
+        data-page="dashboard"
+      >
         📊 Dashboard
       </button>
 
-      <button class="nav-btn" data-page="recommendations">
+
+      <button
+        class="nav-btn"
+        data-page="recommendations"
+      >
         📈 Recommendations
       </button>
 
-      <button class="nav-btn" data-page="sip">
+
+      <button
+        class="nav-btn"
+        data-page="sip"
+      >
         💰 SIP Suggestions
       </button>
 
-      <button class="nav-btn" data-page="options">
+
+      <button
+        class="nav-btn"
+        data-page="options"
+      >
         📉 Options & Hedge
       </button>
 
@@ -49,7 +89,10 @@
 
     <div class="sidebar-bottom">
 
-      <button id="darkModeBtn" class="dark-btn">
+      <button
+        id="darkModeBtn"
+        class="dark-btn"
+      >
         🌙 Dark Mode
       </button>
 
@@ -58,289 +101,67 @@
   </aside>
 
 
-  <!-- MAIN -->
+
+  <!-- =========================================
+       MAIN CONTENT
+  ========================================== -->
+
   <main class="main-content">
 
-    <!-- DASHBOARD -->
-    <section id="dashboard" class="page active">
+
+    <!-- =========================================
+         DASHBOARD
+    ========================================== -->
+
+    <section
+      id="dashboard"
+      class="page active"
+    >
 
       <div class="page-header">
 
         <div>
-          <h1>Dashboard</h1>
-          <p>Track your recommendations and performance.</p>
+
+          <h1>
+            Dashboard
+          </h1>
+
+          <p>
+            Track your recommendations and performance.
+          </p>
+
         </div>
 
-        <button id="refreshDashboardBtn" class="secondary-btn">
+
+        <button
+          id="refreshDashboardBtn"
+          class="secondary-btn"
+        >
           ↻ Refresh
         </button>
 
       </div>
 
 
+
+      <!-- DASHBOARD FILTERS -->
+
       <div class="filters">
 
-        <select id="dashboardMonthFilter">
-          <option value="">All Months</option>
-        </select>
-
-        <select id="dashboardTypeFilter">
-          <option value="">All Types</option>
-          <option value="Stock">Stock</option>
-          <option value="ETF">ETF</option>
-          <option value="Mutual Fund">Mutual Fund</option>
-        </select>
-
-      </div>
-
-
-      <div class="stats-grid">
-
-        <div class="stat-card">
-          <span>Total Recommendations</span>
-          <h2 id="totalRecommendations">0</h2>
-        </div>
-
-        <div class="stat-card">
-          <span>Active</span>
-          <h2 id="activeRecommendations">0</h2>
-        </div>
-
-        <div class="stat-card success">
-          <span>Target Hit</span>
-          <h2 id="targetHit">0</h2>
-        </div>
-
-        <div class="stat-card danger">
-          <span>SL Hit</span>
-          <h2 id="slHit">0</h2>
-        </div>
-
-        <div class="stat-card">
-          <span>Average Return</span>
-          <h2 id="averageReturn">0%</h2>
-        </div>
-
-      </div>
-
-
-      <div class="dashboard-section">
-
-        <div class="section-header">
-          <h2>Recent Recommendations</h2>
-        </div>
-
-        <div class="table-wrapper">
-
-          <table>
-
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Entry</th>
-                <th>Current CMP</th>
-                <th>Return</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-
-            <tbody id="dashboardRecommendationsTable">
-            </tbody>
-
-          </table>
-
-        </div>
-
-      </div>
-
-
-      <div class="dashboard-section">
-
-        <div class="section-header">
-          <h2>Options Performance</h2>
-        </div>
-
-        <div class="filters">
-
-          <select id="dashboardOptionMonthFilter">
-            <option value="">All Months</option>
-          </select>
-
-          <select id="dashboardOptionStatusFilter">
-            <option value="">All Status</option>
-            <option value="Open">Open</option>
-            <option value="Target Hit">Target Hit</option>
-            <option value="SL Hit">SL Hit</option>
-          </select>
-
-        </div>
-
-
-        <div class="stats-grid options-stats">
-
-          <div class="stat-card">
-            <span>Total Trades</span>
-            <h2 id="totalOptionTrades">0</h2>
-          </div>
-
-          <div class="stat-card">
-            <span>Open Trades</span>
-            <h2 id="openOptionTrades">0</h2>
-          </div>
-
-          <div class="stat-card success">
-            <span>Target Hit</span>
-            <h2 id="optionTargetHit">0</h2>
-          </div>
-
-          <div class="stat-card danger">
-            <span>SL Hit</span>
-            <h2 id="optionSLHit">0</h2>
-          </div>
-
-          <div class="stat-card">
-            <span>Net P/L</span>
-            <h2 id="optionNetPL">₹0</h2>
-          </div>
-
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- RECOMMENDATIONS -->
-    <section id="recommendations" class="page">
-
-      <div class="page-header">
-
-        <div>
-          <h1>Recommendations</h1>
-          <p>Add and track your stock, ETF and fund recommendations.</p>
-        </div>
-
-        <button id="showRecommendationFormBtn" class="primary-btn">
-          + Add Recommendation
-        </button>
-
-      </div>
-
-
-      <!-- ADD / EDIT FORM -->
-      <div id="recommendationFormContainer" class="form-card hidden">
-
-        <div class="section-header">
-
-          <h2 id="recommendationFormTitle">
-            Add Recommendation
-          </h2>
-
-          <button id="cancelRecommendationBtn" class="close-btn">
-            ×
-          </button>
-
-        </div>
-
-
-        <form id="recommendationForm">
-
-          <input type="hidden" id="recommendationId">
-
-
-          <div class="form-grid">
-
-            <div class="form-group">
-              <label>Date</label>
-              <input type="date" id="recDate" required>
-            </div>
-
-
-            <div class="form-group">
-              <label>Name</label>
-              <input type="text" id="recName" required>
-            </div>
-
-
-            <div class="form-group">
-              <label>Symbol</label>
-              <input type="text" id="recSymbol" placeholder="RELIANCE">
-            </div>
-
-
-            <div class="form-group">
-              <label>Type</label>
-
-              <select id="recType">
-
-                <option value="Stock">Stock</option>
-                <option value="ETF">ETF</option>
-                <option value="Mutual Fund">Mutual Fund</option>
-
-              </select>
-
-            </div>
-
-
-            <div class="form-group">
-              <label>Entry CMP</label>
-              <input type="number" step="0.01" id="recEntry" required>
-            </div>
-
-
-            <div class="form-group">
-              <label>Target</label>
-              <input type="number" step="0.01" id="recTarget" required>
-            </div>
-
-
-            <div class="form-group">
-              <label>Stop Loss</label>
-              <input type="number" step="0.01" id="recStopLoss" required>
-            </div>
-
-
-            <div class="form-group">
-              <label>Time Frame</label>
-              <input type="text" id="recTimeFrame" placeholder="3 Months">
-            </div>
-
-
-            <div class="form-group full">
-              <label>Remarks</label>
-              <textarea id="recRemarks" rows="3"></textarea>
-            </div>
-
-          </div>
-
-
-          <button type="submit" class="primary-btn">
-            Save Recommendation
-          </button>
-
-        </form>
-
-      </div>
-
-
-      <!-- FILTERS -->
-      <div class="filters recommendations-filters">
-
-        <input
-          type="text"
-          id="recommendationSearch"
-          placeholder="Search Name or Symbol"
+        <select
+          id="dashboardMonthFilter"
         >
 
+          <option value="">
+            All Months
+          </option>
 
-        <select id="recommendationMonthFilter">
-          <option value="">All Months</option>
         </select>
 
 
-        <select id="recommendationTypeFilter">
+        <select
+          id="dashboardTypeFilter"
+        >
 
           <option value="">
             All Types
@@ -361,7 +182,647 @@
         </select>
 
 
-        <select id="recommendationStatusFilter">
+        <select
+          id="dashboardTimeStatusFilter"
+        >
+
+          <option value="">
+            All Time Status
+          </option>
+
+          <option value="Within Time">
+            Within Time
+          </option>
+
+          <option value="Near Due">
+            Near Due
+          </option>
+
+          <option value="Overdue">
+            Overdue
+          </option>
+
+        </select>
+
+      </div>
+
+
+
+      <!-- DASHBOARD STATS -->
+
+      <div class="stats-grid">
+
+
+        <div class="stat-card">
+
+          <span>
+            Total Recommendations
+          </span>
+
+          <h2
+            id="totalRecommendations"
+          >
+            0
+          </h2>
+
+        </div>
+
+
+
+        <div class="stat-card">
+
+          <span>
+            Active
+          </span>
+
+          <h2
+            id="activeRecommendations"
+          >
+            0
+          </h2>
+
+        </div>
+
+
+
+        <div class="stat-card success">
+
+          <span>
+            Target Hit
+          </span>
+
+          <h2
+            id="targetHit"
+          >
+            0
+          </h2>
+
+          <small
+            id="targetHitPercent"
+          >
+            0%
+          </small>
+
+        </div>
+
+
+
+        <div class="stat-card danger">
+
+          <span>
+            SL Hit
+          </span>
+
+          <h2
+            id="slHit"
+          >
+            0
+          </h2>
+
+          <small
+            id="slHitPercent"
+          >
+            0%
+          </small>
+
+        </div>
+
+
+
+        <div class="stat-card">
+
+          <span>
+            Average Return
+          </span>
+
+          <h2
+            id="averageReturn"
+          >
+            0%
+          </h2>
+
+        </div>
+
+
+        <div class="stat-card warning">
+
+          <span>
+            Overdue
+          </span>
+
+          <h2
+            id="overdueRecommendations"
+          >
+            0
+          </h2>
+
+        </div>
+
+
+      </div>
+
+
+
+      <!-- RECENT RECOMMENDATIONS -->
+
+      <div class="dashboard-section">
+
+        <div class="section-header">
+
+          <h2>
+            Recent Recommendations
+          </h2>
+
+        </div>
+
+
+        <div class="table-wrapper">
+
+          <table>
+
+            <thead>
+
+              <tr>
+
+                <th>Date</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Entry</th>
+                <th>Current CMP</th>
+                <th>Return</th>
+                <th>Target Progress</th>
+                <th>Holding Status</th>
+                <th>Status</th>
+
+              </tr>
+
+            </thead>
+
+
+            <tbody
+              id="dashboardRecommendationsTable"
+            >
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- OPTIONS PERFORMANCE -->
+
+      <div class="dashboard-section">
+
+        <div class="section-header">
+
+          <h2>
+            Options Performance
+          </h2>
+
+        </div>
+
+
+        <div class="filters">
+
+          <select
+            id="dashboardOptionMonthFilter"
+          >
+
+            <option value="">
+              All Months
+            </option>
+
+          </select>
+
+
+          <select
+            id="dashboardOptionStatusFilter"
+          >
+
+            <option value="">
+              All Status
+            </option>
+
+            <option value="Open">
+              Open
+            </option>
+
+            <option value="Target Hit">
+              Target Hit
+            </option>
+
+            <option value="SL Hit">
+              SL Hit
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <div class="stats-grid">
+
+
+          <div class="stat-card">
+
+            <span>Total Trades</span>
+
+            <h2
+              id="totalOptionTrades"
+            >
+              0
+            </h2>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <span>Open Trades</span>
+
+            <h2
+              id="openOptionTrades"
+            >
+              0
+            </h2>
+
+          </div>
+
+
+          <div class="stat-card success">
+
+            <span>Target Hit</span>
+
+            <h2
+              id="optionTargetHit"
+            >
+              0
+            </h2>
+
+          </div>
+
+
+          <div class="stat-card danger">
+
+            <span>SL Hit</span>
+
+            <h2
+              id="optionSLHit"
+            >
+              0
+            </h2>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <span>Net P/L</span>
+
+            <h2
+              id="optionNetPL"
+            >
+              ₹0
+            </h2>
+
+          </div>
+
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- =========================================
+         RECOMMENDATIONS
+    ========================================== -->
+
+    <section
+      id="recommendations"
+      class="page"
+    >
+
+
+      <div class="page-header">
+
+        <div>
+
+          <h1>
+            Recommendations
+          </h1>
+
+          <p>
+            Add and track your stock, ETF and fund recommendations.
+          </p>
+
+        </div>
+
+
+        <button
+          id="showRecommendationFormBtn"
+          class="primary-btn"
+        >
+          + Add Recommendation
+        </button>
+
+      </div>
+
+
+
+      <!-- ADD / EDIT FORM -->
+
+      <div
+        id="recommendationFormContainer"
+        class="form-card hidden"
+      >
+
+
+        <div class="section-header">
+
+          <h2
+            id="recommendationFormTitle"
+          >
+            Add Recommendation
+          </h2>
+
+
+          <button
+            id="cancelRecommendationBtn"
+            class="close-btn"
+          >
+            ×
+          </button>
+
+        </div>
+
+
+
+        <form
+          id="recommendationForm"
+        >
+
+
+          <input
+            type="hidden"
+            id="recommendationId"
+          >
+
+
+          <div class="form-grid">
+
+
+            <div class="form-group">
+
+              <label>Date</label>
+
+              <input
+                type="date"
+                id="recDate"
+                required
+              >
+
+            </div>
+
+
+
+            <div class="form-group">
+
+              <label>Name</label>
+
+              <input
+                type="text"
+                id="recName"
+                required
+              >
+
+            </div>
+
+
+
+            <div class="form-group">
+
+              <label>Symbol</label>
+
+              <input
+                type="text"
+                id="recSymbol"
+                placeholder="RELIANCE"
+              >
+
+            </div>
+
+
+
+            <div class="form-group">
+
+              <label>Type</label>
+
+              <select
+                id="recType"
+              >
+
+                <option value="Stock">
+                  Stock
+                </option>
+
+                <option value="ETF">
+                  ETF
+                </option>
+
+                <option value="Mutual Fund">
+                  Mutual Fund
+                </option>
+
+              </select>
+
+            </div>
+
+
+
+            <div class="form-group">
+
+              <label>Entry CMP</label>
+
+              <input
+                type="number"
+                step="0.01"
+                id="recEntry"
+                required
+              >
+
+            </div>
+
+
+
+            <div class="form-group">
+
+              <label>Target</label>
+
+              <input
+                type="number"
+                step="0.01"
+                id="recTarget"
+                required
+              >
+
+            </div>
+
+
+
+            <div class="form-group">
+
+              <label>Stop Loss</label>
+
+              <input
+                type="number"
+                step="0.01"
+                id="recStopLoss"
+                required
+              >
+
+            </div>
+
+
+
+            <!-- HOLDING PERIOD -->
+
+            <div class="form-group">
+
+              <label>
+                Holding Period
+              </label>
+
+              <input
+                type="number"
+                min="1"
+                id="recHoldingValue"
+                placeholder="Example: 3"
+                required
+              >
+
+            </div>
+
+
+
+            <div class="form-group">
+
+              <label>
+                Holding Unit
+              </label>
+
+              <select
+                id="recHoldingUnit"
+              >
+
+                <option value="Days">
+                  Days
+                </option>
+
+                <option
+                  value="Months"
+                  selected
+                >
+                  Months
+                </option>
+
+              </select>
+
+            </div>
+
+
+
+            <div class="form-group full">
+
+              <label>
+                Remarks
+              </label>
+
+              <textarea
+                id="recRemarks"
+                rows="3"
+              ></textarea>
+
+            </div>
+
+
+          </div>
+
+
+
+          <button
+            type="submit"
+            class="primary-btn"
+          >
+            Save Recommendation
+          </button>
+
+
+        </form>
+
+      </div>
+
+
+
+      <!-- FILTERS -->
+
+      <div
+        class="filters recommendations-filters"
+      >
+
+
+        <input
+          type="text"
+          id="recommendationSearch"
+          placeholder="Search Name or Symbol"
+        >
+
+
+
+        <select
+          id="recommendationMonthFilter"
+        >
+
+          <option value="">
+            All Months
+          </option>
+
+        </select>
+
+
+
+        <select
+          id="recommendationTypeFilter"
+        >
+
+          <option value="">
+            All Types
+          </option>
+
+          <option value="Stock">
+            Stock
+          </option>
+
+          <option value="ETF">
+            ETF
+          </option>
+
+          <option value="Mutual Fund">
+            Mutual Fund
+          </option>
+
+        </select>
+
+
+
+        <select
+          id="recommendationStatusFilter"
+        >
 
           <option value="">
             All Status
@@ -381,8 +842,36 @@
 
         </select>
 
+
+
+        <select
+          id="recommendationTimeStatusFilter"
+        >
+
+          <option value="">
+            All Time Status
+          </option>
+
+          <option value="Within Time">
+            Within Time
+          </option>
+
+          <option value="Near Due">
+            Near Due
+          </option>
+
+          <option value="Overdue">
+            Overdue
+          </option>
+
+        </select>
+
+
       </div>
 
+
+
+      <!-- RECOMMENDATIONS TABLE -->
 
       <div class="table-wrapper">
 
@@ -401,6 +890,9 @@
               <th>Target</th>
               <th>Stop Loss</th>
               <th>Return</th>
+              <th>Target Progress</th>
+              <th>Holding</th>
+              <th>Time Status</th>
               <th>Status</th>
               <th>Actions</th>
 
@@ -409,7 +901,9 @@
           </thead>
 
 
-          <tbody id="recommendationsTable">
+          <tbody
+            id="recommendationsTable"
+          >
           </tbody>
 
         </table>
@@ -419,14 +913,28 @@
     </section>
 
 
-    <!-- SIP -->
-    <section id="sip" class="page">
+
+    <!-- =========================================
+         SIP
+    ========================================== -->
+
+    <section
+      id="sip"
+      class="page"
+    >
 
       <div class="page-header">
 
         <div>
-          <h1>SIP Suggestions</h1>
-          <p>Predefined investment baskets.</p>
+
+          <h1>
+            SIP Suggestions
+          </h1>
+
+          <p>
+            Predefined investment baskets.
+          </p>
+
         </div>
 
       </div>
@@ -434,68 +942,97 @@
 
       <div class="filters">
 
-        <select id="sipAmountFilter">
+        <select
+          id="sipAmountFilter"
+        >
 
           <option value="">
             Select Monthly SIP Amount
           </option>
-
-          <option value="5000">₹5,000</option>
-          <option value="10000">₹10,000</option>
-          <option value="15000">₹15,000</option>
-          <option value="20000">₹20,000</option>
 
         </select>
 
       </div>
 
 
-      <div id="sipBasketContainer" class="sip-container">
-
-        <div class="empty-state">
-          Select a monthly SIP amount to view the allocation.
-        </div>
-
+      <div
+        id="sipBasketContainer"
+        class="sip-container"
+      >
       </div>
+
 
 
       <div class="form-card">
 
         <div class="section-header">
-          <h2>Add Custom SIP</h2>
+
+          <h2>
+            Add Custom SIP
+          </h2>
+
         </div>
 
 
-        <form id="customSIPForm">
+        <form
+          id="customSIPForm"
+        >
 
           <div class="form-grid">
 
+
             <div class="form-group">
+
               <label>Plan Name</label>
-              <input id="sipPlanName" required>
+
+              <input
+                id="sipPlanName"
+                required
+              >
+
             </div>
 
 
             <div class="form-group">
+
               <label>Monthly Amount</label>
-              <input type="number" id="sipMonthlyAmount" required>
+
+              <input
+                type="number"
+                id="sipMonthlyAmount"
+                required
+              >
+
             </div>
 
 
             <div class="form-group">
+
               <label>Investment Name</label>
-              <input id="sipInvestmentName" required>
+
+              <input
+                id="sipInvestmentName"
+                required
+              >
+
             </div>
 
 
             <div class="form-group">
-              <label>Type</label>
 
-              <select id="sipInvestmentType">
+              <label>Investment Type</label>
 
-                <option value="ETF">ETF</option>
-                <option value="Mutual Fund">Mutual Fund</option>
-                <option value="Crypto">Crypto</option>
+              <select
+                id="sipInvestmentType"
+              >
+
+                <option>ETF</option>
+
+                <option>Mutual Fund</option>
+
+                <option>Stock</option>
+
+                <option>Crypto</option>
 
               </select>
 
@@ -503,19 +1040,25 @@
 
 
             <div class="form-group">
+
               <label>Allocation %</label>
+
               <input
                 type="number"
-                step="0.01"
                 id="sipAllocationPercent"
                 required
               >
+
             </div>
+
 
           </div>
 
 
-          <button class="primary-btn" type="submit">
+          <button
+            type="submit"
+            class="primary-btn"
+          >
             Add Custom SIP
           </button>
 
@@ -526,97 +1069,141 @@
     </section>
 
 
-    <!-- OPTIONS -->
-    <section id="options" class="page">
+
+    <!-- =========================================
+         OPTIONS
+    ========================================== -->
+
+    <section
+      id="options"
+      class="page"
+    >
 
       <div class="page-header">
 
         <div>
-          <h1>Options & Hedge</h1>
-          <p>Record option strategies and calculate combined P/L.</p>
+
+          <h1>
+            Options & Hedge
+          </h1>
+
+          <p>
+            Record option trades and hedge positions.
+          </p>
+
         </div>
 
       </div>
 
 
+
       <div class="form-card">
 
-        <form id="optionTradeForm">
+        <form
+          id="optionTradeForm"
+        >
+
 
           <div class="form-grid">
 
+
             <div class="form-group">
+
               <label>Date</label>
-              <input type="date" id="optionDate" required>
-            </div>
 
-
-            <div class="form-group">
-              <label>Underlying</label>
               <input
-                type="text"
-                id="optionUnderlying"
-                placeholder="NIFTY"
+                type="date"
+                id="optionDate"
                 required
               >
+
             </div>
 
 
             <div class="form-group">
-              <label>Expiry</label>
-              <input type="date" id="optionExpiry">
-            </div>
 
+              <label>Underlying</label>
 
-            <div class="form-group">
-              <label>Strategy</label>
               <input
-                type="text"
-                id="optionStrategy"
-                placeholder="Straddle / Strangle / Hedge"
+                id="optionUnderlying"
+                required
               >
+
             </div>
 
 
             <div class="form-group">
+
+              <label>Expiry</label>
+
+              <input
+                type="date"
+                id="optionExpiry"
+              >
+
+            </div>
+
+
+            <div class="form-group">
+
+              <label>Strategy</label>
+
+              <input
+                id="optionStrategy"
+              >
+
+            </div>
+
+
+            <div class="form-group">
+
               <label>Lot Size</label>
+
               <input
                 type="number"
                 id="optionLotSize"
                 value="1"
-                required
               >
+
             </div>
 
 
             <div class="form-group">
+
               <label>Lots</label>
+
               <input
                 type="number"
                 id="optionLots"
                 value="1"
-                required
               >
+
             </div>
 
 
             <div class="form-group">
+
               <label>Target %</label>
+
               <input
                 type="number"
                 id="optionTargetPercent"
-                value="0"
+                value="20"
               >
+
             </div>
 
 
             <div class="form-group">
+
               <label>SL %</label>
+
               <input
                 type="number"
                 id="optionSLPercent"
-                value="0"
+                value="10"
               >
+
             </div>
 
 
@@ -630,16 +1217,19 @@
 
             </div>
 
+
           </div>
 
 
-          <!-- OPTION LEGS -->
 
           <div class="legs-section">
 
             <div class="section-header">
 
-              <h2>Option Legs</h2>
+              <h2>
+                Option Legs
+              </h2>
+
 
               <button
                 type="button"
@@ -652,8 +1242,9 @@
             </div>
 
 
-            <div id="optionLegsContainer">
-
+            <div
+              id="optionLegsContainer"
+            >
             </div>
 
           </div>
@@ -666,14 +1257,18 @@
             Save Option Trade
           </button>
 
+
         </form>
 
       </div>
 
 
+
       <div class="page-header small-header">
 
-        <h2>Option Trade Records</h2>
+        <h2>
+          Option Trade Records
+        </h2>
 
       </div>
 
@@ -685,40 +1280,6 @@
           id="optionSearch"
           placeholder="Search Underlying"
         >
-
-
-        <select
-          id="optionMonthFilter"
-        >
-
-          <option value="">
-            All Months
-          </option>
-
-        </select>
-
-
-        <select
-          id="optionStatusFilter"
-        >
-
-          <option value="">
-            All Status
-          </option>
-
-          <option value="Open">
-            Open
-          </option>
-
-          <option value="Target Hit">
-            Target Hit
-          </option>
-
-          <option value="SL Hit">
-            SL Hit
-          </option>
-
-        </select>
 
       </div>
 
@@ -756,14 +1317,28 @@
 
     </section>
 
+
   </main>
 
 </div>
 
 
-<div id="toast" class="toast"></div>
 
-<script src="app.js"></script>
+<!-- TOAST -->
+
+<div
+  id="toast"
+  class="toast"
+>
+</div>
+
+
+
+<script
+  src="app.js"
+></script>
+
 
 </body>
+
 </html>
