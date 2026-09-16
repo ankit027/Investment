@@ -13,11 +13,9 @@ const API_URL =
   "https://script.google.com/macros/s/AKfycbw3HjV_sDrY8KNmGge2ChFLyg3gicZlNFfw_4xTspr3ZodPpmbJBmZsdMiu26f51R_5/exec";
 
 
-
 let recommendations = [];
 let sipBaskets = [];
 let optionTrades = [];
-
 
 
 // ==========================================
@@ -41,7 +39,6 @@ document.addEventListener(
 
   }
 );
-
 
 
 // ==========================================
@@ -93,7 +90,6 @@ async function apiGet(action) {
   }
 
 }
-
 
 
 // ==========================================
@@ -161,7 +157,6 @@ async function apiPost(
   }
 
 }
-
 
 
 // ==========================================
@@ -252,7 +247,6 @@ async function loadData() {
 }
 
 
-
 // ==========================================
 // NAVIGATION
 // ==========================================
@@ -320,7 +314,6 @@ function setupNavigation() {
     );
 
 }
-
 
 
 // ==========================================
@@ -394,7 +387,6 @@ function setupDarkMode() {
 }
 
 
-
 // ==========================================
 // SET TODAY DATE
 // ==========================================
@@ -441,7 +433,6 @@ function setTodayDates() {
   }
 
 }
-
 
 
 // ==========================================
@@ -551,7 +542,6 @@ function setupFilters() {
 }
 
 
-
 // ==========================================
 // MONTH FILTERS
 // ==========================================
@@ -653,7 +643,6 @@ function populateMonthFilters() {
   );
 
 }
-
 
 
 // ==========================================
@@ -843,8 +832,6 @@ function renderDashboard() {
   );
 
 
-  // IMPORTANT:
-  // This function was missing in your old file.
   renderDashboardTable(
     filtered
   );
@@ -853,7 +840,6 @@ function renderDashboard() {
   renderOptionsDashboard();
 
 }
-
 
 
 // ==========================================
@@ -925,7 +911,7 @@ function renderDashboardTable(
     tbody.innerHTML =
       `
       <tr>
-        <td colspan="8">
+        <td colspan="9">
           No recommendations found.
         </td>
       </tr>
@@ -1013,7 +999,6 @@ function renderDashboardTable(
   );
 
 }
-
 
 
 // ==========================================
@@ -1248,7 +1233,6 @@ function setupRecommendationForm() {
 }
 
 
-
 // ==========================================
 // RESET RECOMMENDATION FORM
 // ==========================================
@@ -1313,7 +1297,6 @@ function resetRecommendationForm() {
   }
 
 }
-
 
 
 // ==========================================
@@ -1466,7 +1449,9 @@ function renderRecommendations() {
 
       row.innerHTML =
         `
-        <td>${formatDate(item.Date)}</td>
+        <td>
+          ${formatDate(item.Date)}
+        </td>
 
         <td>
           <strong>
@@ -1531,14 +1516,14 @@ function renderRecommendations() {
 
           <button
             class="action-btn edit-btn"
-            onclick="editRecommendation('${item.ID}')"
+            onclick="editRecommendation('${escapeHtml(item.ID)}')"
           >
             Edit
           </button>
 
           <button
             class="action-btn delete-btn"
-            onclick="deleteRecommendation('${item.ID}')"
+            onclick="deleteRecommendation('${escapeHtml(item.ID)}')"
           >
             Delete
           </button>
@@ -1555,7 +1540,6 @@ function renderRecommendations() {
   );
 
 }
-
 
 
 // ==========================================
@@ -1691,10 +1675,9 @@ window.editRecommendation =
       behavior:
         "smooth"
 
-    });
+    };
 
   };
-
 
 
 // ==========================================
@@ -1761,7 +1744,6 @@ window.deleteRecommendation =
   };
 
 
-
 // ==========================================
 // TARGET PROGRESS
 // ==========================================
@@ -1824,7 +1806,6 @@ function getTargetProgress(item) {
 }
 
 
-
 // ==========================================
 // PROGRESS BAR
 // ==========================================
@@ -1861,9 +1842,9 @@ function progressBar(progress) {
 }
 
 
-
 // ==========================================
 // HOLDING PERIOD PARSER
+// Used mainly for EDIT form
 // ==========================================
 
 function parseHoldingPeriod(value) {
@@ -1874,20 +1855,52 @@ function parseHoldingPeriod(value) {
       .toLowerCase();
 
 
+  // Example:
+  // "60 Days"
+  // "3 Months"
+
   const match =
     text.match(
       /(\d+(?:\.\d+)?)\s*(day|days|month|months)/
     );
 
 
-  if (!match) {
+  if (match) {
 
     return {
 
-      value: 1,
+      value:
+        Number(match[1]),
 
       unit:
-        "Months"
+        match[2].startsWith("day")
+          ? "Days"
+          : "Months"
+
+    };
+
+  }
+
+
+  // Existing database records may contain
+  // numeric holding periods such as 60, 120, 150.
+
+  const numericValue =
+    Number(value);
+
+
+  if (
+    Number.isFinite(numericValue) &&
+    numericValue > 0
+  ) {
+
+    return {
+
+      value:
+        numericValue,
+
+      unit:
+        "Days"
 
     };
 
@@ -1896,46 +1909,52 @@ function parseHoldingPeriod(value) {
 
   return {
 
-    value:
-      Number(match[1]),
+    value: 1,
 
     unit:
-      match[2]
-        .startsWith("day")
-        ? "Days"
-        : "Months"
+      "Months"
 
   };
 
 }
 
 
-
 // ==========================================
 // HOLDING STATUS
+// BACKEND IS THE SOURCE OF TRUTH
 // ==========================================
 
 function getHoldingStatus(item) {
 
-  const finalStatus =
+  const status =
     String(
       item.Status || ""
     ).trim();
 
 
-  const timingStatus =
+  const timing =
     String(
       item.Timing_Status || ""
     ).trim();
 
 
+  const daysLate =
+    Number(
+      item.Days_Late || 0
+    );
+
+
+  // ------------------------------------------
+  // TARGET HIT
+  // ------------------------------------------
+
   if (
-    finalStatus ===
+    status ===
     "Target Hit"
   ) {
 
     if (
-      timingStatus ===
+      timing ===
       "After Due"
     ) {
 
@@ -1965,13 +1984,17 @@ function getHoldingStatus(item) {
   }
 
 
+  // ------------------------------------------
+  // SL HIT
+  // ------------------------------------------
+
   if (
-    finalStatus ===
+    status ===
     "SL Hit"
   ) {
 
     if (
-      timingStatus ===
+      timing ===
       "After Due"
     ) {
 
@@ -2001,112 +2024,14 @@ function getHoldingStatus(item) {
   }
 
 
-  const inputDate =
-    formatInputDate(
-      item.Date
-    );
-
-
-  const startDate =
-    new Date(
-      `${inputDate}T00:00:00`
-    );
-
+  // ------------------------------------------
+  // ACTIVE + OVERDUE
+  // ------------------------------------------
 
   if (
-    Number.isNaN(
-      startDate.getTime()
-    )
+    timing ===
+    "Overdue"
   ) {
-
-    return {
-
-      status:
-        "Within Time",
-
-      label:
-        "Within Time"
-
-    };
-
-  }
-
-
-  const holding =
-    parseHoldingPeriod(
-      item.Time_Frame
-    );
-
-
-  const dueDate =
-    new Date(
-      startDate
-    );
-
-
-  if (
-    holding.unit ===
-    "Days"
-  ) {
-
-    dueDate.setDate(
-      dueDate.getDate() +
-      holding.value
-    );
-
-  }
-
-  else {
-
-    dueDate.setMonth(
-      dueDate.getMonth() +
-      holding.value
-    );
-
-  }
-
-
-  const today =
-    new Date();
-
-
-  today.setHours(
-    0,
-    0,
-    0,
-    0
-  );
-
-
-  const totalDuration =
-    dueDate -
-    startDate;
-
-
-  const remaining =
-    dueDate -
-    today;
-
-
-  if (
-    remaining < 0
-  ) {
-
-    const daysLate =
-      Math.floor(
-        (
-          today -
-          dueDate
-        )
-        /
-        (
-          1000 *
-          60 *
-          60 *
-          24
-        )
-      );
-
 
     return {
 
@@ -2114,38 +2039,110 @@ function getHoldingStatus(item) {
         "Overdue",
 
       label:
-        `Overdue (${daysLate} Days)`
+        daysLate > 0
+          ? `Overdue (${daysLate} Days)`
+          : "Overdue"
 
     };
 
   }
 
 
-  const remainingPercent =
-    totalDuration > 0
-      ? (
-          remaining /
-          totalDuration
-        ) * 100
-      : 0;
+  // ------------------------------------------
+  // ACTIVE + NEAR DUE
+  // ------------------------------------------
+
+  // Backend gives us Due_Date.
+  // We calculate Near Due from that date.
+  // We DO NOT calculate the due date from Time_Frame.
+
+  const dueDateText =
+    formatInputDate(
+      item.Due_Date
+    );
+
+
+  const startDateText =
+    formatInputDate(
+      item.Date
+    );
 
 
   if (
-    remainingPercent <= 25
+    dueDateText &&
+    startDateText
   ) {
 
-    return {
+    const startDate =
+      new Date(
+        `${startDateText}T00:00:00`
+      );
 
-      status:
-        "Near Due",
 
-      label:
-        "Near Due"
+    const dueDate =
+      new Date(
+        `${dueDateText}T00:00:00`
+      );
 
-    };
+
+    const today =
+      new Date();
+
+
+    today.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+
+    const totalDuration =
+      dueDate.getTime() -
+      startDate.getTime();
+
+
+    const remaining =
+      dueDate.getTime() -
+      today.getTime();
+
+
+    if (
+      totalDuration > 0 &&
+      remaining >= 0
+    ) {
+
+      const remainingPercent =
+        (
+          remaining /
+          totalDuration
+        ) * 100;
+
+
+      if (
+        remainingPercent <= 25
+      ) {
+
+        return {
+
+          status:
+            "Near Due",
+
+          label:
+            "Near Due"
+
+        };
+
+      }
+
+    }
 
   }
 
+
+  // ------------------------------------------
+  // DEFAULT
+  // ------------------------------------------
 
   return {
 
@@ -2158,7 +2155,6 @@ function getHoldingStatus(item) {
   };
 
 }
-
 
 
 // ==========================================
@@ -2182,7 +2178,7 @@ function timeBadge(holding) {
   }
 
 
-  if (
+  else if (
     holding.status ===
     "Overdue"
   ) {
@@ -2193,7 +2189,7 @@ function timeBadge(holding) {
   }
 
 
-  if (
+  else if (
     holding.status ===
     "Target Hit"
   ) {
@@ -2204,7 +2200,7 @@ function timeBadge(holding) {
   }
 
 
-  if (
+  else if (
     holding.status ===
     "Target After Due"
   ) {
@@ -2215,7 +2211,7 @@ function timeBadge(holding) {
   }
 
 
-  if (
+  else if (
     holding.status ===
     "SL Hit"
   ) {
@@ -2226,7 +2222,7 @@ function timeBadge(holding) {
   }
 
 
-  if (
+  else if (
     holding.status ===
     "SL After Due"
   ) {
@@ -2241,12 +2237,11 @@ function timeBadge(holding) {
     <span
       class="time-badge ${className}"
     >
-      ${holding.label}
+      ${escapeHtml(holding.label)}
     </span>
   `;
 
 }
-
 
 
 // ==========================================
@@ -2369,7 +2364,6 @@ function setupSIP() {
   );
 
 }
-
 
 
 // ==========================================
@@ -2556,7 +2550,6 @@ function renderSIPBasket() {
   );
 
 }
-
 
 
 // ==========================================
@@ -2757,7 +2750,6 @@ function setupOptions() {
 }
 
 
-
 // ==========================================
 // ADD OPTION LEG
 // ==========================================
@@ -2794,6 +2786,7 @@ function addOptionLeg() {
     >
 
     <select class="leg-type">
+
       <option value="CE">
         CE
       </option>
@@ -2801,9 +2794,11 @@ function addOptionLeg() {
       <option value="PE">
         PE
       </option>
+
     </select>
 
     <select class="leg-position">
+
       <option value="BUY">
         BUY
       </option>
@@ -2811,6 +2806,7 @@ function addOptionLeg() {
       <option value="SELL">
         SELL
       </option>
+
     </select>
 
     <input
@@ -2855,7 +2851,6 @@ function addOptionLeg() {
   );
 
 }
-
 
 
 // ==========================================
@@ -2912,7 +2907,6 @@ function getOptionLegs() {
   );
 
 }
-
 
 
 // ==========================================
@@ -2985,7 +2979,9 @@ function renderOptions() {
 
       row.innerHTML =
         `
-        <td>${formatDate(item.Date)}</td>
+        <td>
+          ${formatDate(item.Date)}
+        </td>
 
         <td>
           ${escapeHtml(item.Underlying)}
@@ -3037,7 +3033,6 @@ function renderOptions() {
   );
 
 }
-
 
 
 // ==========================================
@@ -3120,7 +3115,6 @@ function renderOptionsDashboard() {
 }
 
 
-
 // ==========================================
 // STATUS BADGE
 // ==========================================
@@ -3200,7 +3194,6 @@ function statusBadge(status) {
 }
 
 
-
 // ==========================================
 // DISPLAY STATUS
 // ==========================================
@@ -3250,7 +3243,6 @@ function getDisplayStatus(item) {
 }
 
 
-
 // ==========================================
 // HELPERS
 // ==========================================
@@ -3268,6 +3260,9 @@ function getMonthKey(value) {
 }
 
 
+// ==========================================
+// FORMAT MONTH
+// ==========================================
 
 function formatMonth(value) {
 
@@ -3303,6 +3298,9 @@ function formatMonth(value) {
 }
 
 
+// ==========================================
+// FORMAT DATE
+// ==========================================
 
 function formatDate(value) {
 
@@ -3333,6 +3331,9 @@ function formatDate(value) {
 }
 
 
+// ==========================================
+// FORMAT INPUT DATE
+// ==========================================
 
 function formatInputDate(value) {
 
@@ -3380,6 +3381,9 @@ function formatInputDate(value) {
 }
 
 
+// ==========================================
+// FORMAT NUMBER
+// ==========================================
 
 function formatNumber(value) {
 
@@ -3397,6 +3401,9 @@ function formatNumber(value) {
 }
 
 
+// ==========================================
+// SET TEXT
+// ==========================================
 
 function setText(
   id,
@@ -3404,7 +3411,9 @@ function setText(
 ) {
 
   const element =
-    document.getElementById(id);
+    document.getElementById(
+      id
+    );
 
 
   if (element) {
@@ -3417,6 +3426,9 @@ function setText(
 }
 
 
+// ==========================================
+// ESCAPE HTML
+// ==========================================
 
 function escapeHtml(value) {
 
@@ -3432,7 +3444,6 @@ function escapeHtml(value) {
     .replace(/'/g, "&#039;");
 
 }
-
 
 
 // ==========================================
