@@ -1668,17 +1668,10 @@ window.editRecommendation =
       "";
 
 
-    window.scrollTo({
-
-      top: 0,
-
-      behavior:
-        "smooth"
-
-    };
-
-  };
-
+  window.scrollTo({
+  top: 0,
+  behavior: "smooth"
+});
 
 // ==========================================
 // DELETE RECOMMENDATION
@@ -1925,325 +1918,83 @@ function parseHoldingPeriod(value) {
 // ==========================================
 
 function getHoldingStatus(item) {
+  const status = String(item.Status || "").trim();
+  const timing = String(item.Timing_Status || "").trim();
+  const daysLate = Number(item.Days_Late || 0);
 
-  const status =
-    String(
-      item.Status || ""
-    ).trim();
-
-
-  const timing =
-    String(
-      item.Timing_Status || ""
-    ).trim();
-
-
-  const daysLate =
-    Number(
-      item.Days_Late || 0
-    );
-
-
-  // ------------------------------------------
-  // TARGET HIT
-  // ------------------------------------------
-
+  // Target hit after due date
   if (
-    status ===
-    "Target Hit"
+    status === "Target Hit" &&
+    (timing === "Target After Due" || timing === "After Due")
   ) {
-
-    if (
-      timing ===
-      "After Due"
-    ) {
-
-      return {
-
-        status:
-          "Target After Due",
-
-        label:
-          "⚠️ Target After Due"
-
-      };
-
-    }
-
-
     return {
-
-      status:
-        "Target Hit",
-
-      label:
-        "🎯 Target Hit"
-
+      status: "Target After Due",
+      label: "⚠️ Target After Due"
     };
-
   }
 
-
-  // ------------------------------------------
-  // SL HIT
-  // ------------------------------------------
-
+  // Stop loss hit after due date
   if (
-    status ===
-    "SL Hit"
+    status === "SL Hit" &&
+    (timing === "SL After Due" || timing === "After Due")
   ) {
-
-    if (
-      timing ===
-      "After Due"
-    ) {
-
-      return {
-
-        status:
-          "SL After Due",
-
-        label:
-          "⚠️ SL After Due"
-
-      };
-
-    }
-
-
     return {
-
-      status:
-        "SL Hit",
-
-      label:
-        "🛑 SL Hit"
-
+      status: "SL After Due",
+      label: "⚠️ SL After Due"
     };
-
   }
 
-
-  // ------------------------------------------
-  // ACTIVE + OVERDUE
-  // ------------------------------------------
-
-  if (
-    timing ===
-    "Overdue"
-  ) {
-
+  // Normal target
+  if (status === "Target Hit") {
     return {
-
-      status:
-        "Overdue",
-
-      label:
-        daysLate > 0
-          ? `Overdue (${daysLate} Days)`
-          : "Overdue"
-
+      status: "Target Hit",
+      label: "🎯 Target Hit"
     };
-
   }
 
+  // Normal stop loss
+  if (status === "SL Hit") {
+    return {
+      status: "SL Hit",
+      label: "🛑 SL Hit"
+    };
+  }
 
-  // ------------------------------------------
-  // ACTIVE + NEAR DUE
-  // ------------------------------------------
+  // Active but holding period expired
+  if (timing === "Overdue") {
+    return {
+      status: "Overdue",
+      label: daysLate > 0
+        ? `Overdue (${daysLate} Days)`
+        : "Overdue"
+    };
+  }
 
-  // Backend gives us Due_Date.
-  // We calculate Near Due from that date.
-  // We DO NOT calculate the due date from Time_Frame.
+  // Close to due date
+  if (timing === "Near Due") {
+    return {
+      status: "Near Due",
+      label: "Near Due"
+    };
+  }
 
-  const dueDateText =
-    formatInputDate(
-      item.Due_Date
-    );
-
-
-  const startDateText =
-    formatInputDate(
-      item.Date
-    );
-
-
+  // Still within holding period
   if (
-    dueDateText &&
-    startDateText
+    timing === "Under Time" ||
+    timing === "Within Time" ||
+    timing === ""
   ) {
-
-    const startDate =
-      new Date(
-        `${startDateText}T00:00:00`
-      );
-
-
-    const dueDate =
-      new Date(
-        `${dueDateText}T00:00:00`
-      );
-
-
-    const today =
-      new Date();
-
-
-    today.setHours(
-      0,
-      0,
-      0,
-      0
-    );
-
-
-    const totalDuration =
-      dueDate.getTime() -
-      startDate.getTime();
-
-
-    const remaining =
-      dueDate.getTime() -
-      today.getTime();
-
-
-    if (
-      totalDuration > 0 &&
-      remaining >= 0
-    ) {
-
-      const remainingPercent =
-        (
-          remaining /
-          totalDuration
-        ) * 100;
-
-
-      if (
-        remainingPercent <= 25
-      ) {
-
-        return {
-
-          status:
-            "Near Due",
-
-          label:
-            "Near Due"
-
-        };
-
-      }
-
-    }
-
+    return {
+      status: "Within Time",
+      label: "Within Time"
+    };
   }
-
-
-  // ------------------------------------------
-  // DEFAULT
-  // ------------------------------------------
 
   return {
-
-    status:
-      "Within Time",
-
-    label:
-      "Within Time"
-
+    status: "Within Time",
+    label: "Within Time"
   };
-
 }
-
-
-// ==========================================
-// TIME BADGE
-// ==========================================
-
-function timeBadge(holding) {
-
-  let className =
-    "within-time";
-
-
-  if (
-    holding.status ===
-    "Near Due"
-  ) {
-
-    className =
-      "near-due";
-
-  }
-
-
-  else if (
-    holding.status ===
-    "Overdue"
-  ) {
-
-    className =
-      "overdue";
-
-  }
-
-
-  else if (
-    holding.status ===
-    "Target Hit"
-  ) {
-
-    className =
-      "time-target";
-
-  }
-
-
-  else if (
-    holding.status ===
-    "Target After Due"
-  ) {
-
-    className =
-      "near-due";
-
-  }
-
-
-  else if (
-    holding.status ===
-    "SL Hit"
-  ) {
-
-    className =
-      "time-sl";
-
-  }
-
-
-  else if (
-    holding.status ===
-    "SL After Due"
-  ) {
-
-    className =
-      "overdue";
-
-  }
-
-
-  return `
-    <span
-      class="time-badge ${className}"
-    >
-      ${escapeHtml(holding.label)}
-    </span>
-  `;
-
-}
-
-
 // ==========================================
 // SIP
 // ==========================================
@@ -3120,367 +2871,84 @@ function renderOptionsDashboard() {
 // ==========================================
 
 function statusBadge(status) {
+  status = String(status || "").trim();
 
-  let className =
-    "active";
+  if (status === "Target Hit") {
+    return `<span class="status-badge target">🎯 Target Hit</span>`;
+  }
 
+  if (status === "Target After Due") {
+    return `<span class="status-badge overdue">⚠️ Target After Due</span>`;
+  }
 
-  let label =
-    status ||
-    "Active";
+  if (status === "SL Hit") {
+    return `<span class="status-badge danger">🛑 SL Hit</span>`;
+  }
 
+  if (status === "SL After Due") {
+    return `<span class="status-badge overdue">⚠️ SL After Due</span>`;
+  }
+
+  if (status === "Overdue") {
+    return `<span class="status-badge overdue">⏰ Overdue</span>`;
+  }
+
+  if (status === "Near Due") {
+    return `<span class="status-badge warning">⚠️ Near Due</span>`;
+  }
 
   if (
-    status ===
-    "Target Hit"
+    status === "Under Time" ||
+    status === "Within Time" ||
+    status === "Active"
   ) {
-
-    className =
-      "target";
-
-    label =
-      "🎯 Target Hit";
-
+    return `<span class="status-badge active">🟢 Within Time</span>`;
   }
 
-  else if (
-    status ===
-    "Target After Due"
-  ) {
-
-    className =
-      "target";
-
-    label =
-      "⚠️ Target After Due";
-
-  }
-
-  else if (
-    status ===
-    "SL Hit"
-  ) {
-
-    className =
-      "sl";
-
-    label =
-      "🛑 SL Hit";
-
-  }
-
-  else if (
-    status ===
-    "SL After Due"
-  ) {
-
-    className =
-      "sl";
-
-    label =
-      "⚠️ SL After Due";
-
-  }
-
-
-  return `
-    <span
-      class="badge ${className}"
-    >
-      ${escapeHtml(label)}
-    </span>
-  `;
-
-}
-
-
-// ==========================================
+  return `<span class="status-badge">${status}</span>`;
+}// ==========================================
 // DISPLAY STATUS
 // ==========================================
 
 function getDisplayStatus(item) {
-
-  const status =
-    String(
-      item.Status || ""
-    ).trim();
-
-
-  const timingStatus =
-    String(
-      item.Timing_Status || ""
-    ).trim();
-
+  const status = String(item.Status || "").trim();
+  const timing = String(item.Timing_Status || "").trim();
 
   if (
-    status ===
-    "Target Hit"
-    &&
-    timingStatus ===
-    "After Due"
+    status === "Target Hit" &&
+    (timing === "Target After Due" || timing === "After Due")
   ) {
-
     return "Target After Due";
-
   }
 
-
   if (
-    status ===
-    "SL Hit"
-    &&
-    timingStatus ===
-    "After Due"
+    status === "SL Hit" &&
+    (timing === "SL After Due" || timing === "After Due")
   ) {
-
     return "SL After Due";
-
   }
 
-
-  return status;
-
-}
-
-
-// ==========================================
-// HELPERS
-// ==========================================
-
-function getMonthKey(value) {
-
-  const date =
-    formatInputDate(value);
-
-
-  return date
-    ? date.substring(0, 7)
-    : "";
-
-}
-
-
-// ==========================================
-// FORMAT MONTH
-// ==========================================
-
-function formatMonth(value) {
-
-  const parts =
-    String(value).split("-");
-
-
-  if (
-    parts.length !== 2
-  ) {
-
-    return value;
-
+  if (status === "Target Hit") {
+    return "Target Hit";
   }
 
-
-  const date =
-    new Date(
-      Number(parts[0]),
-      Number(parts[1]) - 1,
-      1
-    );
-
-
-  return date.toLocaleDateString(
-    "en-IN",
-    {
-      month: "long",
-      year: "numeric"
-    }
-  );
-
-}
-
-
-// ==========================================
-// FORMAT DATE
-// ==========================================
-
-function formatDate(value) {
-
-  if (!value) {
-    return "-";
+  if (status === "SL Hit") {
+    return "SL Hit";
   }
 
-
-  const text =
-    String(value);
-
-
-  const match =
-    text.match(
-      /^(\d{4})-(\d{2})-(\d{2})/
-    );
-
-
-  if (match) {
-
-    return `${match[3]}-${match[2]}-${match[1]}`;
-
+  if (timing === "Overdue") {
+    return "Overdue";
   }
 
-
-  return text;
-
-}
-
-
-// ==========================================
-// FORMAT INPUT DATE
-// ==========================================
-
-function formatInputDate(value) {
-
-  if (!value) {
-    return "";
+  if (timing === "Near Due") {
+    return "Near Due";
   }
 
-
-  const text =
-    String(value);
-
-
-  const match =
-    text.match(
-      /^(\d{4})-(\d{2})-(\d{2})/
-    );
-
-
-  if (match) {
-
-    return `${match[1]}-${match[2]}-${match[3]}`;
-
+  if (timing === "Under Time" || timing === "Within Time") {
+    return "Within Time";
   }
 
-
-  const date =
-    new Date(value);
-
-
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
-
-    return "";
-
-  }
-
-
-  return date
-    .toISOString()
-    .split("T")[0];
-
+  return status || "Active";
 }
 
-
-// ==========================================
-// FORMAT NUMBER
-// ==========================================
-
-function formatNumber(value) {
-
-  const number =
-    Number(value || 0);
-
-
-  return number.toLocaleString(
-    "en-IN",
-    {
-      maximumFractionDigits: 2
-    }
-  );
-
-}
-
-
-// ==========================================
-// SET TEXT
-// ==========================================
-
-function setText(
-  id,
-  value
-) {
-
-  const element =
-    document.getElementById(
-      id
-    );
-
-
-  if (element) {
-
-    element.textContent =
-      value;
-
-  }
-
-}
-
-
-// ==========================================
-// ESCAPE HTML
-// ==========================================
-
-function escapeHtml(value) {
-
-  const text =
-    String(value || "");
-
-
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-
-}
-
-
-// ==========================================
-// TOAST
-// ==========================================
-
-function showToast(message) {
-
-  const toast =
-    document.getElementById(
-      "toast"
-    );
-
-
-  if (!toast) {
-    return;
-  }
-
-
-  toast.textContent =
-    message;
-
-
-  toast.classList.add(
-    "show"
-  );
-
-
-  setTimeout(
-    () => {
-
-      toast.classList.remove(
-        "show"
-      );
-
-    },
-    2500
-  );
-
-}
+ 
