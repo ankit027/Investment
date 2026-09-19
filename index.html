@@ -52,6 +52,19 @@ body.dark .error{background:#451a1a;color:#fecaca}
 .sip-card{border:1px solid var(--border);border-radius:14px;padding:22px;text-align:center}
 .sip-label{font-size:13px;color:var(--muted)}.sip-amount{font-size:30px;font-weight:800;margin:9px 0}.sip-sub{font-size:13px;color:var(--muted)}
 .note{font-size:12px;color:var(--muted);margin-top:7px}
+
+.srt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px}
+.srt-box{display:grid;grid-template-columns:1fr auto;border:1px solid #16a085;border-radius:4px;overflow:hidden;background:var(--card);min-height:52px}
+.srt-label{background:#10c98a;color:#fff;font-weight:700;padding:13px 12px;font-size:16px;display:flex;align-items:center}
+.srt-value{padding:13px 14px;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:flex-end;min-width:105px}
+.srt-value.main{font-size:22px}
+.srt-rules{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.srt-rule{border:1px solid var(--border);border-radius:12px;padding:14px;background:var(--card)}
+.srt-rule .level{font-size:20px;font-weight:800;margin-bottom:4px}.srt-rule .desc{font-size:12px;color:var(--muted)}
+.srt-zone{font-size:16px;font-weight:800;padding:13px 15px;border-radius:10px;margin-top:14px;text-align:center;border:1px solid var(--border)}
+.srt-zone.invest{background:#dcfce7;color:#15803d}.srt-zone.accum{background:#d1fae5;color:#047857}.srt-zone.normal{background:#f1f5f9;color:#475569}.srt-zone.exit{background:#fee2e2;color:#b91c1c}
+.srt-meta{font-size:12px;color:var(--muted);margin-top:8px}
+@media(max-width:800px){.srt-grid,.srt-rules{grid-template-columns:1fr}}
 @media(max-width:1000px){.stats{grid-template-columns:repeat(3,1fr)}.sip-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:650px){.stats{grid-template-columns:repeat(2,1fr)}.summary-grid{grid-template-columns:1fr}.sip-grid{grid-template-columns:1fr}header{align-items:flex-start;flex-direction:column}.tabs{overflow:auto}.tab{white-space:nowrap}.container{padding:12px}h1{font-size:23px}}
 
@@ -126,6 +139,7 @@ body.dark .error{background:#451a1a;color:#fecaca}
   <button class="tab active" data-tab="dashboard" onclick="openTab('dashboard',this)">Dashboard</button>
   <button class="tab" data-tab="recommendations" onclick="openTab('recommendations',this)">Recommendations</button>
   <button class="tab" data-tab="sip" onclick="openTab('sip',this)">SIP Basket</button>
+  <button class="tab" data-tab="srt" onclick="openTab('srt',this)">SRT</button>
 </nav>
 
 <section id="dashboard" class="tab-content active">
@@ -202,6 +216,34 @@ body.dark .error{background:#451a1a;color:#fecaca}
         </thead>
         <tbody id="recBody"></tbody>
       </table>
+    </div>
+  </div>
+</section>
+
+<section id="srt" class="tab-content">
+  <div class="card">
+    <div class="section-header">
+      <div>
+        <h2>NK Sir SRT</h2>
+        <div class="note">SRT = Current Nifty 50 Level ÷ 124-period SMA</div>
+      </div>
+      <button class="btn" onclick="loadSRT()">↻ Refresh SRT</button>
+    </div>
+    <div class="srt-grid" style="margin-top:16px">
+      <div class="srt-box"><div class="srt-label">Current Level</div><div class="srt-value" id="srtCurrent">—</div></div>
+      <div class="srt-box"><div class="srt-label">SMA 124</div><div class="srt-value" id="srtSMA">—</div></div>
+      <div class="srt-box"><div class="srt-label">SRT Value</div><div class="srt-value main" id="srtValue">—</div></div>
+    </div>
+    <div class="srt-zone normal" id="srtZone">Loading SRT zone...</div>
+    <div class="srt-meta" id="srtUpdated">—</div>
+  </div>
+
+  <div class="card">
+    <h2>SRT Reference Levels</h2>
+    <div class="srt-rules">
+      <div class="srt-rule"><div class="level">0.60</div><div class="desc">Investment Time</div></div>
+      <div class="srt-rule"><div class="level">0.80 – 0.90</div><div class="desc">ETF Accumulation Zone</div></div>
+      <div class="srt-rule"><div class="level">1.25</div><div class="desc">Exit Market</div></div>
     </div>
   </div>
 </section>
@@ -317,6 +359,7 @@ body.dark .error{background:#451a1a;color:#fecaca}
 const API_URL = "https://script.google.com/macros/s/AKfycbw3HjV_sDrY8KNmGge2ChFLyg3gicZlNFfw_4xTspr3ZodPpmbJBmZsdMiu26f51R_5/exec";
 let recommendations = [];
 let sipBaskets = [];
+let srtData = null;
 let jsonpCounter = 0;
 
 function $(id){return document.getElementById(id)}
@@ -386,21 +429,83 @@ async function loadData(){
   showError("");
   setConnectionStatus("Connecting...");
   try{
-    const [recResult,sipResult]=await Promise.all([
+    const [recResult,sipResult,srtResult]=await Promise.all([
       apiGet("getRecommendations"),
-      apiGet("getSIPBaskets")
+      apiGet("getSIPBaskets"),
+      apiGet("getSRT")
     ]);
 
     recommendations=Array.isArray(recResult)?recResult:(recResult.data||recResult.recommendations||[]);
     sipBaskets=Array.isArray(sipResult)?sipResult:(sipResult.data||sipResult.sipBaskets||[]);
+    srtData=srtResult && srtResult.data ? srtResult.data : srtResult;
 
     populateMonthFilters();
     renderAll();
+    renderSRT();
     setConnectionStatus("● Data Connected");
   }catch(error){
     console.error(error);
     setConnectionStatus("● Data Offline");
     showError("Connection error: "+error.message+".");
+  }finally{
+    showLoading(false);
+  }
+}
+
+function formatNumber(v,decimals){
+  const n=Number(v);
+  return Number.isFinite(n)?n.toLocaleString("en-IN",{minimumFractionDigits:decimals,maximumFractionDigits:decimals}):"—";
+}
+
+function renderSRT(){
+  if(!srtData){
+    $("srtCurrent").textContent="—";
+    $("srtSMA").textContent="—";
+    $("srtValue").textContent="—";
+    $("srtZone").textContent="SRT unavailable";
+    $("srtUpdated").textContent="";
+    return;
+  }
+  const current=Number(srtData.currentLevel);
+  const sma=Number(srtData.sma124);
+  const srt=Number(srtData.srtValue);
+  $("srtCurrent").textContent=formatNumber(current,1);
+  $("srtSMA").textContent=formatNumber(sma,1);
+  $("srtValue").textContent=Number.isFinite(srt)?srt.toFixed(2):"—";
+
+  const zone=$("srtZone");
+  zone.className="srt-zone";
+  if(!Number.isFinite(srt)){
+    zone.classList.add("normal");
+    zone.textContent="SRT unavailable";
+  }else if(srt<=0.60){
+    zone.classList.add("invest");
+    zone.textContent="🟢 Investment Time";
+  }else if(srt>=0.80 && srt<=0.90){
+    zone.classList.add("accum");
+    zone.textContent="🟢 ETF Accumulation Zone";
+  }else if(srt>=1.25){
+    zone.classList.add("exit");
+    zone.textContent="🔴 Exit Market";
+  }else{
+    zone.classList.add("normal");
+    zone.textContent="⚪ Normal / Hold Zone";
+  }
+  const source=srtData.source?"Source: "+srtData.source+" · ":"";
+  const updated=srtData.updatedAt?new Date(srtData.updatedAt).toLocaleString("en-IN"):"";
+  $("srtUpdated").textContent=source+(updated?"Updated: "+updated:"");
+}
+
+async function loadSRT(){
+  try{
+    showLoading(true);
+    const result=await apiGet("getSRT");
+    srtData=result && result.data ? result.data : result;
+    renderSRT();
+  }catch(error){
+    console.error(error);
+    $("srtZone").className="srt-zone normal";
+    $("srtZone").textContent="Unable to load SRT: "+error.message;
   }finally{
     showLoading(false);
   }
