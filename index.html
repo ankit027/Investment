@@ -54,6 +54,34 @@ body.dark .error{background:#451a1a;color:#fecaca}
 .note{font-size:12px;color:var(--muted);margin-top:7px}
 @media(max-width:1000px){.stats{grid-template-columns:repeat(3,1fr)}.sip-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:650px){.stats{grid-template-columns:repeat(2,1fr)}.summary-grid{grid-template-columns:1fr}.sip-grid{grid-template-columns:1fr}header{align-items:flex-start;flex-direction:column}.tabs{overflow:auto}.tab{white-space:nowrap}.container{padding:12px}h1{font-size:23px}}
+
+.action-cell{white-space:nowrap}
+.action-btn{padding:6px 9px;border-radius:7px;font-size:12px;margin-right:5px}
+.edit-btn{background:#2563eb;color:#fff}
+.delete-btn{background:#dc2626;color:#fff}
+.sip-card{text-align:left}
+.sip-card .sip-label,.sip-card .sip-amount,.sip-card .sip-sub{text-align:center}
+.sip-items{margin-top:15px;border-top:1px solid var(--border);padding-top:10px}
+.sip-item{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;align-items:center}
+.sip-item:last-child{border-bottom:0}
+.sip-name{font-weight:600;word-break:break-word}
+.sip-type{color:var(--muted)}
+.sip-alloc{font-weight:700;white-space:nowrap}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:20;padding:15px}
+.modal.show{display:flex}
+.modal-box{background:var(--card);color:var(--text);width:min(700px,100%);max-height:90vh;overflow:auto;border-radius:16px;border:1px solid var(--border);box-shadow:0 20px 50px rgba(0,0,0,.25);padding:20px}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.modal-header h3{margin:0}
+.close-btn{background:transparent;color:var(--text);font-size:22px;padding:3px 8px}
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:12px;color:var(--muted);font-weight:600}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:10px;font:inherit}
+.form-group textarea{min-height:90px;resize:vertical}
+.modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}
+@media(max-width:650px){.form-grid{grid-template-columns:1fr}.form-group.full{grid-column:auto}.sip-item{grid-template-columns:1fr auto}.sip-type{display:none}}
+
 </style>
 </head>
 <body>
@@ -149,7 +177,7 @@ body.dark .error{background:#451a1a;color:#fecaca}
           <tr>
             <th>Date</th><th>Name</th><th>Symbol</th><th>Type</th>
             <th>Entry</th><th>Current CMP</th><th>Target</th><th>Stop Loss</th>
-            <th>Return</th><th>Status</th><th>Timing</th><th>Progress</th>
+            <th>Return</th><th>Status</th><th>Timing</th><th>Progress</th><th>Actions</th>
           </tr>
         </thead>
         <tbody id="recBody"></tbody>
@@ -165,6 +193,66 @@ body.dark .error{background:#451a1a;color:#fecaca}
     <div id="sipGrid" class="sip-grid" style="margin-top:15px"></div>
   </div>
 </section>
+</div>
+
+
+<!-- Recommendation Edit Modal -->
+<div class="modal" id="editModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="editModalTitle">Edit Recommendation</h3>
+      <button class="close-btn" onclick="closeEditModal()">×</button>
+    </div>
+    <form id="editForm">
+      <input type="hidden" id="editId">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="editDate" required>
+        </div>
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="editName" required>
+        </div>
+        <div class="form-group">
+          <label>Symbol</label>
+          <input type="text" id="editSymbol" required>
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="editType">
+            <option value="Stock">Stock</option>
+            <option value="ETF">ETF</option>
+            <option value="Mutual Fund">Mutual Fund</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Entry CMP</label>
+          <input type="number" step="any" id="editEntry" required>
+        </div>
+        <div class="form-group">
+          <label>Target</label>
+          <input type="number" step="any" id="editTarget" required>
+        </div>
+        <div class="form-group">
+          <label>Stop Loss</label>
+          <input type="number" step="any" id="editSL" required>
+        </div>
+        <div class="form-group">
+          <label>Time Frame (days)</label>
+          <input type="number" id="editTimeFrame" min="0">
+        </div>
+        <div class="form-group full">
+          <label>Remarks</label>
+          <textarea id="editRemarks"></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" onclick="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn">Save Changes</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script>
@@ -389,13 +477,14 @@ function renderRecommendations(){
   const body=$("recBody");
 
   if(!data.length){
-    body.innerHTML='<tr><td colspan="12" class="empty">No recommendations match the selected filters.</td></tr>';
+    body.innerHTML='<tr><td colspan="13" class="empty">No recommendations match the selected filters.</td></tr>';
     return;
   }
 
   body.innerHTML=data.map(r=>{
     const ret=Number(r.Return_Percent);
     const progress=progressValue(r);
+
     return `<tr>
       <td>${escapeHtml(r.Date||"-")}</td>
       <td><b>${escapeHtml(r.Name||"-")}</b></td>
@@ -409,6 +498,10 @@ function renderRecommendations(){
       <td><span class="badge ${statusClass(r.Status)}">${escapeHtml(r.Status||"Not set")}</span></td>
       <td>${escapeHtml(r.Timing_Status||"-")}</td>
       <td><div class="progress"><div class="progress-bar" style="width:${progress}%"></div></div></td>
+      <td class="action-cell">
+        <button class="action-btn edit-btn" onclick="openEditModal('${escapeAttr(r.ID)}')">✏ Edit</button>
+        <button class="action-btn delete-btn" onclick="deleteRecommendation('${escapeAttr(r.ID)}')">🗑 Delete</button>
+      </td>
     </tr>`;
   }).join("");
 }
@@ -431,19 +524,165 @@ function renderSIP(){
   sipBaskets.forEach(row=>{
     const id=String(row.Basket_ID||row.Monthly_Amount||"");
     if(!id)return;
-    if(!grouped[id])grouped[id]={basketId:id,amount:Number(row.Monthly_Amount)||0};
+
+    if(!grouped[id]){
+      grouped[id]={
+        basketId:id,
+        amount:Number(row.Monthly_Amount)||0,
+        items:[]
+      };
+    }
+
+    grouped[id].items.push(row);
   });
 
   const baskets=Object.values(grouped).sort((a,b)=>a.amount-b.amount);
 
-  grid.innerHTML=baskets.map(b=>`
-    <div class="sip-card">
-      <div class="sip-label">Recommended SIP Basket</div>
-      <div class="sip-amount">${money(b.amount)}</div>
-      <div class="sip-sub">Monthly investment</div>
-    </div>
-  `).join("");
+  grid.innerHTML=baskets.map(b=>{
+    const total=b.items.reduce((sum,x)=>sum+(Number(x.Allocation_Amount)||0),0);
+
+    return `
+      <div class="sip-card">
+        <div class="sip-label">Recommended SIP Basket</div>
+        <div class="sip-amount">${money(b.amount)}</div>
+        <div class="sip-sub">Monthly investment</div>
+
+        <div class="sip-items">
+          ${b.items.map(x=>`
+            <div class="sip-item">
+              <div>
+                <div class="sip-name">${escapeHtml(x.Investment_Name||"-")}</div>
+                <div class="sip-type">${escapeHtml(x.Investment_Type||"-")}</div>
+              </div>
+              <div>${money(x.Allocation_Amount)}</div>
+              <div class="sip-alloc">${Number(x.Allocation_Percent||0).toFixed(2)}%</div>
+            </div>
+          `).join("")}
+        </div>
+
+        <div class="summary-line" style="margin-top:10px">
+          <span>Total Allocation</span>
+          <strong>${money(total)}</strong>
+        </div>
+      </div>
+    `;
+  }).join("");
 }
+
+async function apiPost(action,data){
+  const response=await fetch(API_URL,{
+    method:"POST",
+    redirect:"follow",
+    headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body:JSON.stringify({action,data})
+  });
+
+  if(!response.ok){
+    throw new Error("API request failed. HTTP "+response.status);
+  }
+
+  const text=await response.text();
+
+  try{
+    const result=JSON.parse(text);
+    if(result && result.success===false){
+      throw new Error(result.error||result.message||"API request failed");
+    }
+    return result;
+  }catch(error){
+    console.error("Invalid API response:",text);
+    throw new Error("API returned an invalid response");
+  }
+}
+
+function escapeAttr(value){
+  return String(value??"")
+    .replace(/&/g,"&amp;")
+    .replace(/'/g,"&#39;")
+    .replace(/"/g,"&quot;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;");
+}
+
+function openEditModal(id){
+  const r=recommendations.find(x=>String(x.ID)===String(id));
+  if(!r){
+    alert("Recommendation not found.");
+    return;
+  }
+
+  $("editId").value=r.ID||"";
+  $("editDate").value=String(r.Date||"").slice(0,10);
+  $("editName").value=r.Name||"";
+  $("editSymbol").value=r.Symbol||"";
+  $("editType").value=r.Type||"Stock";
+  $("editEntry").value=r.Entry_CMP??"";
+  $("editTarget").value=r.Target??"";
+  $("editSL").value=r.Stop_Loss??"";
+  $("editTimeFrame").value=r.Time_Frame??"";
+  $("editRemarks").value=r.Remarks||"";
+
+  $("editModal").classList.add("show");
+}
+
+function closeEditModal(){
+  $("editModal").classList.remove("show");
+}
+
+async function deleteRecommendation(id){
+  const r=recommendations.find(x=>String(x.ID)===String(id));
+  const name=r ? (r.Name||r.Symbol||"this recommendation") : "this recommendation";
+
+  if(!confirm("Delete "+name+"? This cannot be undone."))return;
+
+  try{
+    showLoading(true);
+    await apiPost("deleteRecommendation",{id:id});
+    closeEditModal();
+    await loadData();
+    alert("Recommendation deleted.");
+  }catch(error){
+    console.error(error);
+    alert("Unable to delete recommendation: "+error.message);
+  }finally{
+    showLoading(false);
+  }
+}
+
+$("editForm").addEventListener("submit",async function(event){
+  event.preventDefault();
+
+  const data={
+    id:$("editId").value,
+    date:$("editDate").value,
+    name:$("editName").value.trim(),
+    symbol:$("editSymbol").value.trim().toUpperCase(),
+    type:$("editType").value,
+    entryCMP:Number($("editEntry").value),
+    target:Number($("editTarget").value),
+    stopLoss:Number($("editSL").value),
+    timeFrame:Number($("editTimeFrame").value||0),
+    remarks:$("editRemarks").value.trim()
+  };
+
+  try{
+    showLoading(true);
+    await apiPost("updateRecommendation",data);
+    closeEditModal();
+    await loadData();
+    alert("Recommendation updated.");
+  }catch(error){
+    console.error(error);
+    alert("Unable to update recommendation: "+error.message);
+  }finally{
+    showLoading(false);
+  }
+});
+
+$("editModal").addEventListener("click",function(e){
+  if(e.target===this)closeEditModal();
+});
+
 
 function renderAll(){
   renderDashboard();
