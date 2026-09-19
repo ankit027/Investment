@@ -79,7 +79,52 @@ html[data-theme="dark"] .error{background:#3b1519}
 @media(max-width:1100px){.cards{grid-template-columns:repeat(3,1fr)}.dashboard-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:650px){.topbar{padding:13px 14px}.brand h1{font-size:19px}.top-actions{flex-wrap:wrap}.tabs{top:68px;overflow:auto;padding:0 8px}.tab{padding:12px 13px}main{padding:12px}.cards{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}.full{grid-column:auto}.search{max-width:100%}.metric-row{grid-template-columns:1fr}}
 
-  </style>
+  
+.filter-bar{
+  display:flex;
+  align-items:end;
+  gap:12px;
+  margin-bottom:18px;
+  background:white;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  padding:14px 16px;
+}
+.filter-bar label,.filter-inline label{
+  min-width:170px;
+}
+.filter-inline{
+  display:flex;
+  align-items:end;
+  gap:8px;
+  margin-top:10px;
+}
+.filter-inline label{
+  min-width:150px;
+}
+@media(max-width:600px){
+  .filter-bar,.filter-inline{
+    flex-wrap:wrap;
+  }
+  .filter-bar label,.filter-inline label{
+    width:100%;
+    min-width:100%;
+  }
+}
+
+
+body.dark{background:#0f172a;color:#e5e7eb}
+body.dark .topbar{background:#020617}
+body.dark .tabs,body.dark .panel,body.dark .card,body.dark .filter-bar{background:#111827;border-color:#334155}
+body.dark .tab{color:#94a3b8}
+body.dark .tab.active{color:#60a5fa}
+body.dark input,body.dark select,body.dark textarea{background:#0f172a;color:#e5e7eb;border-color:#475569}
+body.dark th{background:#1e293b;color:#cbd5e1}
+body.dark td{border-color:#334155}
+body.dark .card span{color:#94a3b8}
+body.dark .secondary{background:#334155;color:#e5e7eb}
+
+</style>
 </head>
 <body>
   <header class="topbar">
@@ -102,7 +147,14 @@ html[data-theme="dark"] .error{background:#3b1519}
 
   <main>
     <section id="dashboard" class="page active">
-      <div class="cards">
+      
+      <div class="filter-bar">
+        <label>Dashboard Month
+          <input type="month" id="dashboardMonth">
+        </label>
+        <button id="clearDashboardMonth" class="btn secondary">All Months</button>
+      </div>
+<div class="cards">
         <div class="card"><span>Total Recommendations</span><strong id="dashTotal">0</strong></div>
         <div class="card"><span>Active</span><strong id="dashActive">0</strong></div>
         <div class="card"><span>Target Hit</span><strong id="dashTarget">0</strong></div>
@@ -199,7 +251,15 @@ html[data-theme="dark"] .error{background:#3b1519}
 
       <div class="panel">
         <div class="panel-title">
-          <h2>Recommendations</h2>
+          <div>
+            <h2>Recommendations</h2>
+            <div class="filter-inline">
+              <label>Month
+                <input type="month" id="recMonth">
+              </label>
+              <button id="clearRecMonth" class="btn secondary small">All Months</button>
+            </div>
+          </div>
           <input id="recSearch" class="search" placeholder="Search name or symbol">
         </div>
         <div id="recommendationTable" class="table-wrap"></div>
@@ -260,6 +320,8 @@ document.addEventListener("DOMContentLoaded", () => {
   setupTabs();
   setupForms();
   setupSearch();
+  setupMonthFilters();
+  setupDarkMode();
   setupTheme();
   document.getElementById("refreshBtn").addEventListener("click", loadData);
   document.getElementById("recDate").value = todayString();
@@ -304,6 +366,49 @@ function setupTabs() {
       document.getElementById(btn.dataset.tab).classList.add("active");
     });
   });
+}
+
+function setupMonthFilters() {
+  const dashboardMonth = document.getElementById("dashboardMonth");
+  const recMonth = document.getElementById("recMonth");
+
+  dashboardMonth.addEventListener("change", renderDashboard);
+  recMonth.addEventListener("change", renderRecommendations);
+
+  document.getElementById("clearDashboardMonth").addEventListener("click", () => {
+    dashboardMonth.value = "";
+    renderDashboard();
+  });
+
+  document.getElementById("clearRecMonth").addEventListener("click", () => {
+    recMonth.value = "";
+    renderRecommendations();
+  });
+}
+
+function setupDarkMode() {
+  const btn = document.getElementById("darkModeBtn");
+  const saved = localStorage.getItem("ankit_dark_mode") === "1";
+
+  if (saved) document.body.classList.add("dark");
+  updateDarkButton();
+
+  btn.addEventListener("click", () => {
+    document.body.classList.toggle("dark");
+    localStorage.setItem(
+      "ankit_dark_mode",
+      document.body.classList.contains("dark") ? "1" : "0"
+    );
+    updateDarkButton();
+  });
+}
+
+function updateDarkButton() {
+  const btn = document.getElementById("darkModeBtn");
+  if (!btn) return;
+  btn.textContent = document.body.classList.contains("dark")
+    ? "☀️ Light"
+    : "🌙 Dark";
 }
 
 function setupForms() {
@@ -517,14 +622,34 @@ function clearSIPForm() {
   setMessage("sipMessage", "");
 }
 
+function getMonth(dateValue) {
+  const d = parseDate(dateValue);
+  if (!d) return "";
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+}
+
+function filterByMonth(items, month) {
+  if (!month) return items;
+  return items.filter(x => getMonth(x.Date) === month);
+}
+
 function renderDashboard() {
-  const total = recommendations.length;
-  const active = recommendations.filter(x => String(x.Status || "").trim() === "Active").length;
-  const target = recommendations.filter(x => String(x.Status || "").trim() === "Target Hit").length;
-  const sl = recommendations.filter(x => String(x.Status || "").trim() === "SL Hit").length;
-  const overdue = recommendations.filter(x => getTiming(x) === "Overdue").length;
-  const uniqueSIPs = getUniqueSIPBaskets();
-  const monthlySIP = uniqueSIPs.reduce((sum,x) => sum + num(x.Monthly_SIP ?? x.amount), 0);
+  const month = value("dashboardMonth");
+  const filtered = filterByMonth(recommendations, month);
+
+  const total = filtered.length;
+  const active = filtered.filter(x => String(x.Status || "").trim() === "Active").length;
+  const target = filtered.filter(x => String(x.Status || "").trim() === "Target Hit").length;
+  const sl = filtered.filter(x => String(x.Status || "").trim() === "SL Hit").length;
+  const overdue = filtered.filter(x => getTiming(x) === "Overdue").length;
+
+  const monthlySIP = sipBaskets.reduce(
+    (sum,x) => sum + num(x.Monthly_SIP ?? x.amount), 0
+  );
+
+  const avgReturn = filtered.length
+    ? filtered.reduce((sum,x) => sum + num(x.Return_Percent), 0) / filtered.length
+    : 0;
 
   document.getElementById("dashTotal").textContent = total;
   document.getElementById("dashActive").textContent = active;
@@ -533,43 +658,28 @@ function renderDashboard() {
   document.getElementById("dashOverdue").textContent = overdue;
   document.getElementById("dashSIP").textContent = money(monthlySIP);
 
-  const returns = recommendations
-    .map(x => x.Return_Percent === undefined || x.Return_Percent === "" ? null : num(x.Return_Percent))
-    .filter(x => x !== null && Number.isFinite(x));
-  const avg = returns.length ? returns.reduce((a,b)=>a+b,0)/returns.length : 0;
+  const latest = [...filtered].reverse().slice(0,8);
 
-  document.getElementById("avgReturn").textContent = avg.toFixed(2) + "%";
-  document.getElementById("targetRate").textContent = total ? ((target/total)*100).toFixed(0) + "%" : "0%";
-  document.getElementById("overdueRate").textContent = total ? ((overdue/total)*100).toFixed(0) + "%" : "0%";
-
-  const bars = [
-    ["Active", active], ["Target Hit", target], ["SL Hit", sl], ["Overdue", overdue]
-  ];
-  const max = Math.max(1, ...bars.map(x=>x[1]));
-  document.getElementById("statusBars").innerHTML = bars.map(([name,count]) => `
-    <div class="bar-row">
-      <span>${name}</span>
-      <div class="bar-bg"><div class="bar-fill" style="width:${(count/max)*100}%"></div></div>
-      <b>${count}</b>
-    </div>
-  `).join("");
-
-  const latest = [...recommendations].reverse().slice(0,8);
   document.getElementById("dashboardRecommendations").innerHTML =
-    latest.length ? recommendationTable(latest, false) : empty("No recommendations yet.");
+    latest.length
+      ? recommendationTable(latest, false)
+      : empty(month ? `No recommendations for ${month}.` : "No recommendations yet.");
 }
 function renderRecommendations() {
   const search = value("recSearch").toLowerCase();
+  const month = value("recMonth");
 
   const filtered = recommendations.filter(x => {
     const text = `${x.Name || ""} ${x.Symbol || ""}`.toLowerCase();
-    return text.includes(search);
+    const monthOK = !month || getMonth(x.Date) === month;
+    return text.includes(search) && monthOK;
   });
 
   document.getElementById("recommendationTable").innerHTML =
-    filtered.length ? recommendationTable(filtered, true) : empty("No recommendations found.");
+    filtered.length
+      ? recommendationTable(filtered, true)
+      : empty(month ? `No recommendations for ${month}.` : "No recommendations found.");
 }
-
 function recommendationTable(items, actions) {
   return `
     <table>
