@@ -5,45 +5,50 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ANKIT Investment Hub</title>
 <style>
-:root{--bg:#f5f7fb;--card:#fff;--text:#18202a;--muted:#687386;--border:#e3e7ee;--accent:#2563eb;--good:#16a34a;--bad:#dc2626;--warn:#d97706;--shadow:0 8px 25px rgba(15,23,42,.07)}
+:root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#687386;--border:#e3e7ee;--accent:#2563eb;--good:#16a34a;--bad:#dc2626;--warn:#d97706;--shadow:0 8px 25px rgba(15,23,42,.07)}
 *{box-sizing:border-box}
 body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}
 body.dark{--bg:#0f172a;--card:#172033;--text:#f1f5f9;--muted:#a7b1c2;--border:#2b364a;--shadow:0 8px 25px rgba(0,0,0,.25)}
+.topline{height:8px;background:#6546b3}
 .container{max-width:1250px;margin:auto;padding:22px}
 header{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:22px}
-h1{margin:0;font-size:28px} h2{margin:0 0 15px;font-size:20px}
+h1{margin:0;font-size:28px}h2{margin:0 0 15px;font-size:20px}
 .header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.status{font-size:13px;color:var(--muted)}
+.status{font-size:13px;color:var(--muted);margin-top:3px}
 button,select,input{font:inherit}
 button{border:0;border-radius:9px;padding:9px 13px;cursor:pointer}
 .btn{background:var(--accent);color:white}.btn.secondary{background:var(--card);color:var(--text);border:1px solid var(--border)}
 .card{background:var(--card);border:1px solid var(--border);border-radius:15px;padding:18px;box-shadow:var(--shadow);margin-bottom:18px}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:15px}
 .stat{padding:18px;border:1px solid var(--border);border-radius:13px;background:var(--card)}
-.stat-label{font-size:13px;color:var(--muted)} .stat-value{font-size:28px;font-weight:700;margin-top:7px}
+.stat-label{font-size:13px;color:var(--muted)}.stat-value{font-size:28px;font-weight:700;margin-top:7px}
 .filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
 select,input{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:9px 11px}
 .table-wrap{overflow:auto}
-table{width:100%;border-collapse:collapse;min-width:850px}
-th,td{padding:11px 9px;border-bottom:1px solid var(--border);text-align:left;font-size:13px}
+table{width:100%;border-collapse:collapse;min-width:1100px}
+th,td{padding:11px 9px;border-bottom:1px solid var(--border);text-align:left;font-size:13px;vertical-align:middle}
 th{color:var(--muted);font-weight:600}
-.badge{display:inline-block;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:600}
+.badge{display:inline-block;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:600;white-space:nowrap}
 .active{background:#dbeafe;color:#1d4ed8}.target{background:#dcfce7;color:#15803d}.sl{background:#fee2e2;color:#b91c1c}.overdue{background:#fef3c7;color:#b45309}
-.progress{height:8px;background:var(--border);border-radius:99px;overflow:hidden;min-width:100px}
-.progress-bar{height:100%;background:linear-gradient(90deg,#22c55e,#eab308,#ef4444)}
+.progress{height:8px;background:var(--border);border-radius:99px;overflow:hidden;min-width:110px}
+.progress-bar{height:100%;background:linear-gradient(90deg,#22c55e,#eab308,#ef4444);border-radius:99px}
 .empty{padding:30px;text-align:center;color:var(--muted)}
 .loading{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:10}
 .loading.show{display:flex}.loader{background:var(--card);padding:20px 25px;border-radius:12px}
 .error{background:#fee2e2;color:#991b1b;padding:12px;border-radius:10px;margin-bottom:15px;display:none}
 body.dark .error{background:#451a1a;color:#fecaca}
-.sip-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
-.sip-card{border:1px solid var(--border);border-radius:13px;padding:16px}
-.sip-title{font-weight:700;font-size:17px}.sip-amount{font-size:24px;font-weight:700;margin-top:8px}
-@media(max-width:800px){.stats{grid-template-columns:repeat(2,1fr)}header{align-items:flex-start;flex-direction:column}}
-@media(max-width:480px){.stats{grid-template-columns:1fr}.container{padding:12px}h1{font-size:23px}}
+.sip-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
+.sip-card{border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center}
+.sip-label{font-size:13px;color:var(--muted)}
+.sip-amount{font-size:30px;font-weight:800;margin:9px 0}
+.sip-sub{font-size:13px;color:var(--muted)}
+.small-note{font-size:12px;color:var(--muted);margin-top:8px}
+@media(max-width:950px){.stats{grid-template-columns:repeat(3,1fr)}.sip-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:650px){.stats{grid-template-columns:repeat(2,1fr)}.sip-grid{grid-template-columns:1fr}header{align-items:flex-start;flex-direction:column}.container{padding:12px}h1{font-size:23px}}
 </style>
 </head>
 <body>
+<div class="topline"></div>
 <div class="loading" id="loading"><div class="loader">Loading Investment Hub...</div></div>
 
 <div class="container">
@@ -72,6 +77,7 @@ body.dark .error{background:#451a1a;color:#fecaca}
     <div class="stat"><div class="stat-label">Active</div><div class="stat-value" id="countActive">0</div></div>
     <div class="stat"><div class="stat-label">Target Hit</div><div class="stat-value" id="countTarget">0</div></div>
     <div class="stat"><div class="stat-label">SL Hit</div><div class="stat-value" id="countSL">0</div></div>
+    <div class="stat"><div class="stat-label">Overdue</div><div class="stat-value" id="countOverdue">0</div></div>
   </div>
 </section>
 
@@ -84,11 +90,22 @@ body.dark .error{background:#451a1a;color:#fecaca}
   </div>
   <div class="table-wrap">
     <table>
-      <thead><tr>
-        <th>Date</th><th>Name</th><th>Symbol</th><th>Type</th><th>Entry</th>
-        <th>Current CMP</th><th>Target</th><th>SL</th><th>Return</th>
-        <th>Status</th><th>Progress</th>
-      </tr></thead>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Name</th>
+          <th>Symbol</th>
+          <th>Type</th>
+          <th>Entry</th>
+          <th>Current CMP</th>
+          <th>Target</th>
+          <th>Stop Loss</th>
+          <th>Return</th>
+          <th>Status</th>
+          <th>Timing</th>
+          <th>Progress</th>
+        </tr>
+      </thead>
       <tbody id="recBody"></tbody>
     </table>
   </div>
@@ -96,7 +113,8 @@ body.dark .error{background:#451a1a;color:#fecaca}
 
 <section class="card">
   <h2>SIP Baskets</h2>
-  <div id="sipGrid" class="sip-grid"></div>
+  <div class="small-note">Recommended monthly SIP baskets from your Google Sheet.</div>
+  <div id="sipGrid" class="sip-grid" style="margin-top:15px"></div>
 </section>
 </div>
 
@@ -111,17 +129,24 @@ function $(id){return document.getElementById(id)}
 
 function showLoading(show){$("loading").classList.toggle("show",show)}
 function setConnectionStatus(text){$("connectionStatus").textContent=text}
+
 function showError(msg){
   const box=$("errorBox");
   box.textContent=msg;
   box.style.display=msg?"block":"none";
 }
 
+/*
+  GET requests use JSONP.
+  This is important when this HTML is opened directly from a computer
+  and Google Apps Script does not allow normal browser CORS requests.
+*/
 function apiGet(action){
   return new Promise((resolve,reject)=>{
     const callbackName="ankitCallback_"+Date.now()+"_"+(++jsonpCounter);
     const script=document.createElement("script");
     let finished=false;
+
     const timer=setTimeout(()=>{
       if(finished)return;
       finished=true;
@@ -134,8 +159,12 @@ function apiGet(action){
       finished=true;
       clearTimeout(timer);
       cleanup();
-      if(data && data.success===false) reject(new Error(data.error||"API error"));
-      else resolve(data);
+
+      if(data && data.success===false){
+        reject(new Error(data.error||"API error"));
+      }else{
+        resolve(data);
+      }
     };
 
     function cleanup(){
@@ -151,34 +180,33 @@ function apiGet(action){
       reject(new Error("Unable to reach Google Apps Script for "+action));
     };
 
-    script.src=API_URL+"?action="+encodeURIComponent(action)+"&callback="+encodeURIComponent(callbackName)+"&_="+Date.now();
+    script.src=API_URL+
+      "?action="+encodeURIComponent(action)+
+      "&callback="+encodeURIComponent(callbackName)+
+      "&_="+Date.now();
+
     document.body.appendChild(script);
   });
-}
-
-async function apiPost(action,data){
-  const response=await fetch(API_URL,{
-    method:"POST",
-    headers:{"Content-Type":"text/plain;charset=utf-8"},
-    body:JSON.stringify({action,data})
-  });
-  const result=await response.json();
-  if(result && result.success===false)throw new Error(result.error||"API error");
-  return result;
 }
 
 async function loadData(){
   showLoading(true);
   showError("");
   setConnectionStatus("Connecting...");
+
   try{
     const [recResult,sipResult]=await Promise.all([
       apiGet("getRecommendations"),
       apiGet("getSIPBaskets")
     ]);
 
-    recommendations=Array.isArray(recResult)?recResult:(recResult.data||recResult.recommendations||[]);
-    sipBaskets=Array.isArray(sipResult)?sipResult:(sipResult.data||sipResult.sipBaskets||[]);
+    recommendations=Array.isArray(recResult)
+      ? recResult
+      : (recResult.data||recResult.recommendations||[]);
+
+    sipBaskets=Array.isArray(sipResult)
+      ? sipResult
+      : (sipResult.data||sipResult.sipBaskets||[]);
 
     populateMonthFilters();
     renderAll();
@@ -186,7 +214,10 @@ async function loadData(){
   }catch(error){
     console.error(error);
     setConnectionStatus("● Data Offline");
-    showError("Connection error: "+error.message+". Check that the Apps Script deployment is set to Execute as: Me and Who has access: Anyone, then redeploy the Web App.");
+    showError(
+      "Connection error: "+error.message+
+      ". Make sure the latest Code.gs is deployed as a Web App."
+    );
   }finally{
     showLoading(false);
   }
@@ -195,30 +226,39 @@ async function loadData(){
 function parseDate(v){
   if(!v)return null;
   const d=new Date(v);
-  return isNaN(d)?null:d;
+  return isNaN(d.getTime())?null:d;
 }
 
 function monthKey(v){
   const d=parseDate(v);
-  return d?d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"):"";
+  return d ? d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0") : "";
 }
 
 function monthLabel(key){
   if(!key)return "All Months";
-  const [y,m]=key.split("-");
-  return new Date(Number(y),Number(m)-1,1).toLocaleString("en-IN",{month:"long",year:"numeric"});
+  const parts=key.split("-");
+  return new Date(Number(parts[0]),Number(parts[1])-1,1)
+    .toLocaleString("en-IN",{month:"long",year:"numeric"});
 }
 
 function populateMonthFilters(){
-  const keys=[...new Set(recommendations.map(r=>monthKey(r.Date)).filter(Boolean))].sort().reverse();
+  const keys=[...new Set(
+    recommendations.map(r=>monthKey(r.Date)).filter(Boolean)
+  )].sort().reverse();
+
   ["dashMonth","recMonth"].forEach(id=>{
     const select=$(id);
     const old=select.value;
+
     select.innerHTML='<option value="">All Months</option>';
+
     keys.forEach(k=>{
-      const o=document.createElement("option");
-      o.value=k;o.textContent=monthLabel(k);select.appendChild(o);
+      const option=document.createElement("option");
+      option.value=k;
+      option.textContent=monthLabel(k);
+      select.appendChild(option);
     });
+
     if(keys.includes(old))select.value=old;
   });
 }
@@ -232,10 +272,20 @@ function filteredRecommendations(filterId){
 
 function renderDashboard(){
   const data=filteredRecommendations("dashMonth");
+
   $("countRec").textContent=data.length;
-  $("countActive").textContent=data.filter(r=>String(r.Status||"").toLowerCase()==="active").length;
-  $("countTarget").textContent=data.filter(r=>String(r.Status||"").toLowerCase().includes("target")).length;
-  $("countSL").textContent=data.filter(r=>String(r.Status||"").toLowerCase().includes("sl")).length;
+  $("countActive").textContent=data.filter(r=>
+    String(r.Status||"").toLowerCase()==="active"
+  ).length;
+  $("countTarget").textContent=data.filter(r=>
+    String(r.Status||"").toLowerCase().includes("target")
+  ).length;
+  $("countSL").textContent=data.filter(r=>
+    String(r.Status||"").toLowerCase().includes("sl")
+  ).length;
+  $("countOverdue").textContent=data.filter(r=>
+    String(r.Timing_Status||"").toLowerCase()==="overdue"
+  ).length;
 }
 
 function statusClass(status){
@@ -247,64 +297,102 @@ function statusClass(status){
 }
 
 function money(v){
-  if(v===""||v==null||isNaN(Number(v)))return "-";
+  if(v===""||v===null||v===undefined||isNaN(Number(v)))return "-";
   return "₹"+Number(v).toLocaleString("en-IN",{maximumFractionDigits:2});
+}
+
+function progressValue(r){
+  const entry=Number(r.Entry_CMP);
+  const current=Number(r.Current_CMP);
+  const target=Number(r.Target);
+
+  if(!isFinite(entry)||!isFinite(current)||!isFinite(target)||target===entry){
+    return 0;
+  }
+
+  return Math.max(0,Math.min(100,((current-entry)/(target-entry))*100));
 }
 
 function renderRecommendations(){
   const data=filteredRecommendations("recMonth");
   const body=$("recBody");
+
   if(!data.length){
-    body.innerHTML='<tr><td colspan="11" class="empty">No recommendations found.</td></tr>';
+    body.innerHTML='<tr><td colspan="12" class="empty">No recommendations found.</td></tr>';
     return;
   }
 
   body.innerHTML=data.map(r=>{
-    const entry=Number(r.Entry_CMP);
-    const current=Number(r.Current_CMP);
-    const target=Number(r.Target);
-    let progress=0;
-    if(!isNaN(entry)&&!isNaN(current)&&!isNaN(target)&&target!==entry){
-      progress=((current-entry)/(target-entry))*100;
-      progress=Math.max(0,Math.min(100,progress));
-    }
     const ret=Number(r.Return_Percent);
+    const progress=progressValue(r);
+
     return `<tr>
       <td>${escapeHtml(r.Date||"-")}</td>
-      <td>${escapeHtml(r.Name||"-")}</td>
-      <td><b>${escapeHtml(r.Symbol||"-")}</b></td>
+      <td><b>${escapeHtml(r.Name||"-")}</b></td>
+      <td>${escapeHtml(r.Symbol||"-")}</td>
       <td>${escapeHtml(r.Type||"-")}</td>
       <td>${money(r.Entry_CMP)}</td>
       <td><b>${money(r.Current_CMP)}</b></td>
       <td>${money(r.Target)}</td>
       <td>${money(r.Stop_Loss)}</td>
       <td>${isNaN(ret)?"-":ret.toFixed(2)+"%"}</td>
-      <td><span class="badge ${statusClass(r.Status)}">${escapeHtml(r.Status||"Not loaded")}</span></td>
-      <td><div class="progress"><div class="progress-bar" style="width:${progress}%"></div></div></td>
+      <td><span class="badge ${statusClass(r.Status)}">${escapeHtml(r.Status||"Not set")}</span></td>
+      <td>${escapeHtml(r.Timing_Status||"-")}</td>
+      <td>
+        <div class="progress">
+          <div class="progress-bar" style="width:${progress}%"></div>
+        </div>
+      </td>
     </tr>`;
   }).join("");
 }
 
+/*
+  SIP API structure:
+  Basket_ID
+  Monthly_Amount
+  Investment_Name
+  Investment_Type
+  Allocation_Amount
+  Allocation_Percent
+  Purpose
+
+  The app intentionally displays ONLY the basket recommendation,
+  not the underlying funds/allocations.
+*/
 function renderSIP(){
   const grid=$("sipGrid");
+
   if(!sipBaskets.length){
     grid.innerHTML='<div class="empty">No SIP baskets found.</div>';
     return;
   }
 
   const grouped={};
-  sipBaskets.forEach(r=>{
-    const key=r.Basket||"SIP Basket";
-    if(!grouped[key])grouped[key]={basket:key,amount:r.Monthly_SIP||0,count:0};
-    grouped[key].count++;
+
+  sipBaskets.forEach(row=>{
+    const id=String(row.Basket_ID||row.Monthly_Amount||"");
+    if(!id)return;
+
+    if(!grouped[id]){
+      grouped[id]={
+        basketId:id,
+        amount:Number(row.Monthly_Amount)||0
+      };
+    }
   });
 
-  grid.innerHTML=Object.values(grouped).map(x=>`
+  const baskets=Object.values(grouped).sort(
+    (a,b)=>a.amount-b.amount
+  );
+
+  grid.innerHTML=baskets.map(b=>`
     <div class="sip-card">
-      <div class="sip-title">${escapeHtml(x.basket)}</div>
-      <div class="sip-amount">${money(x.amount)}</div>
-      <div class="status">Monthly SIP recommendation</div>
-    </div>`).join("");
+      <div class="sip-label">Recommended SIP Basket</div>
+      <div class="sip-amount">${money(b.amount)}</div>
+      <div class="sip-sub">Monthly investment</div>
+    </div>
+  `).join("");
 }
 
 function renderAll(){
@@ -313,16 +401,30 @@ function renderAll(){
   renderSIP();
 }
 
-function escapeHtml(v){
-  return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+function escapeHtml(value){
+  return String(value).replace(/[&<>"']/g,function(c){
+    return {
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#039;"
+    }[c];
+  });
 }
 
 function toggleDark(){
   document.body.classList.toggle("dark");
-  localStorage.setItem("ankitDark",document.body.classList.contains("dark")?"1":"0");
+  localStorage.setItem(
+    "ankitDark",
+    document.body.classList.contains("dark")?"1":"0"
+  );
 }
 
-if(localStorage.getItem("ankitDark")==="1")document.body.classList.add("dark");
+if(localStorage.getItem("ankitDark")==="1"){
+  document.body.classList.add("dark");
+}
+
 loadData();
 </script>
 </body>
