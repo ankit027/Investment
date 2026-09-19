@@ -5,58 +5,75 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ANKIT Investment Hub</title>
   <style>
+
 *{box-sizing:border-box}
-:root{font-family:Arial,Helvetica,sans-serif;color:#172033;background:#f5f7fb}
-body{margin:0;background:#f5f7fb}
-.topbar{background:#111827;color:white;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:15px}
-.topbar h1{margin:0;font-size:24px}
-.topbar p{margin:5px 0 0;color:#cbd5e1;font-size:13px}
-.tabs{display:flex;background:white;border-bottom:1px solid #e5e7eb;padding:0 18px;position:sticky;top:0;z-index:5}
-.tab{border:0;background:none;padding:15px 20px;cursor:pointer;font-weight:600;color:#64748b}
-.tab.active{color:#2563eb;border-bottom:3px solid #2563eb}
-main{max-width:1400px;margin:auto;padding:22px}
+:root{
+  --bg:#f3f6fb;--panel:#ffffff;--text:#172033;--muted:#64748b;
+  --border:#e2e8f0;--primary:#2563eb;--primary2:#1d4ed8;
+  --header:#0f172a;--soft:#f8fafc;--success:#15803d;--warning:#b45309;--danger:#b91c1c;
+  font-family:Inter,Arial,Helvetica,sans-serif
+}
+html[data-theme="dark"]{
+  --bg:#0b1120;--panel:#111827;--text:#e5e7eb;--muted:#94a3b8;
+  --border:#263244;--primary:#60a5fa;--primary2:#3b82f6;
+  --header:#020617;--soft:#172033;--success:#4ade80;--warning:#fbbf24;--danger:#f87171
+}
+body{margin:0;background:var(--bg);color:var(--text);min-height:100vh}
+.topbar{background:var(--header);color:white;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:15px;position:sticky;top:0;z-index:20;box-shadow:0 2px 10px #0002}
+.brand h1{margin:0;font-size:24px;letter-spacing:.2px}.brand p{margin:4px 0 0;color:#cbd5e1;font-size:12px}
+.top-actions{display:flex;gap:8px;align-items:center}
+.tabs{display:flex;background:var(--panel);border-bottom:1px solid var(--border);padding:0 18px;position:sticky;top:73px;z-index:15}
+.tab{border:0;background:transparent;padding:14px 20px;cursor:pointer;font-weight:600;color:var(--muted);border-bottom:3px solid transparent}
+.tab:hover{color:var(--primary)}.tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+main{max-width:1450px;margin:auto;padding:22px}
 .page{display:none}.page.active{display:block}
-.cards{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:22px}
-.card{background:white;border:1px solid #e5e7eb;border-radius:12px;padding:18px;box-shadow:0 2px 8px #00000008}
-.card span{display:block;color:#64748b;font-size:13px;margin-bottom:8px}
-.card strong{font-size:25px}
-.panel{background:white;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:22px;box-shadow:0 2px 8px #00000008}
-.panel-title{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:16px}
-.panel-title h2{font-size:18px;margin:0}
-.form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-label{font-size:13px;font-weight:600;color:#475569}
-input,select,textarea{display:block;width:100%;margin-top:6px;padding:10px 11px;border:1px solid #cbd5e1;border-radius:8px;background:white;color:#111827;font:inherit}
-textarea{resize:vertical}
-.full{grid-column:1/-1}
+.cards{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:0 3px 12px #0000000b}
+.card span{display:block;color:var(--muted);font-size:12px;margin-bottom:7px}.card strong{font-size:25px;color:var(--text)}
+.dashboard-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;margin-bottom:18px}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:18px;box-shadow:0 3px 12px #00000009}
+.panel-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.panel-title h2{font-size:17px;margin:0}
+.form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
+label{font-size:12px;font-weight:700;color:var(--muted)}
+input,select,textarea{display:block;width:100%;margin-top:6px;padding:10px 11px;border:1px solid var(--border);border-radius:8px;background:var(--panel);color:var(--text);font:inherit;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 2px #2563eb22}
+textarea{resize:vertical}.full{grid-column:1/-1}
 .form-actions{display:flex;align-items:center;gap:15px}
-.btn{border:0;border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:600}
-.primary{background:#2563eb;color:white}.secondary{background:#e2e8f0;color:#1e293b}
-.danger{background:#fee2e2;color:#b91c1c;padding:7px 10px}
-.small{padding:7px 10px;font-size:12px}
-.search{max-width:260px}
-.table-wrap{overflow:auto}
-table{width:100%;border-collapse:collapse;min-width:900px}
-th,td{text-align:left;padding:11px 10px;border-bottom:1px solid #e5e7eb;font-size:13px;white-space:nowrap}
-th{background:#f8fafc;color:#475569}
-.badge{display:inline-block;border-radius:20px;padding:5px 9px;font-size:11px;font-weight:700}
+.btn{border:0;border-radius:8px;padding:9px 14px;cursor:pointer;font-weight:700}
+.primary{background:var(--primary);color:white}.primary:hover{background:var(--primary2)}
+.secondary{background:var(--soft);color:var(--text);border:1px solid var(--border)}
+.danger{background:#fee2e2;color:#b91c1c}.dark-toggle{background:#1e293b;color:white;border:1px solid #475569}
+.small{padding:6px 9px;font-size:11px}.message{font-size:12px;color:var(--success)}
+.search{max-width:280px}.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:920px}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--border);font-size:12px;white-space:nowrap}
+th{background:var(--soft);color:var(--muted);position:sticky;top:0}
+.badge{display:inline-block;border-radius:20px;padding:5px 9px;font-size:10px;font-weight:800}
 .active{background:#dcfce7;color:#166534}.target{background:#dbeafe;color:#1d4ed8}.sl{background:#fee2e2;color:#b91c1c}.overdue{background:#fef3c7;color:#92400e}
-.message{font-size:13px;color:#166534}
-.empty{text-align:center;padding:35px;color:#64748b}
-.loading{position:fixed;right:20px;bottom:20px;background:#111827;color:white;padding:10px 16px;border-radius:8px;box-shadow:0 5px 20px #0003}
-.hidden{display:none}
-.error{color:#b91c1c;background:#fee2e2;padding:12px;border-radius:8px}
-@media(max-width:1000px){.cards{grid-template-columns:repeat(3,1fr)}.form-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:600px){.topbar{padding:15px}.topbar h1{font-size:19px}.tabs{overflow:auto}.tab{padding:13px 15px}.cards{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}main{padding:12px}.panel{padding:15px}.full{grid-column:auto}.search{max-width:100%}}
+html[data-theme="dark"] .active{background:#12351f;color:#86efac}html[data-theme="dark"] .target{background:#12294b;color:#93c5fd}html[data-theme="dark"] .sl{background:#401b20;color:#fca5a5}html[data-theme="dark"] .overdue{background:#3b2b0b;color:#fcd34d}
+.bar-row{display:grid;grid-template-columns:120px 1fr 40px;gap:10px;align-items:center;margin:13px 0;font-size:12px}
+.bar-bg{height:10px;background:var(--soft);border-radius:10px;overflow:hidden}.bar-fill{height:100%;background:var(--primary);border-radius:10px}
+.metric-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.metric{padding:13px;background:var(--soft);border-radius:9px}.metric span{display:block;color:var(--muted);font-size:11px}.metric strong{font-size:17px;display:block;margin-top:4px}
+.connection{font-size:11px;padding:6px 9px;border-radius:20px;background:#dcfce7;color:#166534}.connection.off{background:#fee2e2;color:#b91c1c}
+.empty{text-align:center;padding:35px;color:var(--muted)}
+.loading{position:fixed;right:20px;bottom:20px;background:var(--header);color:white;padding:10px 16px;border-radius:8px;box-shadow:0 5px 20px #0003;z-index:50}.hidden{display:none}
+.error{color:var(--danger);background:#fee2e2;padding:12px;border-radius:8px;margin-bottom:15px}
+html[data-theme="dark"] .error{background:#3b1519}
+@media(max-width:1100px){.cards{grid-template-columns:repeat(3,1fr)}.dashboard-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:650px){.topbar{padding:13px 14px}.brand h1{font-size:19px}.top-actions{flex-wrap:wrap}.tabs{top:68px;overflow:auto;padding:0 8px}.tab{padding:12px 13px}main{padding:12px}.cards{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}.full{grid-column:auto}.search{max-width:100%}.metric-row{grid-template-columns:1fr}}
 
   </style>
 </head>
 <body>
   <header class="topbar">
-    <div>
+    <div class="brand">
       <h1>ANKIT Investment Hub</h1>
-      <p>Simple Recommendations & SIP Baskets</p>
+      <p>Recommendations & SIP Baskets</p>
     </div>
-    <button id="refreshBtn" class="btn secondary">Refresh</button>
+    <div class="top-actions">
+      <span id="connection" class="connection off">Connecting...</span>
+      <button id="themeBtn" class="btn dark-toggle">🌙 Dark</button>
+      <button id="refreshBtn" class="btn secondary">↻ Refresh</button>
+    </div>
   </header>
 
   <nav class="tabs">
@@ -76,10 +93,23 @@ th{background:#f8fafc;color:#475569}
         <div class="card"><span>Monthly SIP</span><strong id="dashSIP">₹0</strong></div>
       </div>
 
-      <div class="panel">
-        <div class="panel-title">
-          <h2>Recent Recommendations</h2>
+      <div class="dashboard-grid">
+        <div class="panel">
+          <div class="panel-title"><h2>Recommendation Status</h2><span id="dashUpdated" style="font-size:11px;color:var(--muted)">Not loaded</span></div>
+          <div id="statusBars"></div>
         </div>
+        <div class="panel">
+          <div class="panel-title"><h2>Portfolio Summary</h2></div>
+          <div class="metric-row">
+            <div class="metric"><span>Avg. Return</span><strong id="avgReturn">0.00%</strong></div>
+            <div class="metric"><span>Target Rate</span><strong id="targetRate">0%</strong></div>
+            <div class="metric"><span>Overdue Rate</span><strong id="overdueRate">0%</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><h2>Recent Recommendations</h2><button class="btn secondary small" onclick="activateTab('recommendations')">View All</button></div>
         <div id="dashboardRecommendations" class="table-wrap"></div>
       </div>
     </section>
@@ -231,6 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupTabs();
   setupForms();
   setupSearch();
+  setupTheme();
   document.getElementById("refreshBtn").addEventListener("click", loadData);
   document.getElementById("recDate").value = todayString();
   loadData();
@@ -240,6 +271,30 @@ function todayString() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
+function setupTheme() {
+  const saved = localStorage.getItem("ankit-theme") || "light";
+  applyTheme(saved);
+  document.getElementById("themeBtn").addEventListener("click", () => {
+    const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    applyTheme(next);
+    localStorage.setItem("ankit-theme", next);
+  });
+}
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  document.getElementById("themeBtn").textContent = theme === "dark" ? "☀️ Light" : "🌙 Dark";
+}
+
+function extractArray(result, keys) {
+  if (Array.isArray(result)) return result;
+  if (!result || typeof result !== "object") return [];
+  for (const key of keys) {
+    if (Array.isArray(result[key])) return result[key];
+  }
+  return [];
+}
+
 
 function setupTabs() {
   document.querySelectorAll(".tab").forEach(btn => {
@@ -285,26 +340,40 @@ async function apiPost(action, data) {
 
 async function loadData() {
   showLoading(true);
+  let recOK = false, sipOK = false;
 
   try {
-    const [recResult, sipResult] = await Promise.all([
-      apiGet("getRecommendations"),
-      apiGet("getSIPBaskets")
-    ]);
-
-    recommendations = Array.isArray(recResult) ? recResult :
-      (recResult.data || recResult.recommendations || []);
-
-    sipBaskets = Array.isArray(sipResult) ? sipResult :
-      (sipResult.data || sipResult.sipBaskets || []);
-
-    renderAll();
+    const recResult = await apiGet("getRecommendations");
+    recommendations = extractArray(recResult, ["recommendations","data","results"]);
+    recOK = true;
   } catch (error) {
-    console.error(error);
-    showGlobalError("Unable to load data. Check your Apps Script deployment and API URL.");
-  } finally {
-    showLoading(false);
+    console.error("Recommendations load failed:", error);
+    recommendations = [];
   }
+
+  try {
+    const sipResult = await apiGet("getSIPBaskets");
+    sipBaskets = extractArray(sipResult, ["sipBaskets","baskets","data","results"]);
+    sipOK = true;
+  } catch (error) {
+    console.warn("SIP load failed:", error);
+    sipBaskets = [];
+  }
+
+  document.getElementById("connection").textContent = recOK ? "● Data Connected" : "● Data Offline";
+  document.getElementById("connection").classList.toggle("off", !recOK);
+
+  renderAll();
+  document.getElementById("dashUpdated").textContent =
+    "Updated " + new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+
+  if (!recOK) {
+    showGlobalError("Recommendations could not be loaded. Check the Apps Script Web App URL and deployment access.");
+  } else {
+    removeGlobalError();
+  }
+
+  showLoading(false);
 }
 
 function renderAll() {
@@ -472,11 +541,31 @@ function renderDashboard() {
   document.getElementById("dashOverdue").textContent = overdue;
   document.getElementById("dashSIP").textContent = money(monthlySIP);
 
+  const returns = recommendations
+    .map(x => x.Return_Percent === undefined || x.Return_Percent === "" ? null : num(x.Return_Percent))
+    .filter(x => x !== null && Number.isFinite(x));
+  const avg = returns.length ? returns.reduce((a,b)=>a+b,0)/returns.length : 0;
+
+  document.getElementById("avgReturn").textContent = avg.toFixed(2) + "%";
+  document.getElementById("targetRate").textContent = total ? ((target/total)*100).toFixed(0) + "%" : "0%";
+  document.getElementById("overdueRate").textContent = total ? ((overdue/total)*100).toFixed(0) + "%" : "0%";
+
+  const bars = [
+    ["Active", active], ["Target Hit", target], ["SL Hit", sl], ["Overdue", overdue]
+  ];
+  const max = Math.max(1, ...bars.map(x=>x[1]));
+  document.getElementById("statusBars").innerHTML = bars.map(([name,count]) => `
+    <div class="bar-row">
+      <span>${name}</span>
+      <div class="bar-bg"><div class="bar-fill" style="width:${(count/max)*100}%"></div></div>
+      <b>${count}</b>
+    </div>
+  `).join("");
+
   const latest = [...recommendations].reverse().slice(0,8);
   document.getElementById("dashboardRecommendations").innerHTML =
     latest.length ? recommendationTable(latest, false) : empty("No recommendations yet.");
 }
-
 function renderRecommendations() {
   const search = value("recSearch").toLowerCase();
 
@@ -701,13 +790,17 @@ function showLoading(show) {
 
 function showGlobalError(message) {
   const dashboard = document.getElementById("dashboard");
-  const old = dashboard.querySelector(".error");
-  if (old) old.remove();
-
+  removeGlobalError();
   const div = document.createElement("div");
   div.className = "error";
+  div.id = "globalError";
   div.textContent = message;
   dashboard.prepend(div);
+}
+
+function removeGlobalError() {
+  const old = document.getElementById("globalError");
+  if (old) old.remove();
 }
 
   </script>
