@@ -58,6 +58,24 @@ html[data-theme="dark"] .active{background:#12351f;color:#86efac}html[data-theme
 .loading{position:fixed;right:20px;bottom:20px;background:var(--header);color:white;padding:10px 16px;border-radius:8px;box-shadow:0 5px 20px #0003;z-index:50}.hidden{display:none}
 .error{color:var(--danger);background:#fee2e2;padding:12px;border-radius:8px;margin-bottom:15px}
 html[data-theme="dark"] .error{background:#3b1519}
+
+/* Progress gradient */
+.progress-wrap{display:flex;align-items:center;gap:9px;min-width:150px}
+.progress-bg{height:9px;flex:1;background:var(--border);border-radius:999px;overflow:hidden}
+.progress-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#2563eb 0%,#7c3aed 50%,#16a34a 100%);transition:width .35s ease}
+.progress-label{font-size:11px;font-weight:700;min-width:38px;text-align:right;color:var(--muted)}
+.bar-bg{height:11px;background:var(--border);border-radius:999px;overflow:hidden}
+.bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#2563eb 0%,#7c3aed 50%,#16a34a 100%);transition:width .4s ease}
+.basket-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.basket-card{border:1px solid var(--border);background:var(--soft);border-radius:12px;padding:18px;position:relative}
+.basket-card h3{margin:0 0 10px;font-size:16px}
+.basket-card .basket-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.basket-card .basket-amount{font-size:25px;font-weight:800;margin-top:5px;color:var(--success)}
+.basket-actions{display:flex;gap:8px;margin-top:15px}
+.basket-form{grid-template-columns:repeat(2,1fr)}
+@media(max-width:900px){.basket-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:650px){.basket-grid{grid-template-columns:1fr}.basket-form{grid-template-columns:1fr}}
+
 @media(max-width:1100px){.cards{grid-template-columns:repeat(3,1fr)}.dashboard-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:650px){.topbar{padding:13px 14px}.brand h1{font-size:19px}.top-actions{flex-wrap:wrap}.tabs{top:68px;overflow:auto;padding:0 8px}.tab{padding:12px 13px}main{padding:12px}.cards{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}.full{grid-column:auto}.search{max-width:100%}.metric-row{grid-template-columns:1fr}}
 
@@ -121,6 +139,7 @@ html[data-theme="dark"] .error{background:#3b1519}
           <button id="clearRecBtn" class="btn secondary">Clear</button>
         </div>
 
+        <div class="auto-price-note">📈 <b>Current Market Price:</b> updated automatically from Google Finance when the recommendation is refreshed.</div>
         <form id="recommendationForm" class="form-grid">
           <input type="hidden" id="recId">
 
@@ -159,10 +178,6 @@ html[data-theme="dark"] .error{background:#3b1519}
             <input type="number" id="recDays" min="1" step="1" placeholder="Example: 60" required>
           </label>
 
-          <label>Current Price
-            <input type="number" id="recCurrent" step="0.01" min="0">
-          </label>
-
           <label>Status
             <select id="recStatus">
               <option value="Active">Active</option>
@@ -194,11 +209,11 @@ html[data-theme="dark"] .error{background:#3b1519}
     <section id="sip" class="page">
       <div class="panel">
         <div class="panel-title">
-          <h2>Add SIP Basket</h2>
+          <h2>Add SIP Basket Recommendation</h2>
           <button id="clearSipBtn" class="btn secondary">Clear</button>
         </div>
 
-        <form id="sipForm" class="form-grid">
+        <form id="sipForm" class="form-grid basket-form">
           <input type="hidden" id="sipId">
 
           <label>Basket Name
@@ -209,24 +224,8 @@ html[data-theme="dark"] .error{background:#3b1519}
             <input type="number" id="sipAmount" step="1" min="0" placeholder="20000" required>
           </label>
 
-          <label>Fund / ETF Name
-            <input type="text" id="sipFund" placeholder="Example: Parag Parikh Flexi Cap" required>
-          </label>
-
-          <label>Symbol
-            <input type="text" id="sipSymbol" placeholder="Example: PPFAS" >
-          </label>
-
-          <label>Allocation %
-            <input type="number" id="sipAllocation" step="0.01" min="0" max="100" placeholder="20">
-          </label>
-
-          <label>Category
-            <input type="text" id="sipCategory" placeholder="Equity / Gold / ETF">
-          </label>
-
           <div class="form-actions full">
-            <button type="submit" class="btn primary">Save SIP Item</button>
+            <button type="submit" class="btn primary">Save Basket</button>
             <span id="sipMessage" class="message"></span>
           </div>
         </form>
@@ -234,10 +233,10 @@ html[data-theme="dark"] .error{background:#3b1519}
 
       <div class="panel">
         <div class="panel-title">
-          <h2>SIP Baskets</h2>
-          <input id="sipSearch" class="search" placeholder="Search basket or fund">
+          <h2>SIP Basket Recommendations</h2>
+          <input id="sipSearch" class="search" placeholder="Search basket">
         </div>
-        <div id="sipTable" class="table-wrap"></div>
+        <div id="sipTable" class="basket-grid"></div>
       </div>
     </section>
   </main>
@@ -340,40 +339,37 @@ async function apiPost(action, data) {
 
 async function loadData() {
   showLoading(true);
-  let recOK = false, sipOK = false;
 
   try {
-    const recResult = await apiGet("getRecommendations");
-    recommendations = extractArray(recResult, ["recommendations","data","results"]);
-    recOK = true;
+    // Ask Apps Script to refresh current market prices before reading data.
+    try {
+      await apiGet("refreshMarketPrices");
+    } catch (refreshError) {
+      console.warn("Market price refresh failed:", refreshError);
+    }
+
+    const [recResult, sipResult] = await Promise.all([
+      apiGet("getRecommendations"),
+      apiGet("getSIPBaskets")
+    ]);
+
+    recommendations = Array.isArray(recResult)
+      ? recResult
+      : (recResult.data || recResult.recommendations || []);
+
+    sipBaskets = Array.isArray(sipResult)
+      ? sipResult
+      : (sipResult.data || sipResult.sipBaskets || []);
+
+    renderAll();
   } catch (error) {
-    console.error("Recommendations load failed:", error);
-    recommendations = [];
+    console.error(error);
+    showGlobalError(
+      "Unable to load data. Check your Apps Script deployment and API URL."
+    );
+  } finally {
+    showLoading(false);
   }
-
-  try {
-    const sipResult = await apiGet("getSIPBaskets");
-    sipBaskets = extractArray(sipResult, ["sipBaskets","baskets","data","results"]);
-    sipOK = true;
-  } catch (error) {
-    console.warn("SIP load failed:", error);
-    sipBaskets = [];
-  }
-
-  document.getElementById("connection").textContent = recOK ? "● Data Connected" : "● Data Offline";
-  document.getElementById("connection").classList.toggle("off", !recOK);
-
-  renderAll();
-  document.getElementById("dashUpdated").textContent =
-    "Updated " + new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
-
-  if (!recOK) {
-    showGlobalError("Recommendations could not be loaded. Check the Apps Script Web App URL and deployment access.");
-  } else {
-    removeGlobalError();
-  }
-
-  showLoading(false);
 }
 
 function renderAll() {
@@ -395,7 +391,7 @@ async function saveRecommendation(event) {
     target: number("recTarget"),
     stopLoss: number("recSL"),
     holdingDays: number("recDays"),
-    current: number("recCurrent"),
+    current: 0, // Current market price is fetched by Google Sheets/Apps Script
     status: value("recStatus"),
     notes: value("recNotes")
   };
@@ -444,7 +440,6 @@ function editRecommendation(item) {
   document.getElementById("recTarget").value = item.Target ?? item.target ?? "";
   document.getElementById("recSL").value = item.Stop_Loss ?? item.stopLoss ?? "";
   document.getElementById("recDays").value = item.Time_Frame ?? item.holdingDays ?? "";
-  document.getElementById("recCurrent").value = item.Current_CMP ?? item.current ?? "";
   document.getElementById("recStatus").value = item.Status || item.status || "Active";
   document.getElementById("recNotes").value = item.Remarks || item.notes || "";
 
@@ -467,14 +462,14 @@ async function saveSIP(event) {
     id: value("sipId"),
     basket: value("sipBasket"),
     amount: number("sipAmount"),
-    fund: value("sipFund"),
-    symbol: value("sipSymbol").toUpperCase(),
-    allocation: number("sipAllocation"),
-    category: value("sipCategory")
+    fund: "",
+    symbol: "",
+    allocation: 0,
+    category: "Basket"
   };
 
-  if (!data.basket || !data.amount || !data.fund) {
-    setMessage("sipMessage", "Basket, amount and fund are required.", true);
+  if (!data.basket || !data.amount) {
+    setMessage("sipMessage", "Basket name and monthly SIP are required.", true);
     return;
   }
 
@@ -487,7 +482,7 @@ async function saveSIP(event) {
       throw new Error(result.message || "Save failed");
     }
 
-    setMessage("sipMessage", "Saved successfully.");
+    setMessage("sipMessage", "Basket saved successfully.");
     clearSIPForm();
     await loadData();
   } catch (error) {
@@ -511,10 +506,6 @@ function editSIP(item) {
   document.getElementById("sipId").value = item.ID || item.id || "";
   document.getElementById("sipBasket").value = item.Basket || item.basket || "";
   document.getElementById("sipAmount").value = item.Monthly_SIP ?? item.amount ?? "";
-  document.getElementById("sipFund").value = item.Fund || item.fund || "";
-  document.getElementById("sipSymbol").value = item.Symbol || item.symbol || "";
-  document.getElementById("sipAllocation").value = item.Allocation_Percent ?? item.allocation ?? "";
-  document.getElementById("sipCategory").value = item.Category || item.category || "";
 
   activateTab("sip");
   window.scrollTo({top:0, behavior:"smooth"});
@@ -532,7 +523,8 @@ function renderDashboard() {
   const target = recommendations.filter(x => String(x.Status || "").trim() === "Target Hit").length;
   const sl = recommendations.filter(x => String(x.Status || "").trim() === "SL Hit").length;
   const overdue = recommendations.filter(x => getTiming(x) === "Overdue").length;
-  const monthlySIP = sipBaskets.reduce((sum,x) => sum + num(x.Monthly_SIP ?? x.amount), 0);
+  const uniqueSIPs = getUniqueSIPBaskets();
+  const monthlySIP = uniqueSIPs.reduce((sum,x) => sum + num(x.Monthly_SIP ?? x.amount), 0);
 
   document.getElementById("dashTotal").textContent = total;
   document.getElementById("dashActive").textContent = active;
@@ -592,6 +584,7 @@ function recommendationTable(items, actions) {
           <th>Target</th>
           <th>SL</th>
           <th>Return</th>
+          <th>Progress</th>
           <th>Due Date</th>
           <th>Status</th>
           ${actions ? "<th>Action</th>" : ""}
@@ -616,6 +609,7 @@ function recommendationTable(items, actions) {
               <td>${price(x.Target)}</td>
               <td>${price(x.Stop_Loss)}</td>
               <td>${returnPct}</td>
+              <td>${progressBar(x)}</td>
               <td>${esc(normalizeDate(x.Due_Date))}</td>
               <td>${statusBadge(status, timing, x)}</td>
               ${actions ? `
@@ -633,43 +627,82 @@ function recommendationTable(items, actions) {
 
 function renderSIP() {
   const search = value("sipSearch").toLowerCase();
+  const baskets = getUniqueSIPBaskets();
 
-  const filtered = sipBaskets.filter(x => {
-    const text = `${x.Basket || x.basket || ""} ${x.Fund || x.fund || ""} ${x.Symbol || x.symbol || ""}`.toLowerCase();
+  const filtered = baskets.filter(x => {
+    const text = `${x.Basket || x.basket || ""}`.toLowerCase();
     return text.includes(search);
   });
 
   document.getElementById("sipTable").innerHTML = filtered.length ? `
-    <table>
-      <thead>
-        <tr>
-          <th>Basket</th>
-          <th>Monthly SIP</th>
-          <th>Fund / ETF</th>
-          <th>Symbol</th>
-          <th>Allocation</th>
-          <th>Category</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${filtered.map(x => `
-          <tr>
-            <td><b>${esc(x.Basket || x.basket || "")}</b></td>
-            <td>${money(x.Monthly_SIP ?? x.amount)}</td>
-            <td>${esc(x.Fund || x.fund || "")}</td>
-            <td>${esc(x.Symbol || x.symbol || "")}</td>
-            <td>${x.Allocation_Percent ?? x.allocation ?? ""}%</td>
-            <td>${esc(x.Category || x.category || "")}</td>
-            <td>
-              <button class="btn secondary small" onclick='editSIP(${safeJSON(x)})'>Edit</button>
-              <button class="btn danger small" onclick='deleteSIP("${escAttr(x.ID || x.id || "")}")'>Delete</button>
-            </td>
-          </tr>
-        `).join("")}
-      </tbody>
-    </table>
-  ` : empty("No SIP items found.");
+    ${filtered.map(x => `
+      <div class="basket-card">
+        <div class="basket-label">SIP Basket Recommendation</div>
+        <h3>${esc(x.Basket || x.basket || "")}</h3>
+        <div class="basket-label">Monthly SIP</div>
+        <div class="basket-amount">${money(x.Monthly_SIP ?? x.amount)}</div>
+        <div class="basket-actions">
+          <button class="btn secondary small" onclick='editSIP(${safeJSON(x)})'>Edit</button>
+          <button class="btn danger small" onclick='deleteSIP("${escAttr(x.ID || x.id || "")}")'>Delete</button>
+        </div>
+      </div>
+    `).join("")}
+  ` : empty("No SIP basket recommendations found.");
+}
+
+function getUniqueSIPBaskets() {
+  const map = new Map();
+
+  sipBaskets.forEach(x => {
+    const name = String(x.Basket || x.basket || "").trim();
+    if (!name) return;
+
+    const key = name.toLowerCase();
+
+    if (!map.has(key)) {
+      map.set(key, {
+        ID: x.ID || x.id || "",
+        Basket: name,
+        Monthly_SIP: num(x.Monthly_SIP ?? x.amount)
+      });
+    } else {
+      // Keep the first basket record so a basket is displayed only once.
+      // This avoids double-counting when older data contains fund-level rows.
+    }
+  });
+
+  return Array.from(map.values());
+}
+
+
+function progressPercent(x) {
+  const entry = num(x.Entry_CMP);
+  const current = num(x.Current_CMP);
+  const target = num(x.Target);
+
+  if (!entry || !current || !target || entry === target) return 0;
+
+  let pct;
+
+  if (String(x.Type || "Buy").toLowerCase() === "sell") {
+    pct = ((entry - current) / (entry - target)) * 100;
+  } else {
+    pct = ((current - entry) / (target - entry)) * 100;
+  }
+
+  return Math.max(0, Math.min(100, pct));
+}
+
+function progressBar(x) {
+  const pct = progressPercent(x);
+  return `
+    <div class="progress-wrap" title="${pct.toFixed(0)}% progress toward target">
+      <div class="progress-bg">
+        <div class="progress-fill" style="width:${pct}%"></div>
+      </div>
+      <span class="progress-label">${pct.toFixed(0)}%</span>
+    </div>
+  `;
 }
 
 function getTiming(x) {
