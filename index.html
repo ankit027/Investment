@@ -1,971 +1,329 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ANKIT Investment Hub</title>
-  <style>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ANKIT Investment Hub</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--text:#18202a;--muted:#687386;--border:#e3e7ee;--accent:#2563eb;--good:#16a34a;--bad:#dc2626;--warn:#d97706;--shadow:0 8px 25px rgba(15,23,42,.07)}
 *{box-sizing:border-box}
-:root{
-  --bg:#f3f6fb;--panel:#ffffff;--text:#172033;--muted:#64748b;
-  --border:#e2e8f0;--primary:#2563eb;--primary2:#1d4ed8;
-  --header:#0f172a;--soft:#f8fafc;--success:#15803d;--warning:#b45309;--danger:#b91c1c;
-  font-family:Inter,Arial,Helvetica,sans-serif
-}
-html[data-theme="dark"]{
-  --bg:#0b1120;--panel:#111827;--text:#e5e7eb;--muted:#94a3b8;
-  --border:#263244;--primary:#60a5fa;--primary2:#3b82f6;
-  --header:#020617;--soft:#172033;--success:#4ade80;--warning:#fbbf24;--danger:#f87171
-}
-body{margin:0;background:var(--bg);color:var(--text);min-height:100vh}
-.topbar{background:var(--header);color:white;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:15px;position:sticky;top:0;z-index:20;box-shadow:0 2px 10px #0002}
-.brand h1{margin:0;font-size:24px;letter-spacing:.2px}.brand p{margin:4px 0 0;color:#cbd5e1;font-size:12px}
-.top-actions{display:flex;gap:8px;align-items:center}
-.tabs{display:flex;background:var(--panel);border-bottom:1px solid var(--border);padding:0 18px;position:sticky;top:73px;z-index:15}
-.tab{border:0;background:transparent;padding:14px 20px;cursor:pointer;font-weight:600;color:var(--muted);border-bottom:3px solid transparent}
-.tab:hover{color:var(--primary)}.tab.active{color:var(--primary);border-bottom-color:var(--primary)}
-main{max-width:1450px;margin:auto;padding:22px}
-.page{display:none}.page.active{display:block}
-.cards{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px}
-.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:0 3px 12px #0000000b}
-.card span{display:block;color:var(--muted);font-size:12px;margin-bottom:7px}.card strong{font-size:25px;color:var(--text)}
-.dashboard-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;margin-bottom:18px}
-.panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:18px;box-shadow:0 3px 12px #00000009}
-.panel-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.panel-title h2{font-size:17px;margin:0}
-.form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
-label{font-size:12px;font-weight:700;color:var(--muted)}
-input,select,textarea{display:block;width:100%;margin-top:6px;padding:10px 11px;border:1px solid var(--border);border-radius:8px;background:var(--panel);color:var(--text);font:inherit;outline:none}
-input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 2px #2563eb22}
-textarea{resize:vertical}.full{grid-column:1/-1}
-.form-actions{display:flex;align-items:center;gap:15px}
-.btn{border:0;border-radius:8px;padding:9px 14px;cursor:pointer;font-weight:700}
-.primary{background:var(--primary);color:white}.primary:hover{background:var(--primary2)}
-.secondary{background:var(--soft);color:var(--text);border:1px solid var(--border)}
-.danger{background:#fee2e2;color:#b91c1c}.dark-toggle{background:#1e293b;color:white;border:1px solid #475569}
-.small{padding:6px 9px;font-size:11px}.message{font-size:12px;color:var(--success)}
-.search{max-width:280px}.table-wrap{overflow:auto}
-table{width:100%;border-collapse:collapse;min-width:920px}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--border);font-size:12px;white-space:nowrap}
-th{background:var(--soft);color:var(--muted);position:sticky;top:0}
-.badge{display:inline-block;border-radius:20px;padding:5px 9px;font-size:10px;font-weight:800}
-.active{background:#dcfce7;color:#166534}.target{background:#dbeafe;color:#1d4ed8}.sl{background:#fee2e2;color:#b91c1c}.overdue{background:#fef3c7;color:#92400e}
-html[data-theme="dark"] .active{background:#12351f;color:#86efac}html[data-theme="dark"] .target{background:#12294b;color:#93c5fd}html[data-theme="dark"] .sl{background:#401b20;color:#fca5a5}html[data-theme="dark"] .overdue{background:#3b2b0b;color:#fcd34d}
-.bar-row{display:grid;grid-template-columns:120px 1fr 40px;gap:10px;align-items:center;margin:13px 0;font-size:12px}
-.bar-bg{height:10px;background:var(--soft);border-radius:10px;overflow:hidden}.bar-fill{height:100%;background:var(--primary);border-radius:10px}
-.metric-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.metric{padding:13px;background:var(--soft);border-radius:9px}.metric span{display:block;color:var(--muted);font-size:11px}.metric strong{font-size:17px;display:block;margin-top:4px}
-.connection{font-size:11px;padding:6px 9px;border-radius:20px;background:#dcfce7;color:#166534}.connection.off{background:#fee2e2;color:#b91c1c}
-.empty{text-align:center;padding:35px;color:var(--muted)}
-.loading{position:fixed;right:20px;bottom:20px;background:var(--header);color:white;padding:10px 16px;border-radius:8px;box-shadow:0 5px 20px #0003;z-index:50}.hidden{display:none}
-.error{color:var(--danger);background:#fee2e2;padding:12px;border-radius:8px;margin-bottom:15px}
-html[data-theme="dark"] .error{background:#3b1519}
-
-/* Progress gradient */
-.progress-wrap{display:flex;align-items:center;gap:9px;min-width:150px}
-.progress-bg{height:9px;flex:1;background:var(--border);border-radius:999px;overflow:hidden}
-.progress-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#2563eb 0%,#7c3aed 50%,#16a34a 100%);transition:width .35s ease}
-.progress-label{font-size:11px;font-weight:700;min-width:38px;text-align:right;color:var(--muted)}
-.bar-bg{height:11px;background:var(--border);border-radius:999px;overflow:hidden}
-.bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#2563eb 0%,#7c3aed 50%,#16a34a 100%);transition:width .4s ease}
-.basket-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
-.basket-card{border:1px solid var(--border);background:var(--soft);border-radius:12px;padding:18px;position:relative}
-.basket-card h3{margin:0 0 10px;font-size:16px}
-.basket-card .basket-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
-.basket-card .basket-amount{font-size:25px;font-weight:800;margin-top:5px;color:var(--success)}
-.basket-actions{display:flex;gap:8px;margin-top:15px}
-.basket-form{grid-template-columns:repeat(2,1fr)}
-@media(max-width:900px){.basket-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:650px){.basket-grid{grid-template-columns:1fr}.basket-form{grid-template-columns:1fr}}
-
-@media(max-width:1100px){.cards{grid-template-columns:repeat(3,1fr)}.dashboard-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:650px){.topbar{padding:13px 14px}.brand h1{font-size:19px}.top-actions{flex-wrap:wrap}.tabs{top:68px;overflow:auto;padding:0 8px}.tab{padding:12px 13px}main{padding:12px}.cards{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}.full{grid-column:auto}.search{max-width:100%}.metric-row{grid-template-columns:1fr}}
-
-  
-.filter-bar{
-  display:flex;
-  align-items:end;
-  gap:12px;
-  margin-bottom:18px;
-  background:white;
-  border:1px solid #e5e7eb;
-  border-radius:12px;
-  padding:14px 16px;
-}
-.filter-bar label,.filter-inline label{
-  min-width:170px;
-}
-.filter-inline{
-  display:flex;
-  align-items:end;
-  gap:8px;
-  margin-top:10px;
-}
-.filter-inline label{
-  min-width:150px;
-}
-@media(max-width:600px){
-  .filter-bar,.filter-inline{
-    flex-wrap:wrap;
-  }
-  .filter-bar label,.filter-inline label{
-    width:100%;
-    min-width:100%;
-  }
-}
-
-
-body.dark{background:#0f172a;color:#e5e7eb}
-body.dark .topbar{background:#020617}
-body.dark .tabs,body.dark .panel,body.dark .card,body.dark .filter-bar{background:#111827;border-color:#334155}
-body.dark .tab{color:#94a3b8}
-body.dark .tab.active{color:#60a5fa}
-body.dark input,body.dark select,body.dark textarea{background:#0f172a;color:#e5e7eb;border-color:#475569}
-body.dark th{background:#1e293b;color:#cbd5e1}
-body.dark td{border-color:#334155}
-body.dark .card span{color:#94a3b8}
-body.dark .secondary{background:#334155;color:#e5e7eb}
-
-
-.connection-status{font-size:12px;font-weight:700;color:#64748b;padding:8px 4px}
-body.dark .connection-status{color:#94a3b8}
+body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}
+body.dark{--bg:#0f172a;--card:#172033;--text:#f1f5f9;--muted:#a7b1c2;--border:#2b364a;--shadow:0 8px 25px rgba(0,0,0,.25)}
+.container{max-width:1250px;margin:auto;padding:22px}
+header{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:22px}
+h1{margin:0;font-size:28px} h2{margin:0 0 15px;font-size:20px}
+.header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.status{font-size:13px;color:var(--muted)}
+button,select,input{font:inherit}
+button{border:0;border-radius:9px;padding:9px 13px;cursor:pointer}
+.btn{background:var(--accent);color:white}.btn.secondary{background:var(--card);color:var(--text);border:1px solid var(--border)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:15px;padding:18px;box-shadow:var(--shadow);margin-bottom:18px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
+.stat{padding:18px;border:1px solid var(--border);border-radius:13px;background:var(--card)}
+.stat-label{font-size:13px;color:var(--muted)} .stat-value{font-size:28px;font-weight:700;margin-top:7px}
+.filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+select,input{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:9px 11px}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:850px}
+th,td{padding:11px 9px;border-bottom:1px solid var(--border);text-align:left;font-size:13px}
+th{color:var(--muted);font-weight:600}
+.badge{display:inline-block;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:600}
+.active{background:#dbeafe;color:#1d4ed8}.target{background:#dcfce7;color:#15803d}.sl{background:#fee2e2;color:#b91c1c}.overdue{background:#fef3c7;color:#b45309}
+.progress{height:8px;background:var(--border);border-radius:99px;overflow:hidden;min-width:100px}
+.progress-bar{height:100%;background:linear-gradient(90deg,#22c55e,#eab308,#ef4444)}
+.empty{padding:30px;text-align:center;color:var(--muted)}
+.loading{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:10}
+.loading.show{display:flex}.loader{background:var(--card);padding:20px 25px;border-radius:12px}
+.error{background:#fee2e2;color:#991b1b;padding:12px;border-radius:10px;margin-bottom:15px;display:none}
+body.dark .error{background:#451a1a;color:#fecaca}
+.sip-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.sip-card{border:1px solid var(--border);border-radius:13px;padding:16px}
+.sip-title{font-weight:700;font-size:17px}.sip-amount{font-size:24px;font-weight:700;margin-top:8px}
+@media(max-width:800px){.stats{grid-template-columns:repeat(2,1fr)}header{align-items:flex-start;flex-direction:column}}
+@media(max-width:480px){.stats{grid-template-columns:1fr}.container{padding:12px}h1{font-size:23px}}
 </style>
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <h1>ANKIT Investment Hub</h1>
-      <p>Recommendations & SIP Baskets</p>
-    </div>
-    <div class="top-actions">
-      <span id="connection" class="connection off">Connecting...</span>
-      <button id="themeBtn" class="btn dark-toggle">🌙 Dark</button>
-      <button id="refreshBtn" class="btn secondary">↻ Refresh</button>
-    </div>
-  </header>
+<div class="loading" id="loading"><div class="loader">Loading Investment Hub...</div></div>
 
-  <nav class="tabs">
-    <button class="tab active" data-tab="dashboard">Dashboard</button>
-    <button class="tab" data-tab="recommendations">Recommendations</button>
-    <button class="tab" data-tab="sip">SIP Baskets</button>
-  </nav>
+<div class="container">
+<header>
+  <div>
+    <h1>ANKIT Investment Hub</h1>
+    <div class="status" id="connectionStatus">Connecting...</div>
+  </div>
+  <div class="header-right">
+    <button class="btn secondary" onclick="toggleDark()">🌙 Dark</button>
+    <button class="btn" onclick="loadData()">↻ Refresh</button>
+  </div>
+</header>
 
-  <main>
-    <section id="dashboard" class="page active">
-      
-      <div class="filter-bar">
-        <label>Dashboard Month
-          <input type="month" id="dashboardMonth">
-        </label>
-        <button id="clearDashboardMonth" class="btn secondary">All Months</button>
-      </div>
-<div class="cards">
-        <div class="card"><span>Total Recommendations</span><strong id="dashTotal">0</strong></div>
-        <div class="card"><span>Active</span><strong id="dashActive">0</strong></div>
-        <div class="card"><span>Target Hit</span><strong id="dashTarget">0</strong></div>
-        <div class="card"><span>SL Hit</span><strong id="dashSL">0</strong></div>
-        <div class="card"><span>Overdue</span><strong id="dashOverdue">0</strong></div>
-        <div class="card"><span>Monthly SIP</span><strong id="dashSIP">₹0</strong></div>
-      </div>
+<div id="errorBox" class="error"></div>
 
-      <div class="dashboard-grid">
-        <div class="panel">
-          <div class="panel-title"><h2>Recommendation Status</h2><span id="dashUpdated" style="font-size:11px;color:var(--muted)">Not loaded</span></div>
-          <div id="statusBars"></div>
-        </div>
-        <div class="panel">
-          <div class="panel-title"><h2>Portfolio Summary</h2></div>
-          <div class="metric-row">
-            <div class="metric"><span>Avg. Return</span><strong id="avgReturn">0.00%</strong></div>
-            <div class="metric"><span>Target Rate</span><strong id="targetRate">0%</strong></div>
-            <div class="metric"><span>Overdue Rate</span><strong id="overdueRate">0%</strong></div>
-          </div>
-        </div>
-      </div>
+<section class="card">
+  <h2>Dashboard</h2>
+  <div class="filters">
+    <label>Month:</label>
+    <select id="dashMonth" onchange="renderDashboard()"></select>
+    <button class="btn secondary" onclick="setAllMonth('dashMonth');renderDashboard()">All Months</button>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Recommendations</div><div class="stat-value" id="countRec">0</div></div>
+    <div class="stat"><div class="stat-label">Active</div><div class="stat-value" id="countActive">0</div></div>
+    <div class="stat"><div class="stat-label">Target Hit</div><div class="stat-value" id="countTarget">0</div></div>
+    <div class="stat"><div class="stat-label">SL Hit</div><div class="stat-value" id="countSL">0</div></div>
+  </div>
+</section>
 
-      <div class="panel">
-        <div class="panel-title"><h2>Recent Recommendations</h2><button class="btn secondary small" onclick="activateTab('recommendations')">View All</button></div>
-        <div id="dashboardRecommendations" class="table-wrap"></div>
-      </div>
-    </section>
+<section class="card">
+  <h2>Recommendations</h2>
+  <div class="filters">
+    <label>Month:</label>
+    <select id="recMonth" onchange="renderRecommendations()"></select>
+    <button class="btn secondary" onclick="setAllMonth('recMonth');renderRecommendations()">All Months</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>Date</th><th>Name</th><th>Symbol</th><th>Type</th><th>Entry</th>
+        <th>Current CMP</th><th>Target</th><th>SL</th><th>Return</th>
+        <th>Status</th><th>Progress</th>
+      </tr></thead>
+      <tbody id="recBody"></tbody>
+    </table>
+  </div>
+</section>
 
-    <section id="recommendations" class="page">
-      <div class="panel">
-        <div class="panel-title">
-          <h2>Add Recommendation</h2>
-          <button id="clearRecBtn" class="btn secondary">Clear</button>
-        </div>
+<section class="card">
+  <h2>SIP Baskets</h2>
+  <div id="sipGrid" class="sip-grid"></div>
+</section>
+</div>
 
-        <div class="auto-price-note">📈 <b>Current Market Price:</b> updated automatically from Google Finance when the recommendation is refreshed.</div>
-        <form id="recommendationForm" class="form-grid">
-          <input type="hidden" id="recId">
-
-          <label>Date
-            <input type="date" id="recDate" required>
-          </label>
-
-          <label>Name
-            <input type="text" id="recName" placeholder="Example: Reliance" required>
-          </label>
-
-          <label>Symbol
-            <input type="text" id="recSymbol" placeholder="Example: RELIANCE" required>
-          </label>
-
-          <label>Type
-            <select id="recType">
-              <option value="Buy">Buy</option>
-              <option value="Sell">Sell</option>
-            </select>
-          </label>
-
-          <label>Entry Price
-            <input type="number" id="recEntry" step="0.01" min="0" required>
-          </label>
-
-          <label>Target Price
-            <input type="number" id="recTarget" step="0.01" min="0" required>
-          </label>
-
-          <label>Stop Loss
-            <input type="number" id="recSL" step="0.01" min="0" required>
-          </label>
-
-          <label>Holding Period (Days)
-            <input type="number" id="recDays" min="1" step="1" placeholder="Example: 60" required>
-          </label>
-
-          <label>Status
-            <select id="recStatus">
-              <option value="Active">Active</option>
-              <option value="Target Hit">Target Hit</option>
-              <option value="SL Hit">SL Hit</option>
-            </select>
-          </label>
-
-          <label class="full">Notes
-            <textarea id="recNotes" rows="3" placeholder="Optional notes"></textarea>
-          </label>
-
-          <div class="form-actions full">
-            <button type="submit" class="btn primary">Save Recommendation</button>
-            <span id="recMessage" class="message"></span>
-          </div>
-        </form>
-      </div>
-
-      <div class="panel">
-        <div class="panel-title">
-          <div>
-            <h2>Recommendations</h2>
-            <div class="filter-inline">
-              <label>Month
-                <input type="month" id="recMonth">
-              </label>
-              <button id="clearRecMonth" class="btn secondary small">All Months</button>
-            </div>
-          </div>
-          <input id="recSearch" class="search" placeholder="Search name or symbol">
-        </div>
-        <div id="recommendationTable" class="table-wrap"></div>
-      </div>
-    </section>
-
-    <section id="sip" class="page">
-      <div class="panel">
-        <div class="panel-title">
-          <h2>Add SIP Basket Recommendation</h2>
-          <button id="clearSipBtn" class="btn secondary">Clear</button>
-        </div>
-
-        <form id="sipForm" class="form-grid basket-form">
-          <input type="hidden" id="sipId">
-
-          <label>Basket Name
-            <input type="text" id="sipBasket" placeholder="Example: Retirement ₹20K" required>
-          </label>
-
-          <label>Monthly SIP
-            <input type="number" id="sipAmount" step="1" min="0" placeholder="20000" required>
-          </label>
-
-          <div class="form-actions full">
-            <button type="submit" class="btn primary">Save Basket</button>
-            <span id="sipMessage" class="message"></span>
-          </div>
-        </form>
-      </div>
-
-      <div class="panel">
-        <div class="panel-title">
-          <h2>SIP Basket Recommendations</h2>
-          <input id="sipSearch" class="search" placeholder="Search basket">
-        </div>
-        <div id="sipTable" class="basket-grid"></div>
-      </div>
-    </section>
-  </main>
-
-  <div id="loading" class="loading hidden">Loading...</div>
-  <script>
-/*
-  ANKIT INVESTMENT HUB
-  Simple version:
-  - Recommendations
-  - SIP Baskets
-  No Options / Hedge
-*/
-
+<script>
 const API_URL = "https://script.google.com/macros/s/AKfycbw3HjV_sDrY8KNmGge2ChFLyg3gicZlNFfw_4xTspr3ZodPpmbJBmZsdMiu26f51R_5/exec";
 
 let recommendations = [];
 let sipBaskets = [];
+let jsonpCounter = 0;
 
-document.addEventListener("DOMContentLoaded", () => {
-  setupTabs();
-  setupForms();
-  setupSearch();
-  setupMonthFilters();
-  setupDarkMode();
-  setupTheme();
-  document.getElementById("refreshBtn").addEventListener("click", loadData);
-  document.getElementById("recDate").value = todayString();
-  loadData();
-});
+function $(id){return document.getElementById(id)}
 
-function todayString() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-}
-function setupTheme() {
-  const saved = localStorage.getItem("ankit-theme") || "light";
-  applyTheme(saved);
-  document.getElementById("themeBtn").addEventListener("click", () => {
-    const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-    applyTheme(next);
-    localStorage.setItem("ankit-theme", next);
-  });
+function showLoading(show){$("loading").classList.toggle("show",show)}
+function setConnectionStatus(text){$("connectionStatus").textContent=text}
+function showError(msg){
+  const box=$("errorBox");
+  box.textContent=msg;
+  box.style.display=msg?"block":"none";
 }
 
-function applyTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  document.getElementById("themeBtn").textContent = theme === "dark" ? "☀️ Light" : "🌙 Dark";
-}
+function apiGet(action){
+  return new Promise((resolve,reject)=>{
+    const callbackName="ankitCallback_"+Date.now()+"_"+(++jsonpCounter);
+    const script=document.createElement("script");
+    let finished=false;
+    const timer=setTimeout(()=>{
+      if(finished)return;
+      finished=true;
+      cleanup();
+      reject(new Error("Request timed out for "+action));
+    },15000);
 
-function extractArray(result, keys) {
-  if (Array.isArray(result)) return result;
-  if (!result || typeof result !== "object") return [];
-  for (const key of keys) {
-    if (Array.isArray(result[key])) return result[key];
-  }
-  return [];
-}
+    window[callbackName]=function(data){
+      if(finished)return;
+      finished=true;
+      clearTimeout(timer);
+      cleanup();
+      if(data && data.success===false) reject(new Error(data.error||"API error"));
+      else resolve(data);
+    };
 
-
-function setupTabs() {
-  document.querySelectorAll(".tab").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
-      document.querySelectorAll(".page").forEach(x => x.classList.remove("active"));
-      btn.classList.add("active");
-      document.getElementById(btn.dataset.tab).classList.add("active");
-    });
-  });
-}
-
-function setupMonthFilters() {
-  const dashboardMonth = document.getElementById("dashboardMonth");
-  const recMonth = document.getElementById("recMonth");
-
-  dashboardMonth.addEventListener("change", renderDashboard);
-  recMonth.addEventListener("change", renderRecommendations);
-
-  document.getElementById("clearDashboardMonth").addEventListener("click", () => {
-    dashboardMonth.value = "";
-    renderDashboard();
-  });
-
-  document.getElementById("clearRecMonth").addEventListener("click", () => {
-    recMonth.value = "";
-    renderRecommendations();
-  });
-}
-
-function setupDarkMode() {
-  const btn = document.getElementById("darkModeBtn");
-  const saved = localStorage.getItem("ankit_dark_mode") === "1";
-
-  if (saved) document.body.classList.add("dark");
-  updateDarkButton();
-
-  btn.addEventListener("click", () => {
-    document.body.classList.toggle("dark");
-    localStorage.setItem(
-      "ankit_dark_mode",
-      document.body.classList.contains("dark") ? "1" : "0"
-    );
-    updateDarkButton();
-  });
-}
-
-function updateDarkButton() {
-  const btn = document.getElementById("darkModeBtn");
-  if (!btn) return;
-  btn.textContent = document.body.classList.contains("dark")
-    ? "☀️ Light"
-    : "🌙 Dark";
-}
-
-function setupForms() {
-  document.getElementById("recommendationForm").addEventListener("submit", saveRecommendation);
-  document.getElementById("sipForm").addEventListener("submit", saveSIP);
-
-  document.getElementById("clearRecBtn").addEventListener("click", clearRecommendationForm);
-  document.getElementById("clearSipBtn").addEventListener("click", clearSIPForm);
-}
-
-function setupSearch() {
-  document.getElementById("recSearch").addEventListener("input", renderRecommendations);
-  document.getElementById("sipSearch").addEventListener("input", renderSIP);
-}
-
-async function apiGet(action) {
-  const url = `${API_URL}?action=${encodeURIComponent(action)}&_=${Date.now()}`;
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
-
-  try {
-    const response = await fetch(url, {
-      method: "GET",
-      cache: "no-store",
-      signal: controller.signal
-    });
-
-    if (!response.ok) {
-      throw new Error(`Server error ${response.status}`);
+    function cleanup(){
+      delete window[callbackName];
+      if(script.parentNode)script.parentNode.removeChild(script);
     }
 
-    return await response.json();
-  } finally {
-    clearTimeout(timeout);
-  }
-}
+    script.onerror=function(){
+      if(finished)return;
+      finished=true;
+      clearTimeout(timer);
+      cleanup();
+      reject(new Error("Unable to reach Google Apps Script for "+action));
+    };
 
-async function apiPost(action, data) {
-  const response = await fetch(API_URL, {
-    method: "POST",
-    headers: {"Content-Type":"text/plain;charset=utf-8"},
-    body: JSON.stringify({action, data})
+    script.src=API_URL+"?action="+encodeURIComponent(action)+"&callback="+encodeURIComponent(callbackName)+"&_="+Date.now();
+    document.body.appendChild(script);
   });
-
-  if (!response.ok) throw new Error(`Server error ${response.status}`);
-  return response.json();
 }
 
-async function loadData() {
-  showLoading(true);
-  setConnectionStatus("Connecting...");
+async function apiPost(action,data){
+  const response=await fetch(API_URL,{
+    method:"POST",
+    headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body:JSON.stringify({action,data})
+  });
+  const result=await response.json();
+  if(result && result.success===false)throw new Error(result.error||"API error");
+  return result;
+}
 
-  try {
-    const [recResult, sipResult] = await Promise.all([
+async function loadData(){
+  showLoading(true);
+  showError("");
+  setConnectionStatus("Connecting...");
+  try{
+    const [recResult,sipResult]=await Promise.all([
       apiGet("getRecommendations"),
       apiGet("getSIPBaskets")
     ]);
 
-    recommendations = Array.isArray(recResult)
-      ? recResult
-      : (recResult.data || recResult.recommendations || []);
+    recommendations=Array.isArray(recResult)?recResult:(recResult.data||recResult.recommendations||[]);
+    sipBaskets=Array.isArray(sipResult)?sipResult:(sipResult.data||sipResult.sipBaskets||[]);
 
-    sipBaskets = Array.isArray(sipResult)
-      ? sipResult
-      : (sipResult.data || sipResult.sipBaskets || []);
-
+    populateMonthFilters();
     renderAll();
     setConnectionStatus("● Data Connected");
-  } catch (error) {
-    console.error("ANKIT Investment Hub connection error:", error);
+  }catch(error){
+    console.error(error);
     setConnectionStatus("● Data Offline");
-    showGlobalError(
-      "Google Sheet data could not be loaded. The dashboard is still available offline."
-    );
-  } finally {
+    showError("Connection error: "+error.message+". Check that the Apps Script deployment is set to Execute as: Me and Who has access: Anyone, then redeploy the Web App.");
+  }finally{
     showLoading(false);
   }
 }
 
-function renderAll() {
+function parseDate(v){
+  if(!v)return null;
+  const d=new Date(v);
+  return isNaN(d)?null:d;
+}
+
+function monthKey(v){
+  const d=parseDate(v);
+  return d?d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"):"";
+}
+
+function monthLabel(key){
+  if(!key)return "All Months";
+  const [y,m]=key.split("-");
+  return new Date(Number(y),Number(m)-1,1).toLocaleString("en-IN",{month:"long",year:"numeric"});
+}
+
+function populateMonthFilters(){
+  const keys=[...new Set(recommendations.map(r=>monthKey(r.Date)).filter(Boolean))].sort().reverse();
+  ["dashMonth","recMonth"].forEach(id=>{
+    const select=$(id);
+    const old=select.value;
+    select.innerHTML='<option value="">All Months</option>';
+    keys.forEach(k=>{
+      const o=document.createElement("option");
+      o.value=k;o.textContent=monthLabel(k);select.appendChild(o);
+    });
+    if(keys.includes(old))select.value=old;
+  });
+}
+
+function setAllMonth(id){$(id).value=""}
+
+function filteredRecommendations(filterId){
+  const key=$(filterId).value;
+  return recommendations.filter(r=>!key||monthKey(r.Date)===key);
+}
+
+function renderDashboard(){
+  const data=filteredRecommendations("dashMonth");
+  $("countRec").textContent=data.length;
+  $("countActive").textContent=data.filter(r=>String(r.Status||"").toLowerCase()==="active").length;
+  $("countTarget").textContent=data.filter(r=>String(r.Status||"").toLowerCase().includes("target")).length;
+  $("countSL").textContent=data.filter(r=>String(r.Status||"").toLowerCase().includes("sl")).length;
+}
+
+function statusClass(status){
+  const s=String(status||"").toLowerCase();
+  if(s.includes("target"))return "target";
+  if(s.includes("sl"))return "sl";
+  if(s.includes("overdue"))return "overdue";
+  return "active";
+}
+
+function money(v){
+  if(v===""||v==null||isNaN(Number(v)))return "-";
+  return "₹"+Number(v).toLocaleString("en-IN",{maximumFractionDigits:2});
+}
+
+function renderRecommendations(){
+  const data=filteredRecommendations("recMonth");
+  const body=$("recBody");
+  if(!data.length){
+    body.innerHTML='<tr><td colspan="11" class="empty">No recommendations found.</td></tr>';
+    return;
+  }
+
+  body.innerHTML=data.map(r=>{
+    const entry=Number(r.Entry_CMP);
+    const current=Number(r.Current_CMP);
+    const target=Number(r.Target);
+    let progress=0;
+    if(!isNaN(entry)&&!isNaN(current)&&!isNaN(target)&&target!==entry){
+      progress=((current-entry)/(target-entry))*100;
+      progress=Math.max(0,Math.min(100,progress));
+    }
+    const ret=Number(r.Return_Percent);
+    return `<tr>
+      <td>${escapeHtml(r.Date||"-")}</td>
+      <td>${escapeHtml(r.Name||"-")}</td>
+      <td><b>${escapeHtml(r.Symbol||"-")}</b></td>
+      <td>${escapeHtml(r.Type||"-")}</td>
+      <td>${money(r.Entry_CMP)}</td>
+      <td><b>${money(r.Current_CMP)}</b></td>
+      <td>${money(r.Target)}</td>
+      <td>${money(r.Stop_Loss)}</td>
+      <td>${isNaN(ret)?"-":ret.toFixed(2)+"%"}</td>
+      <td><span class="badge ${statusClass(r.Status)}">${escapeHtml(r.Status||"Not loaded")}</span></td>
+      <td><div class="progress"><div class="progress-bar" style="width:${progress}%"></div></div></td>
+    </tr>`;
+  }).join("");
+}
+
+function renderSIP(){
+  const grid=$("sipGrid");
+  if(!sipBaskets.length){
+    grid.innerHTML='<div class="empty">No SIP baskets found.</div>';
+    return;
+  }
+
+  const grouped={};
+  sipBaskets.forEach(r=>{
+    const key=r.Basket||"SIP Basket";
+    if(!grouped[key])grouped[key]={basket:key,amount:r.Monthly_SIP||0,count:0};
+    grouped[key].count++;
+  });
+
+  grid.innerHTML=Object.values(grouped).map(x=>`
+    <div class="sip-card">
+      <div class="sip-title">${escapeHtml(x.basket)}</div>
+      <div class="sip-amount">${money(x.amount)}</div>
+      <div class="status">Monthly SIP recommendation</div>
+    </div>`).join("");
+}
+
+function renderAll(){
   renderDashboard();
   renderRecommendations();
   renderSIP();
 }
 
-async function saveRecommendation(event) {
-  event.preventDefault();
-
-  const data = {
-    id: value("recId"),
-    date: value("recDate"),
-    name: value("recName"),
-    symbol: value("recSymbol").toUpperCase(),
-    type: value("recType"),
-    entry: number("recEntry"),
-    target: number("recTarget"),
-    stopLoss: number("recSL"),
-    holdingDays: number("recDays"),
-    current: 0, // Current market price is fetched by Google Sheets/Apps Script
-    status: value("recStatus"),
-    notes: value("recNotes")
-  };
-
-  if (!data.name || !data.symbol || !data.entry || !data.target || !data.stopLoss || !data.holdingDays) {
-    setMessage("recMessage", "Please fill all required fields.", true);
-    return;
-  }
-
-  try {
-    setMessage("recMessage", "Saving...");
-    const action = data.id ? "updateRecommendation" : "addRecommendation";
-    const result = await apiPost(action, data);
-
-    if (result && result.success === false) {
-      throw new Error(result.message || "Save failed");
-    }
-
-    setMessage("recMessage", "Saved successfully.");
-    clearRecommendationForm();
-    await loadData();
-  } catch (error) {
-    console.error(error);
-    setMessage("recMessage", error.message || "Unable to save.", true);
-  }
+function escapeHtml(v){
+  return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 }
 
-async function deleteRecommendation(id) {
-  if (!confirm("Delete this recommendation?")) return;
-
-  try {
-    await apiPost("deleteRecommendation", {id});
-    await loadData();
-  } catch (error) {
-    alert(error.message || "Unable to delete recommendation.");
-  }
+function toggleDark(){
+  document.body.classList.toggle("dark");
+  localStorage.setItem("ankitDark",document.body.classList.contains("dark")?"1":"0");
 }
 
-function editRecommendation(item) {
-  document.getElementById("recId").value = item.ID || item.id || "";
-  document.getElementById("recDate").value = normalizeDate(item.Date || item.date);
-  document.getElementById("recName").value = item.Name || item.name || "";
-  document.getElementById("recSymbol").value = item.Symbol || item.symbol || "";
-  document.getElementById("recType").value = item.Type || item.type || "Buy";
-  document.getElementById("recEntry").value = item.Entry_CMP ?? item.entry ?? "";
-  document.getElementById("recTarget").value = item.Target ?? item.target ?? "";
-  document.getElementById("recSL").value = item.Stop_Loss ?? item.stopLoss ?? "";
-  document.getElementById("recDays").value = item.Time_Frame ?? item.holdingDays ?? "";
-  document.getElementById("recStatus").value = item.Status || item.status || "Active";
-  document.getElementById("recNotes").value = item.Remarks || item.notes || "";
-
-  activateTab("recommendations");
-  window.scrollTo({top:0, behavior:"smooth"});
-}
-
-function clearRecommendationForm() {
-  document.getElementById("recommendationForm").reset();
-  document.getElementById("recId").value = "";
-  document.getElementById("recDate").value = todayString();
-  document.getElementById("recStatus").value = "Active";
-  setMessage("recMessage", "");
-}
-
-async function saveSIP(event) {
-  event.preventDefault();
-
-  const data = {
-    id: value("sipId"),
-    basket: value("sipBasket"),
-    amount: number("sipAmount"),
-    fund: "",
-    symbol: "",
-    allocation: 0,
-    category: "Basket"
-  };
-
-  if (!data.basket || !data.amount) {
-    setMessage("sipMessage", "Basket name and monthly SIP are required.", true);
-    return;
-  }
-
-  try {
-    setMessage("sipMessage", "Saving...");
-    const action = data.id ? "updateSIPBasket" : "addSIPBasket";
-    const result = await apiPost(action, data);
-
-    if (result && result.success === false) {
-      throw new Error(result.message || "Save failed");
-    }
-
-    setMessage("sipMessage", "Basket saved successfully.");
-    clearSIPForm();
-    await loadData();
-  } catch (error) {
-    console.error(error);
-    setMessage("sipMessage", error.message || "Unable to save.", true);
-  }
-}
-
-async function deleteSIP(id) {
-  if (!confirm("Delete this SIP item?")) return;
-
-  try {
-    await apiPost("deleteSIPBasket", {id});
-    await loadData();
-  } catch (error) {
-    alert(error.message || "Unable to delete SIP item.");
-  }
-}
-
-function editSIP(item) {
-  document.getElementById("sipId").value = item.ID || item.id || "";
-  document.getElementById("sipBasket").value = item.Basket || item.basket || "";
-  document.getElementById("sipAmount").value = item.Monthly_SIP ?? item.amount ?? "";
-
-  activateTab("sip");
-  window.scrollTo({top:0, behavior:"smooth"});
-}
-
-function clearSIPForm() {
-  document.getElementById("sipForm").reset();
-  document.getElementById("sipId").value = "";
-  setMessage("sipMessage", "");
-}
-
-function getMonth(dateValue) {
-  const d = parseDate(dateValue);
-  if (!d) return "";
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
-}
-
-function filterByMonth(items, month) {
-  if (!month) return items;
-  return items.filter(x => getMonth(x.Date) === month);
-}
-
-function renderDashboard() {
-  const month = value("dashboardMonth");
-  const filtered = filterByMonth(recommendations, month);
-
-  const total = filtered.length;
-  const active = filtered.filter(x => String(x.Status || "").trim() === "Active").length;
-  const target = filtered.filter(x => String(x.Status || "").trim() === "Target Hit").length;
-  const sl = filtered.filter(x => String(x.Status || "").trim() === "SL Hit").length;
-  const overdue = filtered.filter(x => getTiming(x) === "Overdue").length;
-
-  const monthlySIP = sipBaskets.reduce(
-    (sum,x) => sum + num(x.Monthly_SIP ?? x.amount), 0
-  );
-
-  const avgReturn = filtered.length
-    ? filtered.reduce((sum,x) => sum + num(x.Return_Percent), 0) / filtered.length
-    : 0;
-
-  document.getElementById("dashTotal").textContent = total;
-  document.getElementById("dashActive").textContent = active;
-  document.getElementById("dashTarget").textContent = target;
-  document.getElementById("dashSL").textContent = sl;
-  document.getElementById("dashOverdue").textContent = overdue;
-  document.getElementById("dashSIP").textContent = money(monthlySIP);
-
-  const latest = [...filtered].reverse().slice(0,8);
-
-  document.getElementById("dashboardRecommendations").innerHTML =
-    latest.length
-      ? recommendationTable(latest, false)
-      : empty(month ? `No recommendations for ${month}.` : "No recommendations yet.");
-}
-function renderRecommendations() {
-  const search = value("recSearch").toLowerCase();
-  const month = value("recMonth");
-
-  const filtered = recommendations.filter(x => {
-    const text = `${x.Name || ""} ${x.Symbol || ""}`.toLowerCase();
-    const monthOK = !month || getMonth(x.Date) === month;
-    return text.includes(search) && monthOK;
-  });
-
-  document.getElementById("recommendationTable").innerHTML =
-    filtered.length
-      ? recommendationTable(filtered, true)
-      : empty(month ? `No recommendations for ${month}.` : "No recommendations found.");
-}
-function recommendationTable(items, actions) {
-  return `
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Name</th>
-          <th>Symbol</th>
-          <th>Type</th>
-          <th>Entry</th>
-          <th>Current</th>
-          <th>Target</th>
-          <th>SL</th>
-          <th>Return</th>
-          <th>Progress</th>
-          <th>Due Date</th>
-          <th>Status</th>
-          ${actions ? "<th>Action</th>" : ""}
-        </tr>
-      </thead>
-      <tbody>
-        ${items.map(x => {
-          const status = String(x.Status || "Active").trim();
-          const timing = getTiming(x);
-          const returnPct = x.Return_Percent !== undefined && x.Return_Percent !== ""
-            ? `${num(x.Return_Percent).toFixed(2)}%`
-            : calculateReturn(x);
-
-          return `
-            <tr>
-              <td>${esc(normalizeDate(x.Date))}</td>
-              <td><b>${esc(x.Name || "")}</b></td>
-              <td>${esc(x.Symbol || "")}</td>
-              <td>${esc(x.Type || "Buy")}</td>
-              <td>${price(x.Entry_CMP)}</td>
-              <td>${price(x.Current_CMP)}</td>
-              <td>${price(x.Target)}</td>
-              <td>${price(x.Stop_Loss)}</td>
-              <td>${returnPct}</td>
-              <td>${progressBar(x)}</td>
-              <td>${esc(normalizeDate(x.Due_Date))}</td>
-              <td>${statusBadge(status, timing, x)}</td>
-              ${actions ? `
-                <td>
-                  <button class="btn secondary small" onclick='editRecommendation(${safeJSON(x)})'>Edit</button>
-                  <button class="btn danger small" onclick='deleteRecommendation("${escAttr(x.ID || x.id || "")}")'>Delete</button>
-                </td>` : ""}
-            </tr>
-          `;
-        }).join("")}
-      </tbody>
-    </table>
-  `;
-}
-
-function renderSIP() {
-  const search = value("sipSearch").toLowerCase();
-  const baskets = getUniqueSIPBaskets();
-
-  const filtered = baskets.filter(x => {
-    const text = `${x.Basket || x.basket || ""}`.toLowerCase();
-    return text.includes(search);
-  });
-
-  document.getElementById("sipTable").innerHTML = filtered.length ? `
-    ${filtered.map(x => `
-      <div class="basket-card">
-        <div class="basket-label">SIP Basket Recommendation</div>
-        <h3>${esc(x.Basket || x.basket || "")}</h3>
-        <div class="basket-label">Monthly SIP</div>
-        <div class="basket-amount">${money(x.Monthly_SIP ?? x.amount)}</div>
-        <div class="basket-actions">
-          <button class="btn secondary small" onclick='editSIP(${safeJSON(x)})'>Edit</button>
-          <button class="btn danger small" onclick='deleteSIP("${escAttr(x.ID || x.id || "")}")'>Delete</button>
-        </div>
-      </div>
-    `).join("")}
-  ` : empty("No SIP basket recommendations found.");
-}
-
-function getUniqueSIPBaskets() {
-  const map = new Map();
-
-  sipBaskets.forEach(x => {
-    const name = String(x.Basket || x.basket || "").trim();
-    if (!name) return;
-
-    const key = name.toLowerCase();
-
-    if (!map.has(key)) {
-      map.set(key, {
-        ID: x.ID || x.id || "",
-        Basket: name,
-        Monthly_SIP: num(x.Monthly_SIP ?? x.amount)
-      });
-    } else {
-      // Keep the first basket record so a basket is displayed only once.
-      // This avoids double-counting when older data contains fund-level rows.
-    }
-  });
-
-  return Array.from(map.values());
-}
-
-
-function progressPercent(x) {
-  const entry = num(x.Entry_CMP);
-  const current = num(x.Current_CMP);
-  const target = num(x.Target);
-
-  if (!entry || !current || !target || entry === target) return 0;
-
-  let pct;
-
-  if (String(x.Type || "Buy").toLowerCase() === "sell") {
-    pct = ((entry - current) / (entry - target)) * 100;
-  } else {
-    pct = ((current - entry) / (target - entry)) * 100;
-  }
-
-  return Math.max(0, Math.min(100, pct));
-}
-
-function progressBar(x) {
-  const pct = progressPercent(x);
-  return `
-    <div class="progress-wrap" title="${pct.toFixed(0)}% progress toward target">
-      <div class="progress-bg">
-        <div class="progress-fill" style="width:${pct}%"></div>
-      </div>
-      <span class="progress-label">${pct.toFixed(0)}%</span>
-    </div>
-  `;
-}
-
-function getTiming(x) {
-  const timing = String(x.Timing_Status || "").trim();
-  if (timing) return timing;
-
-  const due = parseDate(x.Due_Date);
-  if (!due) return "Under Time";
-
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  due.setHours(0,0,0,0);
-
-  return today > due ? "Overdue" : "Under Time";
-}
-
-function statusBadge(status, timing, item) {
-  if (status === "Target Hit") {
-    if (timing === "Target After Due") return `<span class="badge overdue">⚠️ Target After Due</span>`;
-    return `<span class="badge target">🎯 Target Hit</span>`;
-  }
-
-  if (status === "SL Hit") {
-    if (timing === "SL After Due") return `<span class="badge overdue">⚠️ SL After Due</span>`;
-    return `<span class="badge sl">🛑 SL Hit</span>`;
-  }
-
-  if (timing === "Overdue") {
-    const days = num(item.Days_Late);
-    return `<span class="badge overdue">⏰ Overdue${days ? ` (${days} Days)` : ""}</span>`;
-  }
-
-  return `<span class="badge active">🟢 Within Time</span>`;
-}
-
-function calculateReturn(x) {
-  const entry = num(x.Entry_CMP);
-  const current = num(x.Current_CMP);
-  if (!entry || !current) return "-";
-  const pct = ((current-entry)/entry)*100;
-  return `${pct.toFixed(2)}%`;
-}
-
-function activateTab(name) {
-  document.querySelector(`.tab[data-tab="${name}"]`).click();
-}
-
-function value(id) {
-  return document.getElementById(id).value.trim();
-}
-
-function number(id) {
-  const v = parseFloat(document.getElementById(id).value);
-  return Number.isFinite(v) ? v : 0;
-}
-
-function num(v) {
-  const n = parseFloat(String(v ?? "").replace(/,/g,""));
-  return Number.isFinite(n) ? n : 0;
-}
-
-function price(v) {
-  return v === "" || v == null ? "-" : num(v).toFixed(2);
-}
-
-function money(v) {
-  return "₹" + Math.round(num(v)).toLocaleString("en-IN");
-}
-
-function normalizeDate(v) {
-  if (!v) return "";
-  const d = parseDate(v);
-  if (!d) return String(v).substring(0,10);
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-}
-
-function parseDate(v) {
-  if (!v) return null;
-  if (v instanceof Date) return new Date(v);
-  const s = String(v);
-  const d = new Date(s);
-  return isNaN(d.getTime()) ? null : d;
-}
-
-function empty(message) {
-  return `<div class="empty">${esc(message)}</div>`;
-}
-
-function esc(v) {
-  return String(v ?? "")
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
-}
-
-function escAttr(v) {
-  return esc(v).replace(/"/g,"&quot;");
-}
-
-function safeJSON(obj) {
-  return JSON.stringify(obj)
-    .replace(/\\/g,"\\\\")
-    .replace(/'/g,"&#39;")
-    .replace(/"/g,"&quot;");
-}
-
-function setMessage(id, message, error=false) {
-  const el = document.getElementById(id);
-  el.textContent = message;
-  el.style.color = error ? "#b91c1c" : "#166534";
-}
-
-function setConnectionStatus(text) {
-  const el = document.getElementById("connectionStatus");
-  if (el) el.textContent = text;
-}
-
-function showLoading(show) {
-  document.getElementById("loading").classList.toggle("hidden", !show);
-}
-
-function showGlobalError(message) {
-  const dashboard = document.getElementById("dashboard");
-  removeGlobalError();
-  const div = document.createElement("div");
-  div.className = "error";
-  div.id = "globalError";
-  div.textContent = message;
-  dashboard.prepend(div);
-}
-
-function removeGlobalError() {
-  const old = document.getElementById("globalError");
-  if (old) old.remove();
-}
-
-  </script>
+if(localStorage.getItem("ankitDark")==="1")document.body.classList.add("dark");
+loadData();
+</script>
 </body>
 </html>
