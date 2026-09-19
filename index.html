@@ -124,6 +124,9 @@ body.dark td{border-color:#334155}
 body.dark .card span{color:#94a3b8}
 body.dark .secondary{background:#334155;color:#e5e7eb}
 
+
+.connection-status{font-size:12px;font-weight:700;color:#64748b;padding:8px 4px}
+body.dark .connection-status{color:#94a3b8}
 </style>
 </head>
 <body>
@@ -426,9 +429,25 @@ function setupSearch() {
 
 async function apiGet(action) {
   const url = `${API_URL}?action=${encodeURIComponent(action)}&_=${Date.now()}`;
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`Server error ${response.status}`);
-  return response.json();
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      cache: "no-store",
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      throw new Error(`Server error ${response.status}`);
+    }
+
+    return await response.json();
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 async function apiPost(action, data) {
@@ -444,15 +463,9 @@ async function apiPost(action, data) {
 
 async function loadData() {
   showLoading(true);
+  setConnectionStatus("Connecting...");
 
   try {
-    // Ask Apps Script to refresh current market prices before reading data.
-    try {
-      await apiGet("refreshMarketPrices");
-    } catch (refreshError) {
-      console.warn("Market price refresh failed:", refreshError);
-    }
-
     const [recResult, sipResult] = await Promise.all([
       apiGet("getRecommendations"),
       apiGet("getSIPBaskets")
@@ -467,10 +480,12 @@ async function loadData() {
       : (sipResult.data || sipResult.sipBaskets || []);
 
     renderAll();
+    setConnectionStatus("● Data Connected");
   } catch (error) {
-    console.error(error);
+    console.error("ANKIT Investment Hub connection error:", error);
+    setConnectionStatus("● Data Offline");
     showGlobalError(
-      "Unable to load data. Check your Apps Script deployment and API URL."
+      "Google Sheet data could not be loaded. The dashboard is still available offline."
     );
   } finally {
     showLoading(false);
@@ -925,6 +940,11 @@ function setMessage(id, message, error=false) {
   const el = document.getElementById(id);
   el.textContent = message;
   el.style.color = error ? "#b91c1c" : "#166534";
+}
+
+function setConnectionStatus(text) {
+  const el = document.getElementById("connectionStatus");
+  if (el) el.textContent = text;
 }
 
 function showLoading(show) {
