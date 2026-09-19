@@ -243,6 +243,7 @@ body.dark .error{background:#451a1a;color:#fecaca}
     <div class="sip-items-editor">
       <h4>Basket Investments</h4>
       <div id="sipItemsEditor"></div>
+      <div id="sipAllocationSummary" class="note" style="margin-top:12px">Total Allocation: <b>₹0</b> | Allocated: <b>0.00%</b> | Remaining: <b>0.00</b></div>
       <button class="btn secondary" type="button" onclick="addSIPItemRow()">＋ Add Investment</button>
     </div>
 
@@ -640,6 +641,7 @@ function openSIPModal(){
   $("sipBasketId").readOnly=false;
   $("sipItemsEditor").innerHTML="";
   addSIPItemRow();
+  updateSIPPercentages();
   $("sipModal").classList.add("open");
 }
 
@@ -657,6 +659,7 @@ function openSIPEditModal(basketId){
   $("sipItemsEditor").innerHTML="";
 
   items.forEach(item=>addSIPItemRow(item));
+  updateSIPPercentages();
   $("sipModal").classList.add("open");
 }
 
@@ -685,26 +688,66 @@ function addSIPItemRow(item={}){
     </div>
     <div class="form-group">
       <label>Allocation ₹</label>
-      <input class="sip-allocation-input" type="number" min="0" step="1" value="${item.Allocation_Amount??""}" placeholder="4000">
+      <input class="sip-allocation-input" type="number" min="0" step="1" value="${item.Allocation_Amount??""}" placeholder="4000" oninput="updateSIPPercentages()">
     </div>
     <div class="form-group">
-      <label>Allocation %</label>
-      <input class="sip-percent-input" type="number" min="0" step="0.01" value="${item.Allocation_Percent??""}" placeholder="20">
+      <label>Allocation % <span class="note">(auto)</span></label>
+      <input class="sip-percent-input" type="number" min="0" step="0.01" value="${item.Allocation_Percent??""}" placeholder="0" readonly>
     </div>
     <button type="button" class="action-btn delete-btn" onclick="this.parentElement.remove()">Remove</button>
   `;
 
   $("sipItemsEditor").appendChild(row);
+  updateSIPPercentages();
 }
 
 function collectSIPItems(){
-  return [...document.querySelectorAll("#sipItemsEditor .sip-form-row")].map(row=>({
-    Investment_Name:row.querySelector(".sip-name-input").value.trim(),
-    Investment_Type:row.querySelector(".sip-type-input").value,
-    Allocation_Amount:Number(row.querySelector(".sip-allocation-input").value||0),
-    Allocation_Percent:Number(row.querySelector(".sip-percent-input").value||0),
-    Purpose:""
-  })).filter(x=>x.Investment_Name);
+  const monthlyAmount=Number($("sipMonthlyAmount").value||0);
+
+  return [...document.querySelectorAll("#sipItemsEditor .sip-form-row")]
+    .map(row=>{
+      const allocation=Number(row.querySelector(".sip-allocation-input").value||0);
+      const percent=monthlyAmount>0 ? (allocation/monthlyAmount)*100 : 0;
+
+      row.querySelector(".sip-percent-input").value=percent.toFixed(2);
+
+      return {
+        Investment_Name:row.querySelector(".sip-name-input").value.trim(),
+        Investment_Type:row.querySelector(".sip-type-input").value,
+        Allocation_Amount:allocation,
+        Allocation_Percent:Number(percent.toFixed(2)),
+        Purpose:""
+      };
+    })
+    .filter(x=>x.Investment_Name);
+}
+
+function updateSIPPercentages(){
+  const monthlyAmount=Number($("sipMonthlyAmount").value||0);
+
+  document.querySelectorAll("#sipItemsEditor .sip-form-row").forEach(row=>{
+    const allocation=Number(row.querySelector(".sip-allocation-input").value||0);
+    const percent=monthlyAmount>0 ? (allocation/monthlyAmount)*100 : 0;
+    row.querySelector(".sip-percent-input").value=percent.toFixed(2);
+  });
+
+  updateSIPAllocationSummary();
+}
+
+function updateSIPAllocationSummary(){
+  const monthlyAmount=Number($("sipMonthlyAmount").value||0);
+  const total=[...document.querySelectorAll("#sipItemsEditor .sip-allocation-input")]
+    .reduce((sum,input)=>sum+(Number(input.value)||0),0);
+
+  const percent=monthlyAmount>0 ? (total/monthlyAmount)*100 : 0;
+  const summary=$("sipAllocationSummary");
+
+  if(summary){
+    summary.innerHTML=
+      "Total Allocation: <b>"+money(total)+"</b> &nbsp; | &nbsp; "+
+      "Allocated: <b>"+percent.toFixed(2)+"%</b> &nbsp; | &nbsp; "+
+      "Remaining: <b>"+Math.max(0,monthlyAmount-total).toFixed(2)+"</b>";
+  }
 }
 
 async function saveSIPBasket(){
@@ -727,7 +770,8 @@ async function saveSIPBasket(){
 
   const allocated=items.reduce((sum,x)=>sum+x.Allocation_Amount,0);
   if(Math.abs(allocated-monthlyAmount)>0.01){
-    if(!confirm("Allocation total is "+money(allocated)+" while monthly SIP is "+money(monthlyAmount)+". Save anyway?")) return;
+    alert("Allocation total must equal the Monthly SIP Amount. Current allocation: "+money(allocated)+" / Monthly SIP: "+money(monthlyAmount));
+    return;
   }
 
   const payload={
@@ -772,30 +816,54 @@ $("sipModal").addEventListener("click",function(e){
   if(e.target===this)closeSIPModal();
 });
 
-async function apiPost(action,data){
-  const response=await fetch(API_URL,{
-    method:"POST",
-    redirect:"follow",
-    headers:{"Content-Type":"text/plain;charset=utf-8"},
-    body:JSON.stringify({action,data})
-  });
+function apiPost(action,data){
+  return new Promise((resolve,reject)=>{
+    const callbackName="ankitMutation_"+Date.now()+"_"+(++jsonpCounter);
+    const script=document.createElement("script");
+    let finished=false;
 
-  if(!response.ok){
-    throw new Error("API request failed. HTTP "+response.status);
-  }
+    const timer=setTimeout(()=>{
+      if(finished)return;
+      finished=true;
+      cleanup();
+      reject(new Error("Request timed out for "+action));
+    },20000);
 
-  const text=await response.text();
+    window[callbackName]=function(result){
+      if(finished)return;
+      finished=true;
+      clearTimeout(timer);
+      cleanup();
 
-  try{
-    const result=JSON.parse(text);
-    if(result && result.success===false){
-      throw new Error(result.error||result.message||"API request failed");
+      if(result && result.success===false){
+        reject(new Error(result.error||result.message||"API request failed"));
+      }else{
+        resolve(result);
+      }
+    };
+
+    function cleanup(){
+      delete window[callbackName];
+      if(script.parentNode)script.parentNode.removeChild(script);
     }
-    return result;
-  }catch(error){
-    console.error("Invalid API response:",text);
-    throw new Error("API returned an invalid response");
-  }
+
+    script.onerror=function(){
+      if(finished)return;
+      finished=true;
+      clearTimeout(timer);
+      cleanup();
+      reject(new Error("Unable to reach Google Apps Script for "+action));
+    };
+
+    const dataParam=encodeURIComponent(JSON.stringify(data||{}));
+    script.src=API_URL+
+      "?action="+encodeURIComponent(action)+
+      "&data="+dataParam+
+      "&callback="+encodeURIComponent(callbackName)+
+      "&_="+Date.now();
+
+    document.body.appendChild(script);
+  });
 }
 
 function escapeAttr(value){
