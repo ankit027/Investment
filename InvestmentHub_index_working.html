@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ANKIT Investment Hub</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#687386;--border:#e3e7ee;--accent:#2563eb;--green:#16a34a;--red:#dc2626;--orange:#d97706;--shadow:0 8px 25px rgba(15,23,42,.07)}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}
+body.dark{--bg:#0f172a;--card:#172033;--text:#f1f5f9;--muted:#a7b1c2;--border:#2b364a;--shadow:0 8px 25px rgba(0,0,0,.25)}
+.topline{height:8px;background:#6546b3}
+.container{max-width:1280px;margin:auto;padding:22px}
+header{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:18px}
+h1{margin:0;font-size:28px}h2{margin:0 0 15px;font-size:20px}
+.header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.status{font-size:13px;color:var(--muted);margin-top:3px}
+button,select{font:inherit}
+button{border:0;border-radius:9px;padding:9px 13px;cursor:pointer}
+.btn{background:var(--accent);color:white}
+.btn.secondary{background:var(--card);color:var(--text);border:1px solid var(--border)}
+.tabs{display:flex;gap:5px;background:var(--card);border:1px solid var(--border);padding:5px;border-radius:12px;margin-bottom:18px;box-shadow:var(--shadow)}
+.tab{background:transparent;color:var(--muted);padding:11px 18px;border-radius:8px;font-weight:600}
+.tab.active{background:var(--accent);color:white}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:15px;padding:18px;box-shadow:var(--shadow);margin-bottom:18px}
+.filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+select{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:9px 11px;min-width:150px}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.stat{padding:18px;border:1px solid var(--border);border-radius:13px;background:var(--card)}
+.stat-label{font-size:13px;color:var(--muted)}.stat-value{font-size:27px;font-weight:700;margin-top:7px}
+.stat-value.green{color:var(--green)}.stat-value.red{color:var(--red)}
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}
+.summary{border:1px solid var(--border);border-radius:13px;padding:16px}
+.summary-title{font-weight:700;margin-bottom:8px}.summary-line{display:flex;justify-content:space-between;padding:5px 0;color:var(--muted);font-size:13px}
+.summary-line strong{color:var(--text)}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:1150px}
+th,td{padding:11px 9px;border-bottom:1px solid var(--border);text-align:left;font-size:13px;vertical-align:middle}
+th{color:var(--muted);font-weight:600;white-space:nowrap}
+.badge{display:inline-block;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+.active-badge{background:#dbeafe;color:#1d4ed8}.target{background:#dcfce7;color:#15803d}.sl{background:#fee2e2;color:#b91c1c}.overdue{background:#fef3c7;color:#b45309}
+.progress{height:8px;background:var(--border);border-radius:99px;overflow:hidden;min-width:110px}
+.progress-bar{height:100%;background:linear-gradient(90deg,#22c55e,#eab308,#ef4444);border-radius:99px}
+.empty{padding:30px;text-align:center;color:var(--muted)}
+.loading{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:10}
+.loading.show{display:flex}.loader{background:var(--card);padding:20px 25px;border-radius:12px}
+.error{background:#fee2e2;color:#991b1b;padding:12px;border-radius:10px;margin-bottom:15px;display:none}
+body.dark .error{background:#451a1a;color:#fecaca}
+.sip-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
+.sip-card{border:1px solid var(--border);border-radius:14px;padding:22px;text-align:center}
+.sip-label{font-size:13px;color:var(--muted)}.sip-amount{font-size:30px;font-weight:800;margin:9px 0}.sip-sub{font-size:13px;color:var(--muted)}
+.note{font-size:12px;color:var(--muted);margin-top:7px}
+
+.srt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px}
+.srt-box{display:grid;grid-template-columns:1fr auto;border:1px solid #16a085;border-radius:4px;overflow:hidden;background:var(--card);min-height:52px}
+.srt-label{background:#10c98a;color:#fff;font-weight:700;padding:13px 12px;font-size:16px;display:flex;align-items:center}
+.srt-value{padding:13px 14px;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:flex-end;min-width:105px}
+.srt-value.main{font-size:22px}
+.srt-rules{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.srt-rule{border:1px solid var(--border);border-radius:12px;padding:14px;background:var(--card)}
+.srt-rule .level{font-size:20px;font-weight:800;margin-bottom:4px}.srt-rule .desc{font-size:12px;color:var(--muted)}
+.srt-zone{font-size:16px;font-weight:800;padding:13px 15px;border-radius:10px;margin-top:14px;text-align:center;border:1px solid var(--border)}
+.srt-zone.invest{background:#dcfce7;color:#15803d}.srt-zone.accum{background:#d1fae5;color:#047857}.srt-zone.normal{background:#f1f5f9;color:#475569}.srt-zone.exit{background:#fee2e2;color:#b91c1c}
+.srt-meta{font-size:12px;color:var(--muted);margin-top:8px}
+@media(max-width:800px){.srt-grid,.srt-rules{grid-template-columns:1fr}}
+@media(max-width:1000px){.stats{grid-template-columns:repeat(3,1fr)}.sip-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:650px){.stats{grid-template-columns:repeat(2,1fr)}.summary-grid{grid-template-columns:1fr}.sip-grid{grid-template-columns:1fr}header{align-items:flex-start;flex-direction:column}.tabs{overflow:auto}.tab{white-space:nowrap}.container{padding:12px}h1{font-size:23px}}
+
+.action-cell{white-space:nowrap}
+.action-btn{padding:6px 9px;border-radius:7px;font-size:12px;margin-right:5px}
+.edit-btn{background:#2563eb;color:#fff}
+.delete-btn{background:#dc2626;color:#fff}
+.sip-card{text-align:left}
+.sip-card .sip-label,.sip-card .sip-amount,.sip-card .sip-sub{text-align:center}
+.sip-items{margin-top:15px;border-top:1px solid var(--border);padding-top:10px}
+.sip-item{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;align-items:center}
+.sip-item:last-child{border-bottom:0}
+.sip-name{font-weight:600;word-break:break-word}
+.sip-type{color:var(--muted)}
+.sip-alloc{font-weight:700;white-space:nowrap}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:20;padding:15px}
+.modal.show{display:flex}
+.modal-box{background:var(--card);color:var(--text);width:min(700px,100%);max-height:90vh;overflow:auto;border-radius:16px;border:1px solid var(--border);box-shadow:0 20px 50px rgba(0,0,0,.25);padding:20px}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.modal-header h3{margin:0}
+.close-btn{background:transparent;color:var(--text);font-size:22px;padding:3px 8px}
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:12px;color:var(--muted);font-weight:600}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:10px;font:inherit}
+.form-group textarea{min-height:90px;resize:vertical}
+.modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}
+@media(max-width:650px){.form-grid{grid-template-columns:1fr}.form-group.full{grid-column:auto}.sip-item{grid-template-columns:1fr auto}.sip-type{display:none}}
+
+
+
+.section-header{display:flex;justify-content:space-between;align-items:center;gap:15px}
+.sip-actions{display:flex;gap:7px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.action-btn{padding:6px 9px;font-size:12px;border-radius:7px}
+.edit-btn{background:#dbeafe;color:#1d4ed8}.delete-btn{background:#fee2e2;color:#b91c1c}
+.sip-item-actions{display:flex;gap:5px}
+.sip-edit-btn{background:var(--card);color:var(--accent);border:1px solid var(--border)}
+.sip-delete-btn{background:var(--card);color:var(--red);border:1px solid var(--border)}
+.sip-form-row{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr auto;gap:8px;align-items:end;margin-bottom:9px}
+.sip-form-row input,.sip-form-row select{width:100%}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:20}
+.modal.open{display:flex}.modal-box{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:15px;padding:20px;width:min(900px,100%);max-height:90vh;overflow:auto;box-shadow:var(--shadow)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.modal-header h3{margin:0}
+.close-btn{background:transparent;color:var(--muted);font-size:25px;padding:2px 8px}
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.form-group{display:flex;flex-direction:column;gap:5px}.form-group label{font-size:12px;color:var(--muted)}
+.form-group input,.form-group select{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:9px}
+.sip-items-editor{border:1px solid var(--border);border-radius:10px;padding:12px;margin-top:15px}
+.sip-items-editor h4{margin:0 0 10px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+@media(max-width:800px){.section-header{align-items:flex-start;flex-direction:column}.sip-form-row{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="topline"></div>
+<div class="loading" id="loading"><div class="loader">Loading Investment Hub...</div></div>
+
+<div class="container">
+<header>
+  <div>
+    <h1>ANKIT Investment Hub</h1>
+    <div class="status" id="connectionStatus">Connecting...</div>
+  </div>
+  <div class="header-right">
+    <button class="btn secondary" onclick="toggleDark()">🌙 Dark</button>
+    <button class="btn" onclick="loadData()">↻ Refresh</button>
+  </div>
+</header>
+
+<div id="errorBox" class="error"></div>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="dashboard" onclick="openTab('dashboard',this)">Dashboard</button>
+  <button class="tab" data-tab="recommendations" onclick="openTab('recommendations',this)">Recommendations</button>
+  <button class="tab" data-tab="sip" onclick="openTab('sip',this)">SIP Basket</button>
+  <button class="tab" data-tab="srt" onclick="openTab('srt',this)">SRT</button>
+</nav>
+
+<section id="dashboard" class="tab-content active">
+  <div class="card">
+    <h2>Dashboard</h2>
+    <div class="filters">
+      <label><b>Month:</b></label>
+      <select id="dashMonth" onchange="renderDashboard()"></select>
+      <button class="btn secondary" onclick="setAllMonth('dashMonth');renderDashboard()">All Months</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="stat-label">Recommendations</div><div class="stat-value" id="countRec">0</div></div>
+      <div class="stat"><div class="stat-label">Average Return</div><div class="stat-value" id="avgReturn">0.00%</div></div>
+      <div class="stat"><div class="stat-label">Stock Avg Return</div><div class="stat-value" id="avgStock">0.00%</div></div>
+      <div class="stat"><div class="stat-label">ETF Avg Return</div><div class="stat-value" id="avgETF">0.00%</div></div>
+      <div class="stat"><div class="stat-label">Target Hit</div><div class="stat-value" id="countTarget">0</div></div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary">
+        <div class="summary-title">Recommendation Status</div>
+        <div class="summary-line"><span>Active</span><strong id="dashActive">0</strong></div>
+        <div class="summary-line"><span>Target Hit</span><strong id="dashTarget">0</strong></div>
+        <div class="summary-line"><span>SL Hit</span><strong id="dashSL">0</strong></div>
+        <div class="summary-line"><span>Overdue</span><strong id="dashOverdue">0</strong></div>
+      </div>
+      <div class="summary">
+        <div class="summary-title">Type Breakdown</div>
+        <div class="summary-line"><span>Stocks</span><strong id="dashStockCount">0</strong></div>
+        <div class="summary-line"><span>ETFs</span><strong id="dashETFCount">0</strong></div>
+        <div class="summary-line"><span>Other</span><strong id="dashOtherCount">0</strong></div>
+      </div>
+      <div class="summary">
+        <div class="summary-title">Selected Period</div>
+        <div class="summary-line"><span>Month</span><strong id="selectedMonthLabel">All Months</strong></div>
+        <div class="summary-line"><span>Positive Returns</span><strong id="positiveCount">0</strong></div>
+        <div class="summary-line"><span>Negative Returns</span><strong id="negativeCount">0</strong></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="recommendations" class="tab-content">
+  <div class="card">
+    <div class="section-header">
+      <div>
+        <h2>Recommendations</h2>
+        <div class="note">Add, edit and manage your recommendations.</div>
+      </div>
+      <button class="btn" onclick="openAddRecommendationModal()">＋ Add Recommendation</button>
+    </div>
+    <div class="filters">
+      <label><b>Month:</b></label>
+      <select id="recMonth" onchange="renderRecommendations()"></select>
+      <label><b>Type:</b></label>
+      <select id="recType" onchange="renderRecommendations()">
+        <option value="">All Types</option>
+        <option value="Stock">Stock</option>
+        <option value="ETF">ETF</option>
+      </select>
+      <label><b>Status:</b></label>
+      <select id="recStatus" onchange="renderRecommendations()">
+        <option value="">All Status</option>
+        <option value="Active">Active</option>
+        <option value="Target Hit">Target Hit</option>
+        <option value="SL Hit">SL Hit</option>
+      </select>
+      <button class="btn secondary" onclick="resetRecFilters()">Reset Filters</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th><th>Name</th><th>Symbol</th><th>Type</th>
+            <th>Entry</th><th>Current CMP</th><th>Target</th><th>Stop Loss</th>
+            <th>Return</th><th>Status</th><th>Timing</th><th>Progress</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="recBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="srt" class="tab-content">
+  <div class="card">
+    <div class="section-header">
+      <div>
+        <h2>NK Sir SRT</h2>
+        <div class="note">SRT = Current Nifty 50 Level ÷ 124-period SMA</div>
+      </div>
+      <button class="btn" onclick="loadSRT()">↻ Refresh SRT</button>
+    </div>
+    <div class="srt-grid" style="margin-top:16px">
+      <div class="srt-box"><div class="srt-label">Current Level</div><div class="srt-value" id="srtCurrent">—</div></div>
+      <div class="srt-box"><div class="srt-label">SMA 124</div><div class="srt-value" id="srtSMA">—</div></div>
+      <div class="srt-box"><div class="srt-label">SRT Value</div><div class="srt-value main" id="srtValue">—</div></div>
+    </div>
+    <div class="srt-zone normal" id="srtZone">Loading SRT zone...</div>
+    <div class="srt-meta" id="srtUpdated">—</div>
+  </div>
+
+  <div class="card">
+    <h2>SRT Reference Levels</h2>
+    <div class="srt-rules">
+      <div class="srt-rule"><div class="level">0.60</div><div class="desc">Investment Time</div></div>
+      <div class="srt-rule"><div class="level">0.80 – 0.90</div><div class="desc">ETF Accumulation Zone</div></div>
+      <div class="srt-rule"><div class="level">1.25</div><div class="desc">Exit Market</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="sip" class="tab-content">
+  <div class="card">
+    <div class="section-header">
+      <div>
+        <h2>SIP Basket</h2>
+        <div class="note">Create and manage your monthly SIP baskets and see the investments inside each basket.</div>
+      </div>
+      <button class="btn" onclick="openSIPModal()">＋ Add SIP Basket</button>
+    </div>
+    <div id="sipGrid" class="sip-grid" style="margin-top:15px"></div>
+  </div>
+</section>
+</div>
+
+
+<!-- SIP Basket Modal -->
+<div class="modal" id="sipModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="sipModalTitle">Add SIP Basket</h3>
+      <button class="close-btn" onclick="closeSIPModal()">×</button>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Monthly SIP Amount</label>
+        <input type="number" id="sipMonthlyAmount" min="1" step="1" placeholder="e.g. 20000">
+      </div>
+      <div class="form-group">
+        <label>Basket ID (auto-generated for new basket)</label>
+        <input type="text" id="sipBasketId" placeholder="e.g. 25000">
+      </div>
+    </div>
+
+    <div class="sip-items-editor">
+      <h4>Basket Investments</h4>
+      <div id="sipItemsEditor"></div>
+      <div id="sipAllocationSummary" class="note" style="margin-top:12px">Total Allocation: <b>₹0</b> | Allocated: <b>0.00%</b> | Remaining: <b>0.00</b></div>
+      <button class="btn secondary" type="button" onclick="addSIPItemRow()">＋ Add Investment</button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn secondary" onclick="closeSIPModal()">Cancel</button>
+      <button class="btn" onclick="saveSIPBasket()">Save Basket</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Recommendation Modal -->
+<div class="modal" id="addRecommendationModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Add Recommendation</h3>
+      <button class="close-btn" type="button" onclick="closeAddRecommendationModal()">×</button>
+    </div>
+    <form id="addRecommendationForm">
+      <div class="form-grid">
+        <div class="form-group"><label>Date</label><input type="date" id="addRecDate" required></div>
+        <div class="form-group"><label>Name</label><input type="text" id="addRecName" required></div>
+        <div class="form-group"><label>Symbol</label><input type="text" id="addRecSymbol" required></div>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="addRecType" required>
+            <option value="Stock">Stock</option>
+            <option value="ETF">ETF</option>
+            <option value="Mutual Fund">Mutual Fund</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Entry CMP</label><input type="number" step="any" min="0" id="addRecEntry" required></div>
+        <div class="form-group"><label>Target</label><input type="number" step="any" min="0" id="addRecTarget" required></div>
+        <div class="form-group"><label>Stop Loss</label><input type="number" step="any" min="0" id="addRecSL" required></div>
+        <div class="form-group">
+          <label>Holding Period</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <input type="number" id="addRecHoldingValue" min="1" step="1" value="30" required>
+            <select id="addRecHoldingUnit">
+              <option value="Days">Days</option>
+              <option value="Months">Months</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group full"><label>Remarks</label><textarea id="addRecRemarks" placeholder="Optional remarks"></textarea></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" onclick="closeAddRecommendationModal()">Cancel</button>
+        <button type="submit" class="btn">Save Recommendation</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Recommendation Edit Modal -->
+<div class="modal" id="editModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="editModalTitle">Edit Recommendation</h3>
+      <button class="close-btn" onclick="closeEditModal()">×</button>
+    </div>
+    <form id="editForm">
+      <input type="hidden" id="editId">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="editDate" required>
+        </div>
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="editName" required>
+        </div>
+        <div class="form-group">
+          <label>Symbol</label>
+          <input type="text" id="editSymbol" required>
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="editType">
+            <option value="Stock">Stock</option>
+            <option value="ETF">ETF</option>
+            <option value="Mutual Fund">Mutual Fund</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Entry CMP</label>
+          <input type="number" step="any" id="editEntry" required>
+        </div>
+        <div class="form-group">
+          <label>Target</label>
+          <input type="number" step="any" id="editTarget" required>
+        </div>
+        <div class="form-group">
+          <label>Stop Loss</label>
+          <input type="number" step="any" id="editSL" required>
+        </div>
+        <div class="form-group">
+          <label>Time Frame (days)</label>
+          <input type="number" id="editTimeFrame" min="0">
+        </div>
+        <div class="form-group full">
+          <label>Remarks</label>
+          <textarea id="editRemarks"></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" onclick="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbw3HjV_sDrY8KNmGge2ChFLyg3gicZlNFfw_4xTspr3ZodPpmbJBmZsdMiu26f51R_5/exec";
+let recommendations = [];
+let sipBaskets = [];
+let srtData = null;
+let jsonpCounter = 0;
+
+function $(id){return document.getElementById(id)}
+
+function openTab(id, button){
+  document.querySelectorAll(".tab-content").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  $(id).classList.add("active");
+  button.classList.add("active");
+}
+
+function showLoading(show){$("loading").classList.toggle("show",show)}
+function setConnectionStatus(text){$("connectionStatus").textContent=text}
+
+function showError(msg){
+  const box=$("errorBox");
+  box.textContent=msg;
+  box.style.display=msg?"block":"none";
+}
+
+function apiGet(action){
+  return new Promise((resolve,reject)=>{
+    const callbackName="ankitCallback_"+Date.now()+"_"+(++jsonpCounter);
+    const script=document.createElement("script");
+    let finished=false;
+
+    const timer=setTimeout(()=>{
+      if(finished)return;
+      finished=true;
+      cleanup();
+      reject(new Error("Request timed out for "+action));
+    },15000);
+
+    window[callbackName]=function(data){
+      if(finished)return;
+      finished=true;
+      clearTimeout(timer);
+      cleanup();
+      if(data && data.success===false) reject(new Error(data.error||"API error"));
+      else resolve(data);
+    };
+
+    function cleanup(){
+      delete window[callbackName];
+      if(script.parentNode)script.parentNode.removeChild(script);
+    }
+
+    script.onerror=function(){
+      if(finished)return;
+      finished=true;
+      clearTimeout(timer);
+      cleanup();
+      reject(new Error("Unable to reach Google Apps Script for "+action));
+    };
+
+    script.src=API_URL+
+      "?action="+encodeURIComponent(action)+
+      "&callback="+encodeURIComponent(callbackName)+
+      "&_="+Date.now();
+
+    document.body.appendChild(script);
+  });
+}
+
+async function loadData(){
+  showLoading(true);
+  showError("");
+  setConnectionStatus("Connecting...");
+  try{
+    const [recResult,sipResult,srtResult]=await Promise.all([
+      apiGet("getRecommendations"),
+      apiGet("getSIPBaskets"),
+      apiGet("getSRT")
+    ]);
+
+    recommendations=Array.isArray(recResult)?recResult:(recResult.data||recResult.recommendations||[]);
+    sipBaskets=Array.isArray(sipResult)?sipResult:(sipResult.data||sipResult.sipBaskets||[]);
+    srtData=srtResult && srtResult.data ? srtResult.data : srtResult;
+
+    populateMonthFilters();
+    renderAll();
+    renderSRT();
+    setConnectionStatus("● Data Connected");
+  }catch(error){
+    console.error(error);
+    setConnectionStatus("● Data Offline");
+    showError("Connection error: "+error.message+".");
+  }finally{
+    showLoading(false);
+  }
+}
+
+function formatNumber(v,decimals){
+  const n=Number(v);
+  return Number.isFinite(n)?n.toLocaleString("en-IN",{minimumFractionDigits:decimals,maximumFractionDigits:decimals}):"—";
+}
+
+function renderSRT(){
+  if(!srtData){
+    $("srtCurrent").textContent="—";
+    $("srtSMA").textContent="—";
+    $("srtValue").textContent="—";
+    $("srtZone").textContent="SRT unavailable";
+    $("srtUpdated").textContent="";
+    return;
+  }
+  const current=Number(srtData.currentLevel);
+  const sma=Number(srtData.sma124);
+  const srt=Number(srtData.srtValue);
+  $("srtCurrent").textContent=formatNumber(current,1);
+  $("srtSMA").textContent=formatNumber(sma,1);
+  $("srtValue").textContent=Number.isFinite(srt)?srt.toFixed(2):"—";
+
+  const zone=$("srtZone");
+  zone.className="srt-zone";
+  if(!Number.isFinite(srt)){
+    zone.classList.add("normal");
+    zone.textContent="SRT unavailable";
+  }else if(srt<=0.60){
+    zone.classList.add("invest");
+    zone.textContent="🟢 Investment Time";
+  }else if(srt>=0.80 && srt<=0.90){
+    zone.classList.add("accum");
+    zone.textContent="🟢 ETF Accumulation Zone";
+  }else if(srt>=1.25){
+    zone.classList.add("exit");
+    zone.textContent="🔴 Exit Market";
+  }else{
+    zone.classList.add("normal");
+    zone.textContent="⚪ Normal / Hold Zone";
+  }
+  const source=srtData.source?"Source: "+srtData.source+" · ":"";
+  const updated=srtData.updatedAt?new Date(srtData.updatedAt).toLocaleString("en-IN"):"";
+  $("srtUpdated").textContent=source+(updated?"Updated: "+updated:"");
+}
+
+async function loadSRT(){
+  try{
+    showLoading(true);
+    const result=await apiGet("getSRT");
+    srtData=result && result.data ? result.data : result;
+    renderSRT();
+  }catch(error){
+    console.error(error);
+    $("srtZone").className="srt-zone normal";
+    $("srtZone").textContent="Unable to load SRT: "+error.message;
+  }finally{
+    showLoading(false);
+  }
+}
+
+function parseDate(v){
+  if(!v)return null;
+  const d=new Date(v);
+  return isNaN(d.getTime())?null:d;
+}
+
+function monthKey(v){
+  const d=parseDate(v);
+  return d?d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"):"";
+}
+
+function monthLabel(key){
+  if(!key)return "All Months";
+  const p=key.split("-");
+  return new Date(Number(p[0]),Number(p[1])-1,1)
+    .toLocaleString("en-IN",{month:"long",year:"numeric"});
+}
+
+function populateMonthFilters(){
+  const keys=[...new Set(recommendations.map(r=>monthKey(r.Date)).filter(Boolean))].sort().reverse();
+  ["dashMonth","recMonth"].forEach(id=>{
+    const select=$(id);
+    const old=select.value;
+    select.innerHTML='<option value="">All Months</option>';
+    keys.forEach(k=>{
+      const option=document.createElement("option");
+      option.value=k;
+      option.textContent=monthLabel(k);
+      select.appendChild(option);
+    });
+    if(keys.includes(old))select.value=old;
+  });
+}
+
+function setAllMonth(id){$(id).value=""}
+
+function getDashboardData(){
+  const key=$("dashMonth").value;
+  return recommendations.filter(r=>!key||monthKey(r.Date)===key);
+}
+
+function averageReturn(data){
+  const values=data.map(r=>Number(r.Return_Percent)).filter(v=>Number.isFinite(v));
+  if(!values.length)return 0;
+  return values.reduce((a,b)=>a+b,0)/values.length;
+}
+
+function formatPercent(v){
+  if(!Number.isFinite(v))return "0.00%";
+  return (v>=0?"+":"")+v.toFixed(2)+"%";
+}
+
+function setReturnClass(el,value){
+  el.classList.remove("green","red");
+  if(value>0)el.classList.add("green");
+  else if(value<0)el.classList.add("red");
+}
+
+function renderDashboard(){
+  const data=getDashboardData();
+  const stocks=data.filter(r=>String(r.Type||"").toLowerCase()==="stock");
+  const etfs=data.filter(r=>String(r.Type||"").toLowerCase()==="etf");
+  const other=data.filter(r=>!["stock","etf"].includes(String(r.Type||"").toLowerCase()));
+
+  const avg=averageReturn(data);
+  const avgStock=averageReturn(stocks);
+  const avgETF=averageReturn(etfs);
+
+  $("countRec").textContent=data.length;
+  $("avgReturn").textContent=formatPercent(avg);
+  $("avgStock").textContent=stocks.length?formatPercent(avgStock):"—";
+  $("avgETF").textContent=etfs.length?formatPercent(avgETF):"—";
+  $("countTarget").textContent=data.filter(r=>String(r.Status||"").toLowerCase().includes("target")).length;
+
+  $("dashActive").textContent=data.filter(r=>String(r.Status||"").toLowerCase()==="active").length;
+  $("dashTarget").textContent=data.filter(r=>String(r.Status||"").toLowerCase().includes("target")).length;
+  $("dashSL").textContent=data.filter(r=>String(r.Status||"").toLowerCase().includes("sl")).length;
+  $("dashOverdue").textContent=data.filter(r=>String(r.Timing_Status||"").toLowerCase()==="overdue").length;
+
+  $("dashStockCount").textContent=stocks.length;
+  $("dashETFCount").textContent=etfs.length;
+  $("dashOtherCount").textContent=other.length;
+
+  $("selectedMonthLabel").textContent=monthLabel($("dashMonth").value);
+  $("positiveCount").textContent=data.filter(r=>Number(r.Return_Percent)>0).length;
+  $("negativeCount").textContent=data.filter(r=>Number(r.Return_Percent)<0).length;
+
+  setReturnClass($("avgReturn"),avg);
+  setReturnClass($("avgStock"),avgStock);
+  setReturnClass($("avgETF"),avgETF);
+}
+
+function getRecommendationData(){
+  const month=$("recMonth").value;
+  const type=$("recType").value.toLowerCase();
+  const status=$("recStatus").value.toLowerCase();
+
+  return recommendations.filter(r=>{
+    const okMonth=!month||monthKey(r.Date)===month;
+    const okType=!type||String(r.Type||"").toLowerCase()===type;
+    const okStatus=!status||String(r.Status||"").toLowerCase()===status;
+    return okMonth&&okType&&okStatus;
+  });
+}
+
+function statusClass(status){
+  const s=String(status||"").toLowerCase();
+  if(s.includes("target"))return "target";
+  if(s.includes("sl"))return "sl";
+  if(s.includes("overdue"))return "overdue";
+  return "active-badge";
+}
+
+function money(v){
+  if(v===""||v===null||v===undefined||isNaN(Number(v)))return "-";
+  return "₹"+Number(v).toLocaleString("en-IN",{maximumFractionDigits:2});
+}
+
+function progressValue(r){
+  const entry=Number(r.Entry_CMP), current=Number(r.Current_CMP), target=Number(r.Target);
+  if(!Number.isFinite(entry)||!Number.isFinite(current)||!Number.isFinite(target)||target===entry)return 0;
+  return Math.max(0,Math.min(100,((current-entry)/(target-entry))*100));
+}
+
+function renderRecommendations(){
+  const data=getRecommendationData();
+  const body=$("recBody");
+
+  if(!data.length){
+    body.innerHTML='<tr><td colspan="13" class="empty">No recommendations match the selected filters.</td></tr>';
+    return;
+  }
+
+  body.innerHTML=data.map(r=>{
+    const ret=Number(r.Return_Percent);
+    const progress=progressValue(r);
+
+    return `<tr>
+      <td>${escapeHtml(r.Date||"-")}</td>
+      <td><b>${escapeHtml(r.Name||"-")}</b></td>
+      <td>${escapeHtml(r.Symbol||"-")}</td>
+      <td>${escapeHtml(r.Type||"-")}</td>
+      <td>${money(r.Entry_CMP)}</td>
+      <td><b>${money(r.Current_CMP)}</b></td>
+      <td>${money(r.Target)}</td>
+      <td>${money(r.Stop_Loss)}</td>
+      <td class="${ret>0?"positive":ret<0?"negative":""}">${Number.isFinite(ret)?formatPercent(ret):"-"}</td>
+      <td><span class="badge ${statusClass(r.Status)}">${escapeHtml(r.Status||"Not set")}</span></td>
+      <td>${escapeHtml(r.Timing_Status||"-")}</td>
+      <td><div class="progress"><div class="progress-bar" style="width:${progress}%"></div></div></td>
+      <td class="action-cell">
+        <button class="action-btn edit-btn" onclick="openEditModal('${escapeAttr(r.ID)}')">✏ Edit</button>
+        <button class="action-btn delete-btn" onclick="deleteRecommendation('${escapeAttr(r.ID)}')">🗑 Delete</button>
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+function resetRecFilters(){
+  $("recMonth").value="";
+  $("recType").value="";
+  $("recStatus").value="";
+  renderRecommendations();
+}
+
+function renderSIP(){
+  const grid=$("sipGrid");
+  if(!sipBaskets.length){
+    grid.innerHTML='<div class="empty">No SIP baskets found.</div>';
+    return;
+  }
+
+  const grouped={};
+  sipBaskets.forEach(row=>{
+    const id=String(row.Basket_ID||row.Monthly_Amount||"");
+    if(!id)return;
+    if(!grouped[id]){
+      grouped[id]={
+        basketId:id,
+        amount:Number(row.Monthly_Amount)||0,
+        items:[]
+      };
+    }
+    grouped[id].items.push(row);
+  });
+
+  const baskets=Object.values(grouped).sort((a,b)=>a.amount-b.amount);
+
+  grid.innerHTML=baskets.map(b=>{
+    const total=b.items.reduce((sum,x)=>sum+(Number(x.Allocation_Amount)||0),0);
+
+    return `
+      <div class="sip-card">
+        <div class="sip-label">Recommended SIP Basket</div>
+        <div class="sip-amount">${money(b.amount)}</div>
+        <div class="sip-sub">Monthly investment</div>
+
+        <div class="sip-items">
+          ${b.items.map(x=>`
+            <div class="sip-item">
+              <div>
+                <div class="sip-name">${escapeHtml(x.Investment_Name||"-")}</div>
+                <div class="sip-type">${escapeHtml(x.Investment_Type||"-")}</div>
+              </div>
+              <div>${money(x.Allocation_Amount)}</div>
+              <div class="sip-alloc">${Number(x.Allocation_Percent||0).toFixed(2)}%</div>
+            </div>
+          `).join("")}
+        </div>
+
+        <div class="summary-line" style="margin-top:10px">
+          <span>Total Allocation</span>
+          <strong>${money(total)}</strong>
+        </div>
+
+        <div class="sip-actions">
+          <button class="action-btn edit-btn" onclick="openSIPEditModal('${escapeAttr(b.basketId)}')">✏ Edit Basket</button>
+          <button class="action-btn delete-btn" onclick="deleteSIPBasket('${escapeAttr(b.basketId)}')">🗑 Delete Basket</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function getGroupedSIPBasket(basketId){
+  return sipBaskets.filter(x=>String(x.Basket_ID)===String(basketId));
+}
+
+function openSIPModal(){
+  $("sipModalTitle").textContent="Add SIP Basket";
+  $("sipBasketId").value="";
+  $("sipMonthlyAmount").value="";
+  $("sipBasketId").readOnly=false;
+  $("sipItemsEditor").innerHTML="";
+  addSIPItemRow();
+  updateSIPPercentages();
+  $("sipModal").classList.add("open");
+}
+
+function openSIPEditModal(basketId){
+  const items=getGroupedSIPBasket(basketId);
+  if(!items.length){
+    alert("SIP basket not found.");
+    return;
+  }
+
+  $("sipModalTitle").textContent="Edit SIP Basket";
+  $("sipBasketId").value=basketId;
+  $("sipBasketId").readOnly=true;
+  $("sipMonthlyAmount").value=items[0].Monthly_Amount||"";
+  $("sipItemsEditor").innerHTML="";
+
+  items.forEach(item=>addSIPItemRow(item));
+  updateSIPPercentages();
+  $("sipModal").classList.add("open");
+}
+
+function closeSIPModal(){
+  $("sipModal").classList.remove("open");
+}
+
+function addSIPItemRow(item={}){
+  const row=document.createElement("div");
+  row.className="sip-form-row";
+
+  row.innerHTML=`
+    <div class="form-group">
+      <label>Investment Name</label>
+      <input class="sip-name-input" type="text" value="${escapeAttr(item.Investment_Name||"")}" placeholder="MOCAPITAL">
+    </div>
+    <div class="form-group">
+      <label>Type</label>
+      <select class="sip-type-input">
+        <option value="ETF" ${item.Investment_Type==="ETF"?"selected":""}>ETF</option>
+        <option value="Mutual Fund" ${item.Investment_Type==="Mutual Fund"?"selected":""}>Mutual Fund</option>
+        <option value="Stock" ${item.Investment_Type==="Stock"?"selected":""}>Stock</option>
+        <option value="Crypto" ${item.Investment_Type==="Crypto"?"selected":""}>Crypto</option>
+        <option value="Other" ${item.Investment_Type==="Other"?"selected":""}>Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Allocation ₹</label>
+      <input class="sip-allocation-input" type="number" min="0" step="1" value="${item.Allocation_Amount??""}" placeholder="4000" oninput="updateSIPPercentages()">
+    </div>
+    <div class="form-group">
+      <label>Allocation % <span class="note">(auto)</span></label>
+      <input class="sip-percent-input" type="number" min="0" step="0.01" value="${item.Allocation_Percent??""}" placeholder="0" readonly>
+    </div>
+    <button type="button" class="action-btn delete-btn" onclick="this.parentElement.remove()">Remove</button>
+  `;
+
+  $("sipItemsEditor").appendChild(row);
+  updateSIPPercentages();
+}
+
+function collectSIPItems(){
+  const monthlyAmount=Number($("sipMonthlyAmount").value||0);
+
+  return [...document.querySelectorAll("#sipItemsEditor .sip-form-row")]
+    .map(row=>{
+      const allocation=Number(row.querySelector(".sip-allocation-input").value||0);
+      const percent=monthlyAmount>0 ? (allocation/monthlyAmount)*100 : 0;
+
+      row.querySelector(".sip-percent-input").value=percent.toFixed(2);
+
+      return {
+        Investment_Name:row.querySelector(".sip-name-input").value.trim(),
+        Investment_Type:row.querySelector(".sip-type-input").value,
+        Allocation_Amount:allocation,
+        Allocation_Percent:Number(percent.toFixed(2)),
+        Purpose:""
+      };
+    })
+    .filter(x=>x.Investment_Name);
+}
+
+function updateSIPPercentages(){
+  const monthlyAmount=Number($("sipMonthlyAmount").value||0);
+
+  document.querySelectorAll("#sipItemsEditor .sip-form-row").forEach(row=>{
+    const allocation=Number(row.querySelector(".sip-allocation-input").value||0);
+    const percent=monthlyAmount>0 ? (allocation/monthlyAmount)*100 : 0;
+    row.querySelector(".sip-percent-input").value=percent.toFixed(2);
+  });
+
+  updateSIPAllocationSummary();
+}
+
+function updateSIPAllocationSummary(){
+  const monthlyAmount=Number($("sipMonthlyAmount").value||0);
+  const total=[...document.querySelectorAll("#sipItemsEditor .sip-allocation-input")]
+    .reduce((sum,input)=>sum+(Number(input.value)||0),0);
+
+  const percent=monthlyAmount>0 ? (total/monthlyAmount)*100 : 0;
+  const summary=$("sipAllocationSummary");
+
+  if(summary){
+    summary.innerHTML=
+      "Total Allocation: <b>"+money(total)+"</b> &nbsp; | &nbsp; "+
+      "Allocated: <b>"+percent.toFixed(2)+"%</b> &nbsp; | &nbsp; "+
+      "Remaining: <b>"+Math.max(0,monthlyAmount-total).toFixed(2)+"</b>";
+  }
+}
+
+async function saveSIPBasket(){
+  const basketId=$("sipBasketId").value.trim();
+  const monthlyAmount=Number($("sipMonthlyAmount").value||0);
+  const items=collectSIPItems();
+
+  if(!basketId){
+    alert("Please enter a Basket ID.");
+    return;
+  }
+  if(!monthlyAmount){
+    alert("Please enter the Monthly SIP Amount.");
+    return;
+  }
+  if(!items.length){
+    alert("Add at least one investment.");
+    return;
+  }
+
+  const allocated=items.reduce((sum,x)=>sum+x.Allocation_Amount,0);
+  if(Math.abs(allocated-monthlyAmount)>0.01){
+    alert("Allocation total must equal the Monthly SIP Amount. Current allocation: "+money(allocated)+" / Monthly SIP: "+money(monthlyAmount));
+    return;
+  }
+
+  const payload={
+    Basket_ID:basketId,
+    Monthly_Amount:monthlyAmount,
+    Items:items
+  };
+
+  try{
+    showLoading(true);
+    const existing=getGroupedSIPBasket(basketId);
+    const action=existing.length ? "updateSIPBasket" : "addSIPBasket";
+    await apiPost(action,payload);
+    closeSIPModal();
+    await loadData();
+    alert(existing.length?"SIP basket updated.":"SIP basket created.");
+  }catch(error){
+    console.error(error);
+    alert("Unable to save SIP basket: "+error.message);
+  }finally{
+    showLoading(false);
+  }
+}
+
+async function deleteSIPBasket(basketId){
+  if(!confirm("Delete the entire SIP basket ₹"+Number(basketId).toLocaleString("en-IN")+"?")) return;
+
+  try{
+    showLoading(true);
+    await apiPost("deleteSIPBasket",{Basket_ID:basketId});
+    await loadData();
+    alert("SIP basket deleted.");
+  }catch(error){
+    console.error(error);
+    alert("Unable to delete SIP basket: "+error.message);
+  }finally{
+    showLoading(false);
+  }
+}
+
+$("sipModal").addEventListener("click",function(e){
+  if(e.target===this)closeSIPModal();
+});
+
+function apiPost(action,data){
+  return new Promise((resolve,reject)=>{
+    const callbackName="ankitMutation_"+Date.now()+"_"+(++jsonpCounter);
+    const script=document.createElement("script");
+    let finished=false;
+
+    const timer=setTimeout(()=>{
+      if(finished)return;
+      finished=true;
+      cleanup();
+      reject(new Error("Request timed out for "+action));
+    },20000);
+
+    window[callbackName]=function(result){
+      if(finished)return;
+      finished=true;
+      clearTimeout(timer);
+      cleanup();
+
+      if(result && result.success===false){
+        reject(new Error(result.error||result.message||"API request failed"));
+      }else{
+        resolve(result);
+      }
+    };
+
+    function cleanup(){
+      delete window[callbackName];
+      if(script.parentNode)script.parentNode.removeChild(script);
+    }
+
+    script.onerror=function(){
+      if(finished)return;
+      finished=true;
+      clearTimeout(timer);
+      cleanup();
+      reject(new Error("Unable to reach Google Apps Script for "+action));
+    };
+
+    const dataParam=encodeURIComponent(JSON.stringify(data||{}));
+    script.src=API_URL+
+      "?action="+encodeURIComponent(action)+
+      "&data="+dataParam+
+      "&callback="+encodeURIComponent(callbackName)+
+      "&_="+Date.now();
+
+    document.body.appendChild(script);
+  });
+}
+
+function escapeAttr(value){
+  return String(value??"")
+    .replace(/&/g,"&amp;")
+    .replace(/'/g,"&#39;")
+    .replace(/"/g,"&quot;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;");
+}
+
+function openAddRecommendationModal(){
+  const today=new Date().toISOString().split("T")[0];
+  $("addRecDate").value=today;
+  $("addRecName").value="";
+  $("addRecSymbol").value="";
+  $("addRecType").value="Stock";
+  $("addRecEntry").value="";
+  $("addRecTarget").value="";
+  $("addRecSL").value="";
+  $("addRecHoldingValue").value="30";
+  $("addRecHoldingUnit").value="Days";
+  $("addRecRemarks").value="";
+  $("addRecommendationModal").classList.add("open");
+}
+
+function closeAddRecommendationModal(){
+  $("addRecommendationModal").classList.remove("open");
+}
+
+$("addRecommendationModal").addEventListener("click",function(e){
+  if(e.target===this)closeAddRecommendationModal();
+});
+
+$("addRecommendationForm").addEventListener("submit",async function(event){
+  event.preventDefault();
+
+  const holdingValue=Number($("addRecHoldingValue").value||0);
+  const holdingUnit=$("addRecHoldingUnit").value;
+
+  const data={
+    date:$("addRecDate").value,
+    name:$("addRecName").value.trim(),
+    symbol:$("addRecSymbol").value.trim().toUpperCase(),
+    type:$("addRecType").value,
+    entryCMP:Number($("addRecEntry").value),
+    target:Number($("addRecTarget").value),
+    stopLoss:Number($("addRecSL").value),
+    timeFrame:`${holdingValue} ${holdingUnit}`,
+    remarks:$("addRecRemarks").value.trim()
+  };
+
+  if(!data.date||!data.name||!data.symbol){
+    alert("Please fill Date, Name and Symbol.");
+    return;
+  }
+  if(!holdingValue||holdingValue<=0){
+    alert("Please enter a valid holding period.");
+    return;
+  }
+  if(!Number.isFinite(data.entryCMP)||data.entryCMP<=0){
+    alert("Please enter a valid Entry CMP.");
+    return;
+  }
+  if(!Number.isFinite(data.target)||data.target<=0){
+    alert("Please enter a valid Target.");
+    return;
+  }
+  if(!Number.isFinite(data.stopLoss)||data.stopLoss<=0){
+    alert("Please enter a valid Stop Loss.");
+    return;
+  }
+
+  try{
+    showLoading(true);
+    const result=await apiPost("addRecommendation",data);
+    if(result&&result.success===false){
+      throw new Error(result.error||result.message||"Unable to save recommendation");
+    }
+    closeAddRecommendationModal();
+    await loadData();
+    alert("Recommendation added successfully.");
+  }catch(error){
+    console.error(error);
+    alert("Unable to add recommendation: "+error.message);
+  }finally{
+    showLoading(false);
+  }
+});
+
+function openEditModal(id){
+  const r=recommendations.find(x=>String(x.ID)===String(id));
+  if(!r){
+    alert("Recommendation not found.");
+    return;
+  }
+
+  $("editId").value=r.ID||"";
+  $("editDate").value=String(r.Date||"").slice(0,10);
+  $("editName").value=r.Name||"";
+  $("editSymbol").value=r.Symbol||"";
+  $("editType").value=r.Type||"Stock";
+  $("editEntry").value=r.Entry_CMP??"";
+  $("editTarget").value=r.Target??"";
+  $("editSL").value=r.Stop_Loss??"";
+  $("editTimeFrame").value=r.Time_Frame??"";
+  $("editRemarks").value=r.Remarks||"";
+
+  $("editModal").classList.add("show");
+}
+
+function closeEditModal(){
+  $("editModal").classList.remove("show");
+}
+
+async function deleteRecommendation(id){
+  const r=recommendations.find(x=>String(x.ID)===String(id));
+  const name=r ? (r.Name||r.Symbol||"this recommendation") : "this recommendation";
+
+  if(!confirm("Delete "+name+"? This cannot be undone."))return;
+
+  try{
+    showLoading(true);
+    await apiPost("deleteRecommendation",{id:id});
+    closeEditModal();
+    await loadData();
+    alert("Recommendation deleted.");
+  }catch(error){
+    console.error(error);
+    alert("Unable to delete recommendation: "+error.message);
+  }finally{
+    showLoading(false);
+  }
+}
+
+$("editForm").addEventListener("submit",async function(event){
+  event.preventDefault();
+
+  const data={
+    id:$("editId").value,
+    date:$("editDate").value,
+    name:$("editName").value.trim(),
+    symbol:$("editSymbol").value.trim().toUpperCase(),
+    type:$("editType").value,
+    entryCMP:Number($("editEntry").value),
+    target:Number($("editTarget").value),
+    stopLoss:Number($("editSL").value),
+    timeFrame:Number($("editTimeFrame").value||0),
+    remarks:$("editRemarks").value.trim()
+  };
+
+  try{
+    showLoading(true);
+    await apiPost("updateRecommendation",data);
+    closeEditModal();
+    await loadData();
+    alert("Recommendation updated.");
+  }catch(error){
+    console.error(error);
+    alert("Unable to update recommendation: "+error.message);
+  }finally{
+    showLoading(false);
+  }
+});
+
+$("editModal").addEventListener("click",function(e){
+  if(e.target===this)closeEditModal();
+});
+
+
+function renderAll(){
+  renderDashboard();
+  renderRecommendations();
+  renderSIP();
+}
+
+function escapeHtml(value){
+  return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+}
+
+function toggleDark(){
+  document.body.classList.toggle("dark");
+  localStorage.setItem("ankitDark",document.body.classList.contains("dark")?"1":"0");
+}
+
+if(localStorage.getItem("ankitDark")==="1")document.body.classList.add("dark");
+loadData();
+</script>
+</body>
+</html>
