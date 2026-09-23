@@ -440,7 +440,7 @@ function apiGet(action){
       finished=true;
       cleanup();
       reject(new Error("Request timed out for "+action));
-    },20000);
+    },45000);
 
     window[callbackName]=function(data){
       if(finished)return;
@@ -478,29 +478,40 @@ async function loadData(){
   showError("");
   setConnectionStatus("Connecting...");
   try{
-    const [recResult,sipResult,srtResult]=await Promise.all([
+    // Load recommendations and SIP first
+    const [recResult, sipResult] = await Promise.all([
       apiGet("getRecommendations"),
-      apiGet("getSIPBaskets"),
-      apiGet("getSRT")
+      apiGet("getSIPBaskets")
     ]);
 
-    recommendations=Array.isArray(recResult)?recResult:(recResult.recommendations||recResult.data||[]);
-    sipBaskets=Array.isArray(sipResult)?sipResult:(sipResult.sipBaskets||sipResult.data||[]);
-    srtData=srtResult && srtResult.data ? srtResult.data : srtResult;
+    recommendations = Array.isArray(recResult) ? recResult : (recResult.recommendations || recResult.data || []);
+    sipBaskets = Array.isArray(sipResult) ? sipResult : (sipResult.sipBaskets || sipResult.data || []);
 
     populateMonthFilters();
     renderAll();
-    renderSRT();
     setConnectionStatus("● Data Connected");
+
+    // Load SRT in the background — don't block the UI
+    apiGet("getSRT")
+      .then(result => {
+        srtData = result && result.data ? result.data : result;
+        renderSRT();
+      })
+      .catch(err => {
+        console.warn("SRT failed:", err);
+        $("srtZone").className = "srt-zone normal";
+        $("srtZone").textContent = "SRT unavailable";
+        $("srtUpdated").textContent = "SRT fetch timed out";
+      });
+
   }catch(error){
     console.error(error);
     setConnectionStatus("● Data Offline");
-    showError("Connection error: "+error.message+".");
+    showError("Connection error: " + error.message + ".");
   }finally{
     showLoading(false);
   }
 }
-
 function formatNumber(v,decimals){
   const n=Number(v);
   return Number.isFinite(n)?n.toLocaleString("en-IN",{minimumFractionDigits:decimals,maximumFractionDigits:decimals}):"—";
@@ -984,7 +995,7 @@ function apiGetWithData(action,data){
       finished=true;
       cleanup();
       reject(new Error("Request timed out for "+action));
-    },25000);
+    },45000);
 
     window[callbackName]=function(result){
       if(finished)return;
