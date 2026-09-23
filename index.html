@@ -280,7 +280,7 @@ body.dark .error{background:#451a1a;color:#fecaca}
     <div class="form-grid">
       <div class="form-group">
         <label>Monthly SIP Amount</label>
-        <input type="number" id="sipMonthlyAmount" min="1" step="1" placeholder="e.g. 20000">
+        <input type="number" id="sipMonthlyAmount" min="1" step="1" placeholder="e.g. 20000" oninput="updateSIPPercentages()">
       </div>
       <div class="form-group">
         <label>Basket ID (auto-generated for new basket)</label>
@@ -388,8 +388,8 @@ body.dark .error{background:#451a1a;color:#fecaca}
           <input type="number" step="any" id="editSL" required>
         </div>
         <div class="form-group">
-          <label>Time Frame (days)</label>
-          <input type="number" id="editTimeFrame" min="0">
+          <label>Holding Period (Days)</label>
+          <input type="number" id="editTimeFrame" min="1" step="1">
         </div>
         <div class="form-group full">
           <label>Remarks</label>
@@ -440,7 +440,7 @@ function apiGet(action){
       finished=true;
       cleanup();
       reject(new Error("Request timed out for "+action));
-    },15000);
+    },20000);
 
     window[callbackName]=function(data){
       if(finished)return;
@@ -484,8 +484,8 @@ async function loadData(){
       apiGet("getSRT")
     ]);
 
-    recommendations=Array.isArray(recResult)?recResult:(recResult.data||recResult.recommendations||[]);
-    sipBaskets=Array.isArray(sipResult)?sipResult:(sipResult.data||sipResult.sipBaskets||[]);
+    recommendations=Array.isArray(recResult)?recResult:(recResult.recommendations||recResult.data||[]);
+    sipBaskets=Array.isArray(sipResult)?sipResult:(sipResult.sipBaskets||sipResult.data||[]);
     srtData=srtResult && srtResult.data ? srtResult.data : srtResult;
 
     populateMonthFilters();
@@ -518,15 +518,15 @@ function renderSRT(){
   const current=Number(srtData.currentLevel);
   const sma=Number(srtData.sma124);
   const srt=Number(srtData.srtValue);
-  $("srtCurrent").textContent=formatNumber(current,1);
-  $("srtSMA").textContent=formatNumber(sma,1);
+  $("srtCurrent").textContent=Number.isFinite(current)?formatNumber(current,1):"—";
+  $("srtSMA").textContent=Number.isFinite(sma)?formatNumber(sma,1):"—";
   $("srtValue").textContent=Number.isFinite(srt)?srt.toFixed(2):"—";
 
   const zone=$("srtZone");
   zone.className="srt-zone";
   if(!Number.isFinite(srt)){
     zone.classList.add("normal");
-    zone.textContent="SRT unavailable";
+    zone.textContent=srtData.error ? ("SRT unavailable: "+srtData.error) : "SRT unavailable";
   }else if(srt<=0.60){
     zone.classList.add("invest");
     zone.textContent="🟢 Investment Time";
@@ -848,7 +848,7 @@ function addSIPItemRow(item={}){
       <label>Allocation % <span class="note">(auto)</span></label>
       <input class="sip-percent-input" type="number" min="0" step="0.01" value="${item.Allocation_Percent??""}" placeholder="0" readonly>
     </div>
-    <button type="button" class="action-btn delete-btn" onclick="this.parentElement.remove()">Remove</button>
+    <button type="button" class="action-btn delete-btn" onclick="this.parentElement.remove();updateSIPPercentages()">Remove</button>
   `;
 
   $("sipItemsEditor").appendChild(row);
@@ -938,7 +938,7 @@ async function saveSIPBasket(){
     showLoading(true);
     const existing=getGroupedSIPBasket(basketId);
     const action=existing.length ? "updateSIPBasket" : "addSIPBasket";
-    await apiPost(action,payload);
+    await apiGetWithData(action,payload);
     closeSIPModal();
     await loadData();
     alert(existing.length?"SIP basket updated.":"SIP basket created.");
@@ -955,7 +955,7 @@ async function deleteSIPBasket(basketId){
 
   try{
     showLoading(true);
-    await apiPost("deleteSIPBasket",{Basket_ID:basketId});
+    await apiGetWithData("deleteSIPBasket",{Basket_ID:basketId});
     await loadData();
     alert("SIP basket deleted.");
   }catch(error){
@@ -970,7 +970,10 @@ $("sipModal").addEventListener("click",function(e){
   if(e.target===this)closeSIPModal();
 });
 
-function apiPost(action,data){
+/* ---------------------------------------------------------
+   JSONP MUTATION REQUEST (GET with data= param)
+   --------------------------------------------------------- */
+function apiGetWithData(action,data){
   return new Promise((resolve,reject)=>{
     const callbackName="ankitMutation_"+Date.now()+"_"+(++jsonpCounter);
     const script=document.createElement("script");
@@ -981,7 +984,7 @@ function apiPost(action,data){
       finished=true;
       cleanup();
       reject(new Error("Request timed out for "+action));
-    },20000);
+    },25000);
 
     window[callbackName]=function(result){
       if(finished)return;
@@ -1093,7 +1096,7 @@ $("addRecommendationForm").addEventListener("submit",async function(event){
 
   try{
     showLoading(true);
-    const result=await apiPost("addRecommendation",data);
+    const result=await apiGetWithData("addRecommendation",data);
     if(result&&result.success===false){
       throw new Error(result.error||result.message||"Unable to save recommendation");
     }
@@ -1123,7 +1126,7 @@ function openEditModal(id){
   $("editEntry").value=r.Entry_CMP??"";
   $("editTarget").value=r.Target??"";
   $("editSL").value=r.Stop_Loss??"";
-  $("editTimeFrame").value=r.Time_Frame??"";
+  $("editTimeFrame").value=parseInt(r.Time_Frame,10)||30;
   $("editRemarks").value=r.Remarks||"";
 
   $("editModal").classList.add("show");
@@ -1141,7 +1144,7 @@ async function deleteRecommendation(id){
 
   try{
     showLoading(true);
-    await apiPost("deleteRecommendation",{id:id});
+    await apiGetWithData("deleteRecommendation",{id:id});
     closeEditModal();
     await loadData();
     alert("Recommendation deleted.");
@@ -1165,13 +1168,13 @@ $("editForm").addEventListener("submit",async function(event){
     entryCMP:Number($("editEntry").value),
     target:Number($("editTarget").value),
     stopLoss:Number($("editSL").value),
-    timeFrame:Number($("editTimeFrame").value||0),
+    timeFrame:($("editTimeFrame").value||"30")+" Days",
     remarks:$("editRemarks").value.trim()
   };
 
   try{
     showLoading(true);
-    await apiPost("updateRecommendation",data);
+    await apiGetWithData("updateRecommendation",data);
     closeEditModal();
     await loadData();
     alert("Recommendation updated.");
